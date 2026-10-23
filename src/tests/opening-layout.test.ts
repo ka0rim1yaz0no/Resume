@@ -3,14 +3,13 @@ import { openingFrame, openingViewport } from '../three/openingLayout'
 import { openingCamera } from '../three/choreography'
 
 describe('opening framing', () => {
-  it.each([[1916, 916, 100], [1440, 1000, 100], [768, 1024, 84], [558, 672, 76], [390, 844, 76], [360, 568, 76]])('keeps the poster frame inside %i × %i', (width, height, header) => {
+  it.each([[1916, 916, 100], [1440, 1000, 100], [768, 1024, 84], [558, 672, 76], [390, 844, 76], [360, 568, 76]])('centres the assembly within %i × %i without covering navigation', (width, height, header) => {
     const frame = openingFrame(width, height, header)
-    expect(frame.width / frame.height).toBeCloseTo(960 / 760)
+    expect(frame.left + frame.width / 2).toBe(width / 2)
     expect(frame.left).toBeGreaterThanOrEqual(0)
     expect(frame.left + frame.width).toBeLessThanOrEqual(width)
     expect(frame.top).toBeGreaterThanOrEqual(header)
-    expect(frame.top + frame.height).toBeLessThan(height - 100)
-    if (width <= 650) expect(frame.top + frame.height).toBeLessThanOrEqual(height * 0.84 - 132 + 0.001)
+    expect(frame.top + frame.height).toBeLessThanOrEqual(height - 100)
   })
 
   it('joins the poster and hero at exact viewport endpoints', () => {
@@ -18,15 +17,23 @@ describe('opening framing', () => {
     const hero = { left: 750, top: 190, width: 600, height: 620 }
     expect(openingViewport(hero, poster, 1)).toEqual(poster)
     expect(openingViewport(hero, poster, 0)).toEqual(hero)
-    expect(openingViewport(hero, poster, 0.5).width).toBe((hero.width + poster.width) / 2)
+    expect(openingViewport(hero, poster, 0.5)).toEqual(poster)
+    const docking = openingViewport(hero, poster, 0.135)
+    expect(docking.width).toBeCloseTo((hero.width + poster.width) / 2)
   })
 
-  it('matches the poster camera before the gentle arc and the hero camera after it', () => {
+  it('moves from an elevated establishing shot to the exact hero camera without a velocity jump', () => {
     const start = openingCamera(1, false)
     const end = openingCamera(0, false)
-    expect(start).toEqual(end)
-    expect(start).toMatchObject({ y: 0.15, z: 6.7, fov: 35 })
+    expect(end).toEqual({ x: 0, y: 0.15, z: 6.7, lookX: 0, lookY: 0, fov: 35 })
+    expect(start.x).toBeLessThan(-1)
+    expect(start.y).toBeGreaterThan(end.y)
     expect(openingCamera(0.5, false).z).toBeLessThan(start.z)
-    expect(openingCamera(0.5, true).x).toBeGreaterThan(openingCamera(0.5, false).x)
+    expect(Math.abs(openingCamera(0.5, true).x)).toBeLessThan(Math.abs(openingCamera(0.5, false).x))
+    for (const endpoint of [0, 1]) {
+      const near = openingCamera(endpoint === 0 ? 0.0001 : 0.9999, false)
+      const pose = openingCamera(endpoint, false)
+      for (const key of ['x', 'y', 'z', 'fov'] as const) expect(Math.abs(near[key] - pose[key])).toBeLessThan(0.000001)
+    }
   })
 })

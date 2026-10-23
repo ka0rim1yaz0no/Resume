@@ -3,6 +3,7 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { assetUrl, profile } from '../data/profile'
 import { openingFrame } from '../three/openingLayout'
+import { openingDuration } from '../three/sculptureAssembly'
 
 export function OpeningSequence({ disabled }: { disabled: boolean }) {
   const overlay = useRef<HTMLDivElement>(null)
@@ -18,18 +19,19 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     const frame = openingFrame(window.innerWidth, window.innerHeight, header)
     const heroCopy = root.querySelectorAll('.hero-enter')
     const began = performance.now()
-    let disposed = false, finished = false, fontsReady = false
+    let disposed = false, finished = false, settled = false, fontsReady = false
     let reveal: gsap.core.Timeline | undefined
     root.classList.add('intro-opening')
     scene.dataset.sceneOpening = '1'
     curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
     gsap.set(stage, { left: frame.left, top: frame.top, width: frame.width, height: frame.height })
-    gsap.set(curtain, { autoAlpha: 1 })
+    gsap.set(curtain, { autoAlpha: 1, '--opening-header': `${header}px` })
     gsap.set(heroCopy, { opacity: 0, y: 18 })
     gsap.from('.opening-word', { yPercent: 110, duration: 0.7, stagger: 0.08, ease: 'power3.out' })
-    gsap.from('.opening-line span', { scaleX: 0, duration: 1, ease: 'power2.inOut' })
+    gsap.set('.opening-line span', { scaleX: 0 })
     gsap.fromTo('.opening-orbit circle', { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut' })
     const settle = () => {
+      settled = true
       root.classList.remove('intro-opening')
       delete scene.dataset.sceneOpening
       gsap.set(heroCopy, { clearProps: 'opacity,transform' })
@@ -40,11 +42,13 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       finished = true; played.current = true; observer.disconnect(); readyCall.pause()
       if (instant) { settle(); return }
       const shot = { progress: 1 }
-      const copyStart = compact ? 1.3 : 0.85
+      const duration = openingDuration(compact)
+      const copyStart = duration * 0.77
       reveal = gsap.timeline({ onComplete: settle })
-        .to(shot, { progress: 0, duration: 1.8, ease: 'sine.inOut', onUpdate: () => { scene.dataset.sceneOpening = String(shot.progress) } }, 0)
-        .to('.opening-word', { yPercent: -110, opacity: 0, duration: 0.42, stagger: 0.035, ease: 'power2.in' }, 0)
-        .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.45 }, 0.12)
+        .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => { scene.dataset.sceneOpening = String(shot.progress) } }, 0)
+        .to('.opening-line span', { scaleX: 1, duration: duration * 0.8, ease: 'none' }, 0)
+        .to('.opening-word', { yPercent: -110, opacity: 0, duration: 0.5, stagger: 0.05, ease: 'power2.in' }, duration * 0.64)
+        .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.6 }, duration * 0.72)
         .to(curtain, { opacity: 0, duration: 0.8, ease: 'sine.inOut' }, copyStart)
         .to(heroCopy, { y: 0, opacity: 1, duration: 0.75, stagger: 0.045, ease: 'power2.out' }, copyStart)
     }
@@ -52,15 +56,21 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     const schedule = () => {
       curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
       if (!finished && fontsReady && scene.dataset.sceneReady === 'true') {
-        readyCall.delay(Math.max(0.25, 1.05 - (performance.now() - began) / 1000)).restart(true)
+        readyCall.delay(Math.max(0.12, 0.35 - (performance.now() - began) / 1000)).restart(true)
       }
     }
     const observer = new MutationObserver(schedule)
     observer.observe(scene, { attributes: true, attributeFilter: ['data-scene-ready'] })
     const afterFonts = () => { if (!disposed) { fontsReady = true; schedule() } }
     void document.fonts.ready.then(contextSafe ? contextSafe(afterFonts) : afterFonts)
-    const timeout = gsap.delayedCall(4, () => finish())
-    const skip = () => finish(true)
+    const skip = () => {
+      if (disposed || settled) return
+      // Visitors can interrupt the take even after the assembly has started.
+      reveal?.kill(); readyCall.pause(); observer.disconnect()
+      finished = true; played.current = true; settle()
+    }
+    // A slow or unavailable WebGL device gets the regular readable hero.
+    const timeout = gsap.delayedCall(6, () => { if (!finished) skip() })
     const key = (event: KeyboardEvent) => { if (['Escape', 'Tab', 'PageDown', 'ArrowDown'].includes(event.key)) skip() }
     const button = curtain.querySelector('button')!
     button.addEventListener('click', skip)

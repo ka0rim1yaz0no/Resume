@@ -12,7 +12,7 @@ export function sampleSurface(root: Object3D, asset: Object3D, count = surfacePo
   const meshes: { mesh: Mesh; triangles: number; matrix: Matrix4 }[] = []
   let total = 0
   asset.traverse(object => {
-    if (!(object instanceof Mesh) || !object.geometry.attributes.position) return
+    if (!(object instanceof Mesh) || !object.geometry.attributes.position || object.geometry.userData.assemblyCap) return
     const triangles = Math.floor((object.geometry.index?.count || object.geometry.attributes.position.count) / 3)
     meshes.push({ mesh: object, triangles, matrix: inverse.clone().multiply(object.matrixWorld) })
     total += triangles

@@ -14,6 +14,19 @@ function expectInside(camera: PerspectiveCamera, box: Box3, world?: Matrix4) {
 }
 
 describe('Full model framing', () => {
+  it('keeps the opening destination large while fragments arrive from off screen, then restores full fitting', () => {
+    const root = new Group(), geometry = new BoxGeometry(1, 1, 1), material = new MeshBasicMaterial(), fragment = new Mesh(geometry, material)
+    fragment.position.x = 8; root.add(fragment)
+    root.userData.openingFrameBounds = new Box3(new Vector3(-1.85, -1.3, -0.8), new Vector3(1.85, 1.3, 0.8))
+    const camera = new PerspectiveCamera(35, 1, 0.1, 40), fit = createSceneFramer()
+    camera.position.set(0, 0.15, 6.7); camera.lookAt(0, 0, 0)
+    expect(fit(root, camera, 1, 1 / 60)).toBeLessThan(2)
+    delete root.userData.openingFrameBounds
+    camera.position.set(0, 0.15, 6.7); camera.lookAt(0, 0, 0)
+    expect(fit(root, camera, 1, 1 / 60)).toBeGreaterThan(10)
+    expectInside(camera, geometry.boundingBox!, fragment.matrixWorld)
+    geometry.dispose(); material.dispose()
+  })
   it('keeps the entire composition inside phone and desktop frames at maximum zoom', () => {
     const bounds = new Box3(new Vector3(-2.1, -1.9, -0.9), new Vector3(2.8, 2.0, 0.8))
     for (const aspect of [0.65, 1, 1.6]) {

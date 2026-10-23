@@ -24,14 +24,24 @@ export function createSceneFramer() {
   return (scene: Object3D, camera: PerspectiveCamera, aspect: number, delta: number) => {
     let required = 0
     scene.updateMatrixWorld()
-    scene.traverseVisible(object => {
-      if (!(object instanceof Mesh)) return
-      const geometry = object.geometry
-      if (!geometry.boundingBox) geometry.computeBoundingBox()
-      // Fit each oriented mesh, avoiding empty corners introduced by one large
-      // world-aligned box around the sculpture and its offset React companion.
-      if (geometry.boundingBox) required = Math.max(required, cameraRetreat(camera, geometry.boundingBox, aspect, 0.035, object.matrixWorld))
-    })
+    const visit = (object: Object3D) => {
+      if (!object.visible) return
+      const authoredBounds = object.userData.openingFrameBounds as Box3 | undefined
+      if (authoredBounds) {
+        // Incoming opening fragments intentionally begin beyond the frame.
+        // Fit their assembled destination, keeping the central subject large.
+        required = Math.max(required, cameraRetreat(camera, authoredBounds, aspect, 0.035, object.matrixWorld))
+        return
+      }
+      if (object instanceof Mesh) {
+        const geometry = object.geometry
+        if (!geometry.boundingBox) geometry.computeBoundingBox()
+        // Fit each oriented mesh, avoiding empty corners around compositions.
+        if (geometry.boundingBox) required = Math.max(required, cameraRetreat(camera, geometry.boundingBox, aspect, 0.035, object.matrixWorld))
+      }
+      object.children.forEach(visit)
+    }
+    visit(scene)
     // Grow the safe distance immediately; ease back in as the composition
     // becomes smaller. A fast drag can never outrun the frame's safe bounds.
     distance = Math.max(required, MathUtils.damp(distance, required, 9, Math.min(delta, 0.05)))

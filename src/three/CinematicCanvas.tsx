@@ -22,6 +22,8 @@ import { organizationChapter } from './experienceChoreography'
 import { createSceneFramer } from './cameraFraming'
 import { EducationIdentities, type EducationScore } from './EducationIdentities'
 import { educationChapter } from './educationChoreography'
+import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion } from './sculptureAssembly'
+import { bindProjectAssembly, projectPresence } from './projectAssembly'
 
 // Buffer decompression must not compete with touch scrolling on the main thread.
 const startDecoderWorkers = MeshoptDecoder.useWorkers
@@ -30,7 +32,7 @@ if (typeof Worker !== 'undefined') {
 }
 
 type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement; education: HTMLElement }
-type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
+type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; projectExplosion: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
 type OwnedMaterial = { material: Material; opacity: number }
 
 function documentTop(element: HTMLElement) {
@@ -83,21 +85,33 @@ function useModelAsset(id: ModelId, mobile: boolean) {
       }
       object.material = Array.isArray(object.material) ? object.material.map(copy) : copy(object.material)
     })
-    return { clone, materials, scale: entry.scale / Math.max(size.x, size.y, size.z) }
+    const scale = entry.scale / Math.max(size.x, size.y, size.z)
+    const bounds = new Box3(size.clone().multiplyScalar(-0.5 * scale), size.clone().multiplyScalar(0.5 * scale))
+    return { clone, materials, scale, bounds }
   }, [scene, entry.scale])
   useEffect(() => () => normalized.materials.forEach(({ material }) => material.dispose()), [normalized])
   return normalized
 }
 
-function ObjectRig({ id, index, score, targets, motion, compact, mobile, onLoaded }: { id: ModelId; index: number; score: Score; targets: SurfaceTargets; motion: boolean; compact: boolean; mobile: boolean; onLoaded: (id: ModelId) => void }) {
+function ObjectRig({ id, index, score, targets, motion, compact, mobile, projectAnchor, onLoaded }: { id: ModelId; index: number; score: Score; targets: SurfaceTargets; motion: boolean; compact: boolean; mobile: boolean; projectAnchor: HTMLElement; onLoaded: (id: ModelId) => void }) {
   const entry = modelRegistry[id]
   const normalized = useModelAsset(id, mobile)
+  const assembly = useMemo(() => bindSculptureAssembly(normalized.clone), [normalized])
+  const projectAssembly = useMemo(() => bindProjectAssembly(normalized.clone), [normalized])
+  const annotation = useMemo(() => {
+    const panel = projectAnchor.closest('.resume-project')?.querySelector<HTMLElement>('.project-annotations')
+    return { panel, leaders: [...(panel?.querySelectorAll<SVGPathElement>('[data-project-leader]') || [])], dots: [...(panel?.querySelectorAll<SVGCircleElement>('[data-project-dot]') || [])], point: new Vector3(), rect: '' }
+  }, [projectAnchor])
   const group = useRef<Group>(null)
+  const { gl } = useThree()
   useEffect(() => {
+    // Dust samples describe the complete sculpture, never its opening pose.
+    assembly.update(0, compact)
+    projectAssembly.update(0, compact)
     if (group.current) targets.set(index, sampleSurface(group.current, normalized.clone, targets.pointCount))
     onLoaded(id)
     return () => { targets.delete(index) }
-  }, [id, index, normalized, targets, onLoaded])
+  }, [id, index, normalized, assembly, projectAssembly, compact, targets, onLoaded])
   useFrame(() => {
     if (!group.current || !score.active) return
     const film = journeyPose(score.progress, index, compact)
@@ -105,15 +119,22 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, onLoade
     const t = score.handoff
     let weight = blend(score.weights[index], film.weight, t)
     const opening = motion ? score.opening : 0
-    const arc = Math.sin(opening * Math.PI)
+    const turn = assemblyTurn(id === 'systems-sculpture' ? opening : 0)
+    group.current.userData.openingFrameBounds = id === 'systems-sculpture' && opening > 0.23 ? normalized.bounds : undefined
+    assembly.update(opening, compact)
+    projectAssembly.update(score.projectExplosion, compact)
+    if (id === 'systems-sculpture') {
+      gl.domElement.dataset.assemblyPieces = String(assembly.count)
+      gl.domElement.dataset.assemblyProgress = (1 - opening).toFixed(3)
+    }
     const idle = motion ? Math.sin(score.elapsed * 0.32) * 0.018 * (1 - opening) : 0
     // Update hidden poses too: the incoming object is already in place when
     // its weight rises. The scroll score alone controls both pose and opacity.
     group.current.position.set(blend(motion ? hero.x : 0, film.x, t), blend(motion ? hero.y : 0, film.y, t) + idle, blend(motion ? hero.z : 0, film.z, t))
     group.current.rotation.set(
-      entry.rotation[0] + blend((motion ? hero.rx : 0) + arc * 0.025, film.rx, t) - score.pointerY * 0.025 * (1 - opening) + score.explorePitch * (1 - t),
-      entry.rotation[1] + blend((motion ? hero.ry : 0) - arc * 0.14 + score.turn, film.ry, t) + score.pointerX * 0.045 * (1 - opening) + score.exploreYaw * (1 - t),
-      blend(motion ? hero.rz : 0, film.rz, t),
+      entry.rotation[0] + blend((motion ? hero.rx : 0) + turn.rx, film.rx, t) - score.pointerY * 0.025 * (1 - opening) + score.explorePitch * (1 - t),
+      entry.rotation[1] + blend((motion ? hero.ry : 0) + turn.ry + score.turn, film.ry, t) + score.pointerX * 0.045 * (1 - opening) + score.exploreYaw * (1 - t),
+      blend((motion ? hero.rz : 0) + turn.rz, film.rz, t),
     )
     group.current.scale.setScalar(blend(motion ? hero.scale : 1, film.scale * (compact ? 0.8 : 1), t))
     const amount = score.content.amount
@@ -125,10 +146,38 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, onLoade
       object.scale.setScalar(blend(object.scale.x, target.scale, amount))
       weight = blend(weight, target.weight, amount)
     }
+    if (id === 'project-laptop') {
+      group.current.rotation.y -= score.projectExplosion * 0.12
+      group.current.rotation.x += score.projectExplosion * 0.04
+      gl.domElement.dataset.projectExplosion = score.projectExplosion.toFixed(3)
+      gl.domElement.dataset.projectPieces = String(projectAssembly.parts.length)
+    }
     group.current.visible = weight > 0.001
     const solid = weight * (1 - score.dissolve) * score.exitOpacity
     normalized.materials.forEach(({ material, opacity }) => { material.opacity = opacity * solid; material.depthWrite = solid > 0.995 })
   })
+  // The renderer fits the final camera at priority 1. Project physical part
+  // pivots afterwards, so leader lines stay attached throughout the dolly.
+  useFrame(({ camera }) => {
+    if (id !== 'project-laptop' || !annotation.panel) return
+    const showing = score.active && score.projectExplosion > 0.001 && projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount) > 0.98
+    const visibility = showing ? 'visible' : 'hidden'
+    if (annotation.panel.style.visibility !== visibility) annotation.panel.style.visibility = visibility
+    if (!showing) return
+    const { left, top, width, height } = score.viewport
+    const rectKey = `${left},${top},${width},${height}`
+    if (rectKey !== annotation.rect) {
+      Object.assign(annotation.panel.style, { left: '0px', top: '0px', transform: `translate3d(${left}px, ${top}px, 0)`, width: `${width}px`, height: `${height}px` })
+      annotation.rect = rectKey
+    }
+    const ends = compact ? [[21, 14], [78, 53], [21, 87]] : [[14, 15], [84, 53], [17, 87]]
+    for (const part of projectAssembly.parts) {
+      const point = part.object.getWorldPosition(annotation.point).project(camera)
+      const x = (point.x + 1) * 50, y = (1 - point.y) * 50, [endX, endY] = ends[part.index]
+      annotation.leaders[part.index]?.setAttribute('d', `M ${x.toFixed(2)} ${y.toFixed(2)} L ${endX + (part.index === 1 ? -7 : 7)} ${endY} L ${endX} ${endY}`)
+      annotation.dots[part.index]?.setAttribute('cx', x.toFixed(2)); annotation.dots[part.index]?.setAttribute('cy', y.toFixed(2))
+    }
+  }, 1.5)
   return <group ref={group} rotation={entry.rotation}><group scale={normalized.scale}><primitive object={normalized.clone} dispose={null} /></group></group>
 }
 
@@ -177,7 +226,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
     const hero = chapterPose(score.heroScroll, true, compact)
     let weight = blend(score.weights[0], film.weight, score.handoff)
     const opening = motion ? score.opening : 0
-    weight *= 1 - opening
+    weight *= openingCompanion(opening)
     const pose = reactCompanionPose(score.progress, compact, opening)
     const idle = motion ? Math.sin(score.elapsed * 0.32) * 0.018 : 0
     root.current.position.set(blend(motion ? hero.x : 0, film.x, score.handoff), blend(motion ? hero.y : 0, film.y, score.handoff) + idle, blend(motion ? hero.z : 0, film.z, score.handoff))
@@ -220,7 +269,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
   </group>
 }
 
-function Ensemble({ score, model, motion, compact, mobile, warm, technology, environment, onReady, onError }: { score: Score; model: ModelId; motion: boolean; compact: boolean; mobile: boolean; warm: boolean; technology: string; environment: Texture; onReady: (ids: Set<ModelId>) => void; onError: () => void }) {
+function Ensemble({ score, model, motion, compact, mobile, warm, technology, environment, projectAnchor, onReady, onError }: { score: Score; model: ModelId; motion: boolean; compact: boolean; mobile: boolean; warm: boolean; technology: string; environment: Texture; projectAnchor: HTMLElement; onReady: (ids: Set<ModelId>) => void; onError: () => void }) {
   const { scene, gl, camera, invalidate } = useThree()
   const [loaded, setLoaded] = useState<Set<ModelId>>(new Set())
   const targets = useMemo<SurfaceTargets>(() => Object.assign(new Map(), { pointCount: mobile ? 2400 : surfacePointCount }), [mobile])
@@ -259,6 +308,12 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
       fov = blend(fov, target.fov, q)
     }
     state.camera.position.z -= Math.max(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
+    state.camera.position.x += score.projectExplosion * (compact ? 0.08 : 0.22)
+    state.camera.position.y += score.projectExplosion * 0.22
+    state.camera.position.z += score.projectExplosion * 0.3
+    lookY += score.projectExplosion * 0.06
+    const impact = magneticShake(opening, compact)
+    state.camera.position.x += impact.x; state.camera.position.y += impact.y
     state.camera.lookAt(lookX, lookY, 0)
     if (Math.abs(lens.fov - fov) > 0.001) { lens.fov = fov; lens.updateProjectionMatrix() }
     gl.domElement.dataset.camera = state.camera.position.toArray().map(value => value.toFixed(3)).join(',')
@@ -266,7 +321,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
   return <>
     <PerspectiveCamera makeDefault position={[0, 0.15, 6.7]} fov={35} near={0.1} far={40} />
     <StudioLights />
-    {modelIds.map((id, index) => (warm || id === model || id === 'systems-sculpture') && <Suspense key={id} fallback={null}><ObjectRig id={id} index={index} score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} onLoaded={markLoaded} /></Suspense>)}
+    {modelIds.map((id, index) => (warm || id === model || id === 'systems-sculpture') && <Suspense key={id} fallback={null}><ObjectRig id={id} index={index} score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} projectAnchor={projectAnchor} onLoaded={markLoaded} /></Suspense>)}
     <Suspense fallback={null}><ReactCompanion score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} technology={technology} onLoaded={markLoaded} /></Suspense>
     {warm && <ExperienceIdentities score={score} targets={targets} motion={motion} compact={compact} />}
     {warm && <Suspense fallback={null}><EducationIdentities score={score} targets={targets} motion={motion} compact={compact} /></Suspense>}
@@ -281,7 +336,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect; education: DOMRect } | null>(null)
   const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock; education: Dock } | null>(null)
   const fitScene = useMemo(createSceneFramer, [])
-  const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
+  const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   useEffect(() => {
     const generator = new PMREMGenerator(gl)
@@ -373,6 +428,9 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.viewport = rect
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
+    const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
+    score.projectExplosion = damp(score.projectExplosion, requestedExpansion)
+    if (Math.abs(score.projectExplosion - requestedExpansion) < 0.0001) score.projectExplosion = requestedExpansion
     nodes.companies.forEach(element => {
       const view = score.organizationExploration[Number(element.dataset.organizationExplorer)]
       view.yaw = damp(view.yaw, Number(element.dataset.yaw || 0))
@@ -448,7 +506,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationFrom: 10, educationTo: 10, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationFrom: 10, educationTo: 10, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {
@@ -502,7 +560,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   return <>
     <Canvas className="cinematic-renderer" dpr={[1, compact ? 1 : 1.35]} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping }}>
       {anchors && <Director anchors={anchors} score={score} model={model} turn={turn} reset={reset} motion={motion} reduced={reduced} running={running} ready={ready} pointer={pointer} onError={onError} onRendered={rendered}>{environment =>
-          <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready} technology={technology} environment={environment} onReady={loaded} onError={onError} />
+          <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready} technology={technology} environment={environment} projectAnchor={anchors.project} onReady={loaded} onError={onError} />
       }</Director>}
     </Canvas>
   </>

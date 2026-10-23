@@ -2,11 +2,17 @@
   {
     "id": "systems-sculpture",
     "sourceBytes": 55877132,
-    "webBytes": 3440496,
+    "webBytes": 3592468,
     "sourceTriangles": 985920,
-    "webTriangles": 216862,
+    "webTriangles": 232618,
     "nodes": [
-      ""
+      "Foundation",
+      "Data left",
+      "Data centre",
+      "Data right",
+      "Core",
+      "Bridge",
+      "Display"
     ],
     "animations": [],
     "textures": [
@@ -36,11 +42,13 @@
   {
     "id": "project-laptop",
     "sourceBytes": 49314288,
-    "webBytes": 3086116,
+    "webBytes": 3129356,
     "sourceTriangles": 912718,
-    "webTriangles": 200784,
+    "webTriangles": 205892,
     "nodes": [
-      ""
+      "Interface",
+      "Application",
+      "Database"
     ],
     "animations": [],
     "textures": [

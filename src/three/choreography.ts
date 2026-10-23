@@ -35,12 +35,14 @@ export function cinematicCamera(progress: number, compact: boolean) {
     lookX: -Math.sin(turn) * 0.045 * amplitude, lookY: 0.035 + breathing * 0.035, fov: 35 + breathing * 0.55 }
 }
 
-/** A restrained close-up shot opens into the normal hero camera. */
+/** Elevated three-quarter establishing shot, curved dolly, exact hero landing.
+ * A quintic clock brings camera velocity to zero at both ends of the take. */
 export function openingCamera(progress: number, compact: boolean) {
-  const p = clamp(progress)
-  const arc = p === 0 || p === 1 ? 0 : Math.sin(p * Math.PI)
-  return { x: -arc * (compact ? 0.1 : 0.25), y: 0.15 + arc * 0.08,
-    z: 6.7 - arc * 0.15, lookX: arc * 0.02, lookY: arc * 0.025, fov: 35 + arc * 0.25 }
+  const t = smooth(0, 1, 1 - clamp(progress)), s = 1 - t
+  const bezier = (a: number, b: number, c: number, d: number) => s ** 3 * a + 3 * s * s * t * b + 3 * s * t * t * c + t ** 3 * d
+  return { x: bezier(-1.75, -1.2, 0.6, 0) * (compact ? 0.6 : 1),
+    y: bezier(0.95, 1.2, 0.32, 0.15), z: bezier(7.6, 7.3, 6.45, 6.7),
+    lookX: bezier(-0.08, 0.07, 0.03, 0), lookY: bezier(0.22, 0.2, 0.04, 0), fov: blend(32.5, 35, t) }
 }
 
 /** The React tile follows a short arc beside the sculpture. Its visibility

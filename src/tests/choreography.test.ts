@@ -63,11 +63,11 @@ describe('Reversible 3D scroll choreography', () => {
     expect(cinematicCamera(2, false)).toEqual(cinematicCamera(1, false))
   })
   it('lands the opening camera exactly on the hero and keeps its travel bounded', () => {
-    expect(openingCamera(0, false)).toEqual({ x: -0, y: 0.15, z: 6.7, lookX: 0, lookY: 0, fov: 35 })
+    expect(openingCamera(0, false)).toEqual({ x: 0, y: 0.15, z: 6.7, lookX: 0, lookY: 0, fov: 35 })
     for (let i = 0; i <= 100; i++) {
       const shot = openingCamera(i / 100, false)
       expect(shot.z).toBeGreaterThanOrEqual(6.1)
-      expect(shot.z).toBeLessThanOrEqual(6.7)
+      expect(shot.z).toBeLessThanOrEqual(7.6)
       expect(Math.abs(openingCamera(i / 100, true).x)).toBeLessThanOrEqual(Math.abs(shot.x))
     }
   })
