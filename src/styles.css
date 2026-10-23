@@ -519,6 +519,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .education-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .education-heading .section-label { margin: 0; font-weight: 500; }
 .education-heading > span { color: var(--quiet); font-size: 10px; text-align: right; }
+.education-heading, .education-selector { position: relative; z-index: 21; background: var(--bg); }
 .education-visual { margin: 0 0 32px; padding: 0 0 20px; border-block: 1px solid var(--line); background: var(--bg); }
 .education-selector { display: flex; gap: 8px; padding-top: 20px; }
 .education-selector button { min-height: 44px; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--line); border-radius: 30px; padding: 9px 12px; font-size: 11px; color: var(--muted); transition: background 250ms, border-color 250ms, color 250ms; }
@@ -533,6 +534,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .education-visual figcaption { display: flex; justify-content: space-between; gap: 16px; font-size: 10px; color: var(--quiet); }
 .education-visual figcaption > span:last-child { font-size: 9px; }
 .school-static { display: grid; place-items: center; }
+.education-model .school-static { mask-image: none; }
 .school-static img { width: auto; height: 74%; max-width: 78%; object-fit: contain; border: 4px solid #435247; box-shadow: 4px 5px 0 #26322b; }
 .school-static-sti img { border-radius: 20px; }
 .school-static-marcelo img { border-radius: 50%; }
