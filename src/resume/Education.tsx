@@ -1,14 +1,59 @@
-import { useState, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { schools } from '../data/schools'
 import { EducationExplorer } from '../components/EducationExplorer'
+import { experienceFocus } from '../three/experienceChoreography'
+import { educationReader, educationScrollTarget } from '../three/educationChoreography'
+import { scrollToChapter } from '../hooks/useMotion'
 
-export function Education() {
+gsap.registerPlugin(useGSAP, ScrollTrigger)
+
+function flowTop(element: HTMLElement) {
+  let top = 0
+  for (let node: HTMLElement | null = element; node; node = node.offsetParent as HTMLElement | null) top += node.offsetTop + (node.offsetParent?.clientTop || 0)
+  return top
+}
+
+export function Education({ paused = false }: { paused?: boolean }) {
+  const section = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState(0)
+  useGSAP(() => {
+    const root = section.current!
+    const scene = root.querySelector<HTMLElement>('[data-scene="education"]')!
+    const figure = root.querySelector<HTMLElement>('.education-visual')!
+    const entries = [...root.querySelectorAll<HTMLElement>('.education-entry')]
+    let centers: number[] = [], reader = 0
+    const update = () => {
+      const focus = experienceFocus(centers, scrollY + reader)
+      scene.dataset.educationFocus = focus.toFixed(5)
+      const index = Math.round(focus)
+      setSelected(previous => previous === index ? previous : index)
+    }
+    const measure = () => {
+      const header = innerWidth <= 650 ? 76 : innerWidth <= 980 ? 84 : 100
+      centers = entries.map(entry => flowTop(entry) + entry.offsetHeight * 0.5)
+      reader = educationReader(innerHeight, header, figure.offsetHeight)
+      update()
+    }
+    const trigger = ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onUpdate: update, onRefresh: measure })
+    measure()
+    return () => { trigger.kill() }
+  }, { scope: section })
+  const focusSchool = (index: number) => {
+    const root = section.current!
+    const entry = root.querySelectorAll<HTMLElement>('.education-entry')[index]
+    const header = innerWidth <= 650 ? 76 : innerWidth <= 980 ? 84 : 100
+    const sceneHeight = root.querySelector<HTMLElement>('.education-visual')!.offsetHeight
+    scrollToChapter(educationScrollTarget(flowTop(entry), entry.offsetHeight, innerHeight, header, sceneHeight), paused)
+  }
   const active = schools[selected]
-  return <div id="education" className="education-list" aria-labelledby="education-title">
+  return <div ref={section} id="education" className="education-list" aria-labelledby="education-title">
     <div className="education-heading"><h3 id="education-title" className="section-label">Education</h3><span>Foundations behind the work</span></div>
+    <div className="education-layout">
     <figure className="education-visual content-stage">
-      <div className="education-selector" role="group" aria-label="Explore education emblems">{schools.map((school, index) => <button key={school.id} aria-pressed={selected === index} onClick={() => setSelected(index)}><span className="company-indicator" style={{ background: school.accent }} />{school.shortName}</button>)}</div>
+      <div className="education-selector" role="group" aria-label="Explore education emblems">{schools.map((school, index) => <button key={school.id} aria-pressed={selected === index} onClick={() => focusSchool(index)}><span className="company-indicator" style={{ background: school.accent }} />{school.shortName}</button>)}</div>
       <div className="education-model">
         <div className="scene-window section-scene" data-scene="education" data-scene-model="school" data-school={active.id} aria-hidden="true">
           <div className={`scene-poster school-static school-static-${active.id}`}><img src={active.logo} alt="" width="447" height="447" loading="lazy" /></div>
@@ -16,11 +61,12 @@ export function Education() {
         </div>
         {schools.map((school, index) => <EducationExplorer key={school.id} index={index} active={selected === index} />)}
       </div>
-      <figcaption><span>Learning & formation</span><span>{String(selected + 1).padStart(2, '0')} / 02</span></figcaption>
+      <figcaption><span>Scroll between schools</span><span>{String(selected + 1).padStart(2, '0')} / 02</span></figcaption>
     </figure>
-    <div className="education-records">{schools.map((school, index) => <article className="education-entry" key={school.id} data-active={selected === index} style={{ '--school-accent': school.accent } as CSSProperties}>
+    <div className="education-records">{schools.map((school, index) => <article className="education-entry" key={school.id} id={`education-${school.id}`} data-active={selected === index} style={{ '--school-accent': school.accent } as CSSProperties}>
       <div className={`education-logo education-logo-${school.id}`}><img src={school.logo} alt="" width="64" height="64" loading="lazy" /></div>
       <div><p className="education-location">{school.location}</p><h3>{school.institution}</h3><p className="education-course">{school.course}</p>{school.completion && <span className="education-completion">{school.completion}</span>}</div>
     </article>)}</div>
+    </div>
   </div>
 }

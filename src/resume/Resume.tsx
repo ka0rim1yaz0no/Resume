@@ -43,7 +43,7 @@ export default function Resume() {
       <FeaturedProject openDetails={() => setProjectOpen(true)} />
       <Experience paused={paused || reduced} />
       <Capabilities />
-      <About />
+      <About paused={paused || reduced} />
       <Credentials />
       <Contact />
     </main>
