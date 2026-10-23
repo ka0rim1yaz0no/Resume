@@ -47,11 +47,14 @@ npm test
 - `src/styles.css` — responsive layouts, typography, and theme.
 - `src/tests/` — unit and interaction tests.
 - `public/models/` — optimized 3D models.
+- `public/models/mobile/` — lighter, content-hashed phone and tablet models.
 - `public/icons/` — local technology icons and their license notices.
 - `public/organizations/` — company artwork for the experience timeline and its fallbacks.
 - `public/posters/` — model fallback images.
 - `scripts/` — model optimization and icon preparation utilities.
 
 The website includes reduced-motion support, animation controls, keyboard model exploration, and static fallbacks. Fonts and assets are served locally.
+
+Phone models keep the same studio materials with smaller geometry and textures. The first scene loads ahead of later chapters, model decoding runs in a worker when available, and the camera fits rotated models inside their viewing area. Regenerate phone assets from the existing desktop exports with `npm run assets:mobile`.
 
 To enable resume downloads, add the PDF files to `public/documents/` and set their URLs in `src/data/profile.ts`.

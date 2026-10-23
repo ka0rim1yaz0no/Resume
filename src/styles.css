@@ -456,7 +456,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .content-stage { position: relative; }
 .resume-project-art.content-stage { position: sticky; top: 130px; align-self: start; }
 .content-stage > .section-scene { height: 390px; width: 100%; border-radius: 0; }
-.resume-project-art > .project-scene { position: absolute; inset: 48px 8px 40px; height: auto; width: auto; }
+.resume-project-art > .project-scene { position: absolute; inset: 40px 8px 64px; height: auto; width: auto; }
 .section-scene > .scene-poster { mask-image: radial-gradient(ellipse, #000 30%, transparent 73%); }
 .experience-visual { position: relative; margin: 0; background: var(--bg); padding: 0 0 24px; border-block: 1px solid var(--line); }
 .experience-visual figcaption { display: flex; justify-content: space-between; gap: 20px; font-size: 11px; color: var(--muted); }

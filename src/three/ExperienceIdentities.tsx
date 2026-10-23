@@ -30,7 +30,7 @@ function Identity({ index, score, targets, motion, compact }: { index: number; s
   const root = useRef<Group>(null)
   const geometry = useMemo(() => index === 0 ? { ribbons: assistlyRibbon() } : index === 1 ? knowlesGlobe() : syntaxGear(), [index])
   useEffect(() => {
-    if (root.current) targets.set(7 + index, sampleSurface(root.current, root.current))
+    if (root.current) targets.set(7 + index, sampleSurface(root.current, root.current, targets.pointCount))
     return () => {
       targets.delete(7 + index)
       Object.values(geometry).flat().forEach(value => value.dispose())

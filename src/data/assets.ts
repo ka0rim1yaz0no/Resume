@@ -1,4 +1,5 @@
 import { assetUrl } from './profile'
+import mobileModels from './mobileModels.json'
 
 export const modelRegistry = {
   'systems-sculpture': { label: 'Connected systems', url: assetUrl('models/systems-sculpture.glb'), rotation: [0, -0.25, 0] as [number, number, number], scale: 3.7 },
@@ -7,6 +8,9 @@ export const modelRegistry = {
   'react-js': { label: 'React.js', url: assetUrl('models/react-js.glb'), rotation: [0.05, -0.15, -0.08] as [number, number, number], scale: 3.6 },
 }
 export type ModelId = keyof typeof modelRegistry
+export function modelUrl(id: ModelId, mobile: boolean) {
+  return mobile ? assetUrl(`models/mobile/${mobileModels[id]}`) : modelRegistry[id].url
+}
 // The established three-shot story keeps its original subjects. React is a
 // companion within the Systems scene, rather than a replacement chapter.
 export const modelIds: ModelId[] = ['systems-sculpture', 'project-laptop', 'workflow-board']

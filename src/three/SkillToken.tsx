@@ -20,10 +20,10 @@ function Emblem({ technology, active, targetRoot, targets, onEmblemReady }: { te
   useEffect(() => () => parts.forEach(part => part.geometry.dispose()), [parts])
   useEffect(() => {
     if (!targetRoot.current || !group.current) return
-    const surface = sampleSurface(targetRoot.current, group.current)
+    const surface = sampleSurface(targetRoot.current, group.current, targets.pointCount)
     const body = targetRoot.current.getObjectByName('token-body')
     if (body) {
-      const backing = sampleSurface(targetRoot.current, body)
+      const backing = sampleSurface(targetRoot.current, body, targets.pointCount)
       // Keep a quarter of the cloud on the rounded body, and concentrate the
       // rest on the actual raised mark, including the incoming silhouette.
       for (let i = 0; i < surface.points.length; i += 12) surface.points.set(backing.points.subarray(i, i + 3), i)
@@ -54,7 +54,7 @@ export function SkillToken({ technology, requestedTechnology, motion, visibility
   }, { dependencies: [technology, motion], revertOnUpdate: true })
   useEffect(() => { invalidate() }, [technology, invalidate])
   useEffect(() => {
-    if (root.current && !targets.has(4)) targets.set(4, sampleSurface(root.current, root.current))
+    if (root.current && !targets.has(4)) targets.set(4, sampleSurface(root.current, root.current, targets.pointCount))
     return () => { targets.delete(4); targets.delete(5); targets.delete(6) }
   }, [targets])
   useFrame(() => {

@@ -2,11 +2,11 @@ import { Matrix4, Mesh, Object3D, Vector3 } from 'three'
 
 export const surfacePointCount = 6200
 export type SurfaceTarget = { root: Object3D; points: Float32Array }
-export type SurfaceTargets = Map<number, SurfaceTarget>
+export type SurfaceTargets = Map<number, SurfaceTarget> & { pointCount?: number }
 
 // Barycentric samples are prepared once per GLB. Interpolation and scatter
 // happen in the vertex shader, following each rig's actual world transform.
-export function sampleSurface(root: Object3D, asset: Object3D): SurfaceTarget {
+export function sampleSurface(root: Object3D, asset: Object3D, count = surfacePointCount): SurfaceTarget {
   root.updateWorldMatrix(true, true)
   const inverse = root.matrixWorld.clone().invert()
   const meshes: { mesh: Mesh; triangles: number; matrix: Matrix4 }[] = []
@@ -17,12 +17,12 @@ export function sampleSurface(root: Object3D, asset: Object3D): SurfaceTarget {
     meshes.push({ mesh: object, triangles, matrix: inverse.clone().multiply(object.matrixWorld) })
     total += triangles
   })
-  const points = new Float32Array(surfacePointCount * 3)
+  const points = new Float32Array(count * 3)
   let seed = 82971
   const random = () => { seed = seed * 16807 % 2147483647; return seed / 2147483647 }
   const a = new Vector3(), b = new Vector3(), c = new Vector3()
   if (!total) return { root, points }
-  for (let i = 0; i < surfacePointCount; i++) {
+  for (let i = 0; i < count; i++) {
     let triangle = Math.floor(random() * total)
     const selected = meshes.find(entry => {
       if (triangle < entry.triangles) return true

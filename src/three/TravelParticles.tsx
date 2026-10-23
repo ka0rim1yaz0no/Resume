@@ -13,17 +13,18 @@ function dissolvePair(score: DissolveScore) {
     : { from: score.particleFrom, to: score.particleTo, flux: score.flux, mix: score.particleMix, attenuation: 0.88 }
 }
 
-export function TravelParticles({ score, targets, motion, compact }: { score: DissolveScore; targets: SurfaceTargets; motion: boolean; compact: boolean }) {
+export function TravelParticles({ score, targets, motion }: { score: DissolveScore; targets: SurfaceTargets; motion: boolean }) {
   const points = useRef<Points>(null)
   const material = useRef<ShaderMaterial>(null)
   const pair = useRef<{ from: SurfaceTarget; to: SurfaceTarget } | null>(null)
+  const pointCount = targets.pointCount || surfacePointCount
   const geometry = useMemo(() => {
-    const seeds = Float32Array.from({ length: surfacePointCount }, (_, i) => (i * 0.61803398875) % 1)
+    const seeds = Float32Array.from({ length: pointCount }, (_, i) => (i * 0.61803398875) % 1)
     return new BufferGeometry()
-      .setAttribute('position', new Float32BufferAttribute(new Float32Array(surfacePointCount * 3), 3))
-      .setAttribute('aTarget', new Float32BufferAttribute(new Float32Array(surfacePointCount * 3), 3))
+      .setAttribute('position', new Float32BufferAttribute(new Float32Array(pointCount * 3), 3))
+      .setAttribute('aTarget', new Float32BufferAttribute(new Float32Array(pointCount * 3), 3))
       .setAttribute('aSeed', new Float32BufferAttribute(seeds, 1))
-  }, [])
+  }, [pointCount])
   const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() } }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   // Missing surfaces retain the solid transition instead of leaving a gap.
@@ -39,7 +40,7 @@ export function TravelParticles({ score, targets, motion, compact }: { score: Di
     const from = targets.get(transition.from), to = targets.get(transition.to)
     const active = motion && score.active && transition.flux > 0.008 && !!from && !!to
     points.current.visible = active
-    gl.domElement.dataset.dissolvePoints = active ? String(compact ? 2400 : surfacePointCount) : '0'
+    gl.domElement.dataset.dissolvePoints = active ? String(pointCount) : '0'
     if (!active || !from || !to) return
     if (pair.current?.from !== from || pair.current?.to !== to) {
       const origin = geometry.attributes.position as Float32BufferAttribute
@@ -48,7 +49,7 @@ export function TravelParticles({ score, targets, motion, compact }: { score: Di
       destination.copyArray(to.points); destination.needsUpdate = true
       pair.current = { from, to }
     }
-    geometry.setDrawRange(0, compact ? 2400 : surfacePointCount)
+    geometry.setDrawRange(0, pointCount)
     from.root.updateWorldMatrix(true, false); to.root.updateWorldMatrix(true, false)
     const shader = material.current.uniforms
     shader.uFrom.value.copy(from.root.matrixWorld); shader.uTo.value.copy(to.root.matrixWorld)

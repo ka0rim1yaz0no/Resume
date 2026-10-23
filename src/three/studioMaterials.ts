@@ -8,6 +8,9 @@ export const studioLighting = { environment: 0.8, ambient: 0.65, key: 2.15, fill
 export function cloneStudioMaterial(source: Material) {
   const material = source.clone()
   if (material instanceof MeshStandardMaterial) {
+    // These solid assets only fade during dust handoffs. Rendering both sides
+    // in one pass preserves their surfaces without drawing every triangle twice.
+    material.forceSinglePass = true
     material.roughnessMap = null
     material.metalnessMap = null
     material.roughness = studioFinish.roughness

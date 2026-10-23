@@ -14,6 +14,8 @@ describe('Consistent studio and surface dissolve', () => {
     expect(owned.roughnessMap).toBeNull()
     expect(owned.metalnessMap).toBeNull()
     expect(owned.roughness).toBeGreaterThan(0.9)
+    expect(owned.forceSinglePass).toBe(true)
+    expect(source.forceSinglePass).toBe(false)
     expect(source.roughnessMap).toBe(packed)
     expect(source.metalnessMap).toBe(packed)
     expect(source.roughness).toBe(0.2)
