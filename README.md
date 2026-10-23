@@ -1,6 +1,6 @@
 # Vincent Layzie C. Del Rosario
 
-An interactive resume and portfolio featuring cinematic 3D scenes, scroll transitions, selectable technology emblems, and company identities that follow the experience timeline.
+An interactive resume and portfolio featuring cinematic 3D scenes, scroll transitions, selectable technology emblems, and draggable company identities that follow the experience timeline.
 
 Built with React, TypeScript, Vite, Three.js, React Three Fiber, GSAP, and Lenis.
 

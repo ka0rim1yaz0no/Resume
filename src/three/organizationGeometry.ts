@@ -1,4 +1,4 @@
-import { CircleGeometry, ExtrudeGeometry, Path, Shape, SphereGeometry, type BufferGeometry } from 'three'
+import { CircleGeometry, CylinderGeometry, ExtrudeGeometry, Path, Shape, SphereGeometry, type BufferGeometry } from 'three'
 import { mergeGeometries, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
 
 export function assistlyRibbon() {
@@ -45,5 +45,7 @@ export function syntaxGear() {
   shape.holes.push(hole)
   const ring = new ExtrudeGeometry(shape, { depth: 0.15, steps: 1, curveSegments: 48, bevelEnabled: true, bevelSize: 0.028, bevelThickness: 0.032, bevelSegments: 4 })
   ring.translate(0, 0, -0.075); toCreasedNormals(ring, 0.5)
-  return { ring, face: new CircleGeometry(0.746, 64) }
+  const body = new CylinderGeometry(0.744, 0.744, 0.18, 64)
+  body.rotateX(Math.PI / 2)
+  return { ring, body, face: new CircleGeometry(0.746, 64) }
 }

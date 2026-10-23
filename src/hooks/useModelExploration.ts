@@ -16,6 +16,7 @@ export function useModelExploration(model: string, resetView: () => void) {
   const resetLocal = useCallback(() => { view.current = { yaw: 0, pitch: 0, zoom: 0 }; publish() }, [publish])
   useEffect(resetLocal, [model, resetLocal])
   const reset = () => { resetLocal(); resetView() }
+  const rotate = (direction: number) => { view.current.yaw += direction * 0.35; publish() }
   const zoom = (direction: number) => { view.current.zoom = clamp(view.current.zoom + direction * 0.25, -0.75, 1.1); publish() }
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || !event.isPrimary) return
@@ -53,5 +54,5 @@ export function useModelExploration(model: string, resetView: () => void) {
     if (event.key === 'ArrowDown') view.current.pitch = clamp(view.current.pitch + 0.15, -1.25, 1.25)
     publish()
   }
-  return { ref, onPointerDown, onPointerMove, onPointerUp: release, onPointerCancel: release, onLostPointerCapture: release, onKeyDown, reset, zoom }
+  return { ref, onPointerDown, onPointerMove, onPointerUp: release, onPointerCancel: release, onLostPointerCapture: release, onKeyDown, reset, zoom, rotate }
 }

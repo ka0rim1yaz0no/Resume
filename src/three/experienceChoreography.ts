@@ -30,3 +30,8 @@ export function experienceReader(height: number, header: number, sceneHeight: nu
   const top = compact ? header + sceneHeight : header
   return top + Math.max(80, height - top) * 0.46
 }
+
+export function experienceScrollTarget(top: number, entryHeight: number, height: number, header: number, sceneHeight: number, compact: boolean) {
+  const centered = top + entryHeight * 0.5 - experienceReader(height, header, sceneHeight, compact)
+  return compact ? Math.min(centered, top - header - sceneHeight - 16) : centered
+}

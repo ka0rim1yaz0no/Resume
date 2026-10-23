@@ -17,11 +17,11 @@ import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { openingViewport } from './openingLayout'
 import { advanceSkillTransition, createSkillTransition, skillDissolve } from './skillTransition'
 import { technologyIcon } from '../data/technologies'
-import { ExperienceIdentities } from './ExperienceIdentities'
+import { ExperienceIdentities, type IdentityScore } from './ExperienceIdentities'
 import { organizationChapter } from './experienceChoreography'
 
 type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement }
-type Score = { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
+type Score = { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
 type OwnedMaterial = { material: Material; opacity: number }
 
 function documentTop(element: HTMLElement) {
@@ -345,6 +345,12 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.viewport = rect
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
+    anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]').forEach(element => {
+      const view = score.organizationExploration[Number(element.dataset.organizationExplorer)]
+      view.yaw = damp(view.yaw, Number(element.dataset.yaw || 0))
+      view.pitch = damp(view.pitch, Number(element.dataset.pitch || 0))
+      view.zoom = damp(view.zoom, Number(element.dataset.zoom || 0))
+    })
     score.turn = damp(score.turn, turn)
     const exploration = anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer')
     score.exploreYaw = damp(score.exploreYaw, Number(exploration?.dataset.yaw || 0))
@@ -398,7 +404,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {

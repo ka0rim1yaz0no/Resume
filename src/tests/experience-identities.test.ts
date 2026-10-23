@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Box3, Vector3 } from 'three'
 import { assistlyRibbon, knowlesGlobe, syntaxGear } from '../three/organizationGeometry'
-import { experienceFocus, experienceReader, organizationChapter, organizationPose } from '../three/experienceChoreography'
+import { experienceFocus, experienceReader, experienceScrollTarget, organizationChapter, organizationPose } from '../three/experienceChoreography'
 
 describe('experience identity choreography', () => {
   it('holds each identity around its role and reverses continuously', () => {
@@ -28,9 +28,15 @@ describe('experience identity choreography', () => {
     expect(reader).toBeLessThan(844)
     expect(experienceReader(1000, 100, 500, false)).toBeLessThan(600)
   })
+  it('keeps a selected role heading below the phone explorer even when its duties exceed the screen', () => {
+    const top = 5200, header = 76, scene = 406
+    const scroll = experienceScrollTarget(top, 550, 844, header, scene, true)
+    expect(top - scroll).toBeGreaterThanOrEqual(header + scene + 16)
+    expect(experienceScrollTarget(top, 400, 1000, 100, 586, false)).toBe(top + 200 - experienceReader(1000, 100, 586, false))
+  })
   it('gives all three symbols actual depth and finite, centered geometry', () => {
     const globe = knowlesGlobe(), gear = syntaxGear()
-    const groups = [assistlyRibbon(), [globe.panels, globe.core], [gear.ring, gear.face]]
+    const groups = [assistlyRibbon(), [globe.panels, globe.core], [gear.ring, gear.body, gear.face]]
     for (const geometries of groups) {
       const bounds = new Box3()
       for (const geometry of geometries) {

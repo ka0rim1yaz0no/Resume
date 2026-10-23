@@ -254,6 +254,16 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .experience-scene-caption div > span { font-size: 10px; color: var(--quiet); }
 .experience-scene-caption strong { font-size: 16px; font-weight: 500; letter-spacing: -.02em; color: var(--text); }
 .experience-chapters { display: flex; gap: 8px; margin-top: 20px; }
+.experience-exploration[hidden] { display: none; }
+.experience-visual > .scene-window:not([data-scene-ready=true]) ~ .experience-exploration { visibility: hidden; }
+.company-explorer { position: absolute; inset: 1px 0 auto; height: 390px; z-index: 2; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.company-explorer[data-dragging=true] { cursor: grabbing; }
+.company-explorer:focus-visible { outline: 1px solid #8fa897; outline-offset: -8px; border-radius: 12px; }
+.company-explorer-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px 12px; }
+.company-explorer-controls > span { font-size: 10px; color: var(--quiet); }
+.company-explorer-controls > div { display: flex; gap: 4px; }
+.company-explorer-controls .icon-button { color: var(--muted); font-size: 20px; }
+.company-explorer-controls .icon { width: 14px; height: 14px; }
 .experience-chapters button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; gap: 9px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 30px; font-size: 10px; color: var(--quiet); transition: border-color 250ms, background 250ms, color 250ms; }
 .experience-chapters button:hover, .experience-chapters button[aria-pressed=true] { border-color: #7b9483; color: var(--text); background: #202b24; }
 .company-indicator { width: 5px; height: 5px; border-radius: 50%; }
@@ -287,7 +297,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .contribution-summary { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 24px; }.contribution-summary p { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); margin-block: 10px; }.contribution-summary .icon { color: var(--accent); height: 15px; width: 15px; }
 .resume-project-copy .text-link { margin-top: 20px; }
 .experience-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-9); align-items: start; }
-@media (min-width: 651px) { .experience-layout > .experience-timeline { padding-bottom: 180px; } }
+@media (min-width: 651px) { .experience-layout > .experience-timeline { padding-bottom: 240px; } }
 .experience-aside { position: sticky; top: 130px; }.workflow-illustration { background: var(--poster-workflow); aspect-ratio: 1.25; border-radius: var(--radius-md); overflow: clip; }.workflow-illustration img { height: 100%; width: 100%; object-fit: cover; }
 .illustration-caption { font-size: 10px; color: var(--quiet); margin-top: 14px; }
 .internship-stat { display: flex; align-items: center; gap: 24px; border-top: 1px solid var(--line); padding-top: 26px; margin-top: 32px; }.internship-stat .fact-number { font-size: 64px; min-width: 114px; }.internship-stat p { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }.internship-stat strong { font-weight: 500; }.internship-stat p span { color: var(--quiet); font-size: 10px; }
@@ -448,7 +458,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .content-stage > .section-scene { height: 390px; width: 100%; border-radius: 0; }
 .resume-project-art > .project-scene { position: absolute; inset: 48px 8px 40px; height: auto; width: auto; }
 .section-scene > .scene-poster { mask-image: radial-gradient(ellipse, #000 30%, transparent 73%); }
-.experience-visual { margin: 0; background: var(--bg); padding: 0 0 24px; border-block: 1px solid var(--line); }
+.experience-visual { position: relative; margin: 0; background: var(--bg); padding: 0 0 24px; border-block: 1px solid var(--line); }
 .experience-visual figcaption { display: flex; justify-content: space-between; gap: 20px; font-size: 11px; color: var(--muted); }
 .experience-visual figcaption > span { color: var(--quiet); font-size: 9px; }
 .skill-preview.content-stage > .section-scene { height: 310px; }
@@ -486,6 +496,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
   .experience-layout > .experience-timeline { order: 1; width: 100%; }
   .experience-layout .internship-stat { order: 2; width: 100%; }
   .content-stage > .section-scene { height: 235px; }
+  .company-explorer { height: 235px; }
   .experience-visual figcaption { font-size: 10px; padding-inline: 4px; }
   .experience-visual figcaption > span { font-size: 8px; }
   .skills-layout { display: block; }

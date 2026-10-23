@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useModelExploration } from '../hooks/useModelExploration'
+import { ExperienceExplorer } from '../components/ExperienceExplorer'
 
 function Explorer({ reset = () => {} }: { reset?: () => void }) {
   const controls = useModelExploration('systems-sculpture', reset)
@@ -10,6 +11,27 @@ function Explorer({ reset = () => {} }: { reset?: () => void }) {
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 describe('Direct model exploration', () => {
+  it('keeps company views independent through role changes and resets only the selected logo', () => {
+    const renderCompanies = (active: number) => <>{[0, 1, 2].map(index => <ExperienceExplorer key={index} index={index} active={active === index} />)}</>
+    const { rerender } = render(renderCompanies(0))
+    const assistly = screen.getByRole('group', { name: 'Explore Assistly 3D logo' })
+    fireEvent.click(screen.getByRole('button', { name: 'Rotate Assistly logo right' }))
+    fireEvent.keyDown(assistly, { key: 'ArrowDown' })
+    const savedView = { ...assistly.dataset }
+    expect(Number(savedView.yaw)).toBeGreaterThan(0)
+    expect(Number(savedView.pitch)).toBeGreaterThan(0)
+    rerender(renderCompanies(1))
+    expect(screen.queryByRole('group', { name: 'Explore Assistly 3D logo' })).not.toBeInTheDocument()
+    const knowles = screen.getByRole('group', { name: 'Explore Knowles 3D logo' })
+    expect(knowles.dataset.yaw).toBe('0')
+    fireEvent.click(screen.getByRole('button', { name: 'Rotate Knowles logo left' }))
+    expect(Number(knowles.dataset.yaw)).toBeLessThan(0)
+    rerender(renderCompanies(0))
+    expect({ ...assistly.dataset }).toEqual(savedView)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset Assistly logo view' }))
+    expect([assistly.dataset.yaw, assistly.dataset.pitch, assistly.dataset.zoom]).toEqual(['0', '0', '0'])
+    expect(Number(knowles.dataset.yaw)).toBeLessThan(0)
+  })
   it('supports bounded keyboard tilt/zoom and restores the whole view on reset', () => {
     const reset = vi.fn()
     render(<Explorer reset={reset} />)

@@ -9,7 +9,7 @@ import { assistlyRibbon, knowlesGlobe, syntaxGear } from './organizationGeometry
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { studioFinish } from './studioMaterials'
 
-export type IdentityScore = { active: boolean; elapsed: number; content: ContentRoute; organizationFocus: number; organizationDissolve: number; dissolve: number }
+export type IdentityScore = { active: boolean; elapsed: number; content: ContentRoute; organizationFocus: number; organizationDissolve: number; dissolve: number; organizationExploration: { yaw: number; pitch: number; zoom: number }[] }
 const finish = { roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity, transparent: true }
 
 function SyntaxFace({ geometry }: { geometry: ReturnType<typeof syntaxGear>['face'] }) {
@@ -20,7 +20,10 @@ function SyntaxFace({ geometry }: { geometry: ReturnType<typeof syntaxGear>['fac
     return t
   }, [source])
   useEffect(() => () => texture.dispose(), [texture])
-  return <mesh geometry={geometry} position={[0, 0, 0.112]}><meshStandardMaterial {...finish} map={texture} /></mesh>
+  return <>
+    <mesh geometry={geometry} position={[0, 0, 0.112]}><meshStandardMaterial {...finish} map={texture} /></mesh>
+    <mesh geometry={geometry} position={[0, 0, -0.112]} rotation={[0, Math.PI, 0]}><meshStandardMaterial {...finish} map={texture} /></mesh>
+  </>
 }
 
 function Identity({ index, score, targets, motion, compact }: { index: number; score: IdentityScore; targets: SurfaceTargets; motion: boolean; compact: boolean }) {
@@ -42,10 +45,11 @@ function Identity({ index, score, targets, motion, compact }: { index: number; s
     const pose = organizationPose(score.organizationFocus, index)
     const weight = inExperience ? chapter * pose.weight : 0
     const solid = weight * (1 - score.dissolve) * (1 - score.organizationDissolve)
+    const exploration = score.organizationExploration[index]
     root.current.visible = weight > 0.001
     root.current.position.set(stage.x + pose.x, stage.y + pose.y + (motion ? Math.sin(score.elapsed * 0.45 + index) * 0.018 : 0), stage.z + pose.z)
-    root.current.rotation.set(stage.rx + pose.rx, stage.ry + pose.ry, stage.rz + pose.rz)
-    root.current.scale.setScalar(stage.scale * pose.scale)
+    root.current.rotation.set(stage.rx + pose.rx + exploration.pitch, stage.ry + pose.ry + exploration.yaw, stage.rz + pose.rz)
+    root.current.scale.setScalar(stage.scale * pose.scale * (1 + exploration.zoom * 0.16))
     root.current.traverse(object => {
       if (!(object instanceof Mesh)) return
       const apply = (material: Material) => { material.opacity = solid; material.depthWrite = solid > 0.995 }
@@ -63,6 +67,7 @@ function Identity({ index, score, targets, motion, compact }: { index: number; s
     </>}
     {'ring' in geometry && <>
       <mesh geometry={geometry.ring}><meshStandardMaterial attach="material-0" {...finish} color="#a6afbd" /><meshStandardMaterial attach="material-1" {...finish} color="#667585" /></mesh>
+      <mesh geometry={geometry.body}><meshStandardMaterial {...finish} color="#667585" /></mesh>
       <Suspense fallback={null}><SyntaxFace geometry={geometry.face} /></Suspense>
     </>}
   </group>
@@ -73,6 +78,8 @@ export function ExperienceIdentities({ score, targets, motion, compact }: { scor
   useFrame(() => {
     gl.domElement.dataset.organization = organizations[Math.round(score.organizationFocus)].id
     gl.domElement.dataset.organizationFocus = score.organizationFocus.toFixed(3)
+    const exploration = score.organizationExploration[Math.round(score.organizationFocus)]
+    gl.domElement.dataset.organizationExploration = [exploration.yaw, exploration.pitch, exploration.zoom].map(value => value.toFixed(3)).join(',')
   })
   return <>{organizations.map((org, index) => <Identity key={org.id} index={index} score={score} targets={targets} motion={motion} compact={compact} />)}</>
 }
