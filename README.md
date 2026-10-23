@@ -4,6 +4,8 @@ An interactive resume and portfolio featuring cinematic 3D scenes, scroll transi
 
 Built with React, TypeScript, Vite, Three.js, React Three Fiber, GSAP, and Lenis.
 
+[Live portfolio](https://vincent-del-rosario.vercel.app)
+
 ## Run locally
 
 Use Node.js 22.12 or newer.
@@ -23,6 +25,10 @@ npm run preview
 ```
 
 The production files are generated in `dist/`. Preview runs at http://127.0.0.1:4173/.
+
+## Deployment
+
+Vercel hosts the production site and deploys updates pushed to the GitHub repository's `main` branch. The build uses Node.js 22, `npm ci`, and `npm run build`, with `dist/` as the output directory. These settings are recorded in `package.json` and `vercel.json`.
 
 ## Checks
 
