@@ -1,0 +1,9 @@
+Twelve technology icons extracted from Devicon via @iconify-json/devicon (MIT).
+Source: https://github.com/devicons/devicon
+License: LICENSE-devicon.txt
+Microsoft Office, Hostinger, and GoDaddy silhouettes extracted from Simple Icons via @iconify-json/simple-icons (CC0-1.0).
+Source: https://github.com/simple-icons/simple-icons
+License: LICENSE-simple-icons.txt
+Brand names and logos belong to their respective owners.
+Daisy UI flower and SiteGround SG monogram are original illustrative emblems.
+Regenerate: node scripts/prepare-technology-icons.mjs

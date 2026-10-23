@@ -1,0 +1,69 @@
+import { describe, expect, it } from 'vitest'
+import { contentCamera, contentPose, contentRoute, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
+
+const docks: ContentDocks = {
+  film: { rect: { left: 400, top: 180, width: 850, height: 600 }, arrive: 0, leave: 1000 },
+  project: { rect: { left: 70, top: 170, width: 600, height: 500 }, arrive: 1700, leave: 2200 },
+  experience: { rect: { left: 70, top: 130, width: 550, height: 390 }, arrive: 2800, leave: 4000 },
+  skills: { rect: { left: 70, top: 130, width: 480, height: 310 }, arrive: 4700, leave: 5200 },
+}
+const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
+const weights = (r: ContentRoute) => [0, 1, 2, 3].map(i => contentPose(r, i, false).weight)
+
+describe('Continuous résumé scene rail', () => {
+  it('docks the laptop, board, and React model into the actual content stages', () => {
+    expect(route(800).amount).toBe(0)
+    for (const [scroll, stage, expected] of [[1800, 'project', [0, 1, 0, 0]], [3300, 'experience', [0, 0, 1, 0]], [4800, 'skills', [0, 0, 0, 1]]] as const) {
+      expect(route(scroll).to).toBe(stage)
+      expect(route(scroll).viewport).toEqual(docks[stage].rect)
+      expect(weights(route(scroll))).toEqual(expected)
+    }
+  })
+  it('conserves opacity throughout both content-model handoffs', () => {
+    for (const [start, end] of [[2200, 2800], [4000, 4700]]) {
+      for (let s = start; s <= end; s += 5) {
+        const w = weights(route(s))
+        expect(w.reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 8)
+        expect(w.filter(value => value > 0).length).toBeLessThanOrEqual(2)
+      }
+    }
+  })
+  it('meets each destination without a viewport, camera, or visible-pose jump', () => {
+    for (const s of [1700, 2200, 2800, 4000, 4700]) {
+      const a = route(s - 0.001), b = route(s + 0.001)
+      for (const key of ['left', 'top', 'width', 'height'] as const) expect(Math.abs(a.viewport[key] - b.viewport[key])).toBeLessThan(0.001)
+      if (s === 1700) continue // The film camera blends separately into this first arrival.
+      const ca = contentCamera(a, false), cb = contentCamera(b, false)
+      expect(Math.hypot(ca.x - cb.x, ca.y - cb.y, ca.z - cb.z)).toBeLessThan(0.001)
+      for (let i = 0; i < 4; i++) {
+        const pa = contentPose(a, i, false), pb = contentPose(b, i, false)
+        if (pa.weight > 0.99 && pb.weight > 0.99) expect(Math.hypot(pa.x - pb.x, pa.y - pb.y, pa.z - pb.z)).toBeLessThan(0.001)
+      }
+    }
+  })
+  it('keeps a long transition in frame and reverses deterministically', () => {
+    const far = { ...docks, project: { ...docks.project, rect: { ...docks.project.rect, top: 2200 } } }
+    const middle = contentRoute(1350, far, 100, 1000)
+    expect(middle.viewport.top).toBeGreaterThanOrEqual(100)
+    expect(middle.viewport.top + middle.viewport.height).toBeLessThanOrEqual(1000)
+    const samples = [1200, 1800, 2500, 3500, 4300, 4900]
+    expect(samples.map(route)).toEqual([...samples].reverse().map(route).reverse())
+  })
+  it('reduces mobile lateral motion without changing the subject weights', () => {
+    const r = route(4350)
+    for (let i = 0; i < 4; i++) {
+      const mobile = contentPose(r, i, true), desktop = contentPose(r, i, false)
+      expect(mobile.weight).toBe(desktop.weight)
+      expect(Math.abs(mobile.x)).toBeLessThanOrEqual(Math.abs(desktop.x))
+    }
+  })
+  it('handles short section distances without invalid geometry', () => {
+    const compact = Object.fromEntries(Object.entries(docks).map(([name, value], i) => [name, { ...value, arrive: i * 5, leave: i * 5 + 1 }])) as Record<ContentStage, typeof docks.film>
+    for (let s = 0; s <= 25; s++) {
+      const r = contentRoute(s, compact, 76, 844)
+      expect(Object.values(r.viewport).every(Number.isFinite)).toBe(true)
+      expect(r.amount).toBeGreaterThanOrEqual(0)
+      expect(r.amount).toBeLessThanOrEqual(1)
+    }
+  })
+})

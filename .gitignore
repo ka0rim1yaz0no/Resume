@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env*
+!.env.example
+test-results/
+playwright-report/
+.tools/
+.agents/
+artifacts/
+# Local development notes and optional browser-review setup
+ASSET_HANDOFF.md
+CONTENT_NOTES.md
+TOOLS_SETUP.md
+VALIDATION.md
+playwright.config.ts
+tests/browser/
+*.log

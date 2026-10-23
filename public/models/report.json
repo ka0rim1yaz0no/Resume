@@ -1,0 +1,138 @@
+[
+  {
+    "id": "systems-sculpture",
+    "sourceBytes": 55877132,
+    "webBytes": 3440496,
+    "sourceTriangles": 985920,
+    "webTriangles": 216862,
+    "nodes": [
+      ""
+    ],
+    "animations": [],
+    "textures": [
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      }
+    ]
+  },
+  {
+    "id": "project-laptop",
+    "sourceBytes": 49314288,
+    "webBytes": 3086116,
+    "sourceTriangles": 912718,
+    "webTriangles": 200784,
+    "nodes": [
+      ""
+    ],
+    "animations": [],
+    "textures": [
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      }
+    ]
+  },
+  {
+    "id": "workflow-board",
+    "sourceBytes": 49584076,
+    "webBytes": 2915196,
+    "sourceTriangles": 937160,
+    "webTriangles": 206088,
+    "nodes": [
+      ""
+    ],
+    "animations": [],
+    "textures": [
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      }
+    ]
+  },
+  {
+    "id": "react-js",
+    "sourceBytes": 22204664,
+    "webBytes": 1034504,
+    "sourceTriangles": 389760,
+    "webTriangles": 91882,
+    "nodes": [
+      ""
+    ],
+    "animations": [],
+    "textures": [
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      },
+      {
+        "size": [
+          2048,
+          2048
+        ],
+        "mime": "image/webp"
+      }
+    ]
+  }
+]
