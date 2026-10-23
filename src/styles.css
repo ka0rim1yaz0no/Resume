@@ -512,3 +512,53 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
   .content-stage { position: relative !important; top: auto !important; }
   .section-scene > .scene-poster { opacity: 1 !important; transition: none; }
 }
+
+/* School identities use the same studio stage, controls, and restrained surfaces. */
+.about-layout { align-items: start; }
+.about-copy { position: sticky; top: 130px; }
+.education-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.education-heading .section-label { margin: 0; font-weight: 500; }
+.education-heading > span { color: var(--quiet); font-size: 10px; text-align: right; }
+.education-visual { margin: 0 0 32px; padding: 0 0 20px; border-block: 1px solid var(--line); background: var(--bg); }
+.education-selector { display: flex; gap: 8px; padding-top: 20px; }
+.education-selector button { min-height: 44px; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--line); border-radius: 30px; padding: 9px 12px; font-size: 11px; color: var(--muted); transition: background 250ms, border-color 250ms, color 250ms; }
+.education-selector button:hover, .education-selector button[aria-pressed=true] { background: #202b24; border-color: #7b9483; color: var(--text); }
+.education-model { position: relative; }
+.education-model > .section-scene { height: 300px; }
+.school-explorer { position: absolute; top: 0; left: 0; width: 100%; height: 300px; z-index: 2; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.school-explorer[data-dragging=true] { cursor: grabbing; }
+.school-explorer:focus-visible { outline: 1px solid #8fa897; outline-offset: -8px; border-radius: 12px; }
+.education-exploration[hidden] { display: none; }
+.education-model > .scene-window:not([data-scene-ready=true]) ~ .education-exploration { visibility: hidden; }
+.education-visual figcaption { display: flex; justify-content: space-between; gap: 16px; font-size: 10px; color: var(--quiet); }
+.education-visual figcaption > span:last-child { font-size: 9px; }
+.school-static { display: grid; place-items: center; }
+.school-static img { width: auto; height: 74%; max-width: 78%; object-fit: contain; border: 4px solid #435247; box-shadow: 4px 5px 0 #26322b; }
+.school-static-sti img { border-radius: 20px; }
+.school-static-marcelo img { border-radius: 50%; }
+.education-entry { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: 18px; border-left: 0; border-top: 1px solid var(--line); padding: 24px 0; transition: border-color 350ms; }
+.education-entry[data-active=true] { border-color: var(--school-accent); }
+.education-logo { width: 56px; height: 56px; padding: 3px; border: 1px solid #647669; background: #26332a; border-radius: 10px; box-shadow: -3px 4px 0 #1c271f; }
+.education-logo img { display: block; height: 100%; width: 100%; object-fit: contain; border-radius: 7px; }
+.education-logo-marcelo, .education-logo-marcelo img { border-radius: 50%; }
+.education-location { font-size: 10px; color: var(--quiet); margin-bottom: 10px; }
+.education-entry h3 { font-size: clamp(19px, 1.7vw, 23px); font-weight: 500; }
+.education-entry .education-course { font-size: 12px; line-height: 1.75; margin-top: 10px; }
+.education-completion { color: var(--accent); }
+@media (max-width: 980px) {
+  .education-heading { display: block; }
+  .education-heading > span { display: block; margin-top: 10px; text-align: left; }
+  .education-selector button { font-size: 10px; padding-inline: 8px; }
+}
+@media (max-width: 650px) {
+  .about-copy { position: static; }
+  .education-heading { display: flex; }
+  .education-heading > span { margin-top: 0; text-align: right; }
+  .education-model > .section-scene, .school-explorer { height: 260px; }
+  .education-entry { gap: 16px; padding-block: 22px; }
+  .education-entry h3 { font-size: 21px; }
+  .education-visual { margin-bottom: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .education-selector button, .education-entry { transition: none; }
+}

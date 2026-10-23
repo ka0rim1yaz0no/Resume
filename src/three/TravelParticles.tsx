@@ -3,10 +3,12 @@ import { useFrame } from '@react-three/fiber'
 import { BufferGeometry, Float32BufferAttribute, Matrix4, Points, ShaderMaterial } from 'three'
 import { surfacePointCount, type SurfaceTarget, type SurfaceTargets } from './surfaceCloud'
 
-type DissolveScore = { active: boolean; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number }
+type DissolveScore = { active: boolean; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number }
 
 function dissolvePair(score: DissolveScore) {
-  return score.organizationFlux > 0.001
+  return score.educationFlux > 0.001
+    ? { from: score.educationFrom, to: score.educationTo, flux: score.educationFlux, mix: score.educationMix, attenuation: 1 }
+    : score.organizationFlux > 0.001
     ? { from: score.organizationFrom, to: score.organizationTo, flux: score.organizationFlux, mix: score.organizationMix, attenuation: 1 }
     : score.skillFlux > 0
     ? { from: score.skillFrom, to: score.skillTo, flux: score.skillFlux, mix: score.skillMix, attenuation: 1 }
@@ -32,7 +34,8 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     const pair = dissolvePair(score)
     const ready = targets.has(pair.from) && targets.has(pair.to)
     score.organizationDissolve = motion && ready ? score.organizationFlux : 0
-    score.dissolve = score.organizationFlux > 0.001 ? 0 : motion && ready ? pair.flux * pair.attenuation : 0
+    score.educationDissolve = motion && ready ? score.educationFlux : 0
+    score.dissolve = score.organizationFlux > 0.001 || score.educationFlux > 0.001 ? 0 : motion && ready ? pair.flux * pair.attenuation : 0
   }, -2)
   useFrame(({ gl }) => {
     if (!points.current || !material.current) return

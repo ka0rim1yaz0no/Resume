@@ -1,6 +1,6 @@
 import { blend, clamp, type StageRect } from './choreography'
 
-export type ContentStage = 'film' | 'project' | 'experience' | 'skills'
+export type ContentStage = 'film' | 'project' | 'experience' | 'skills' | 'education'
 export type Dock = { rect: StageRect; arrive: number; leave: number }
 export type ContentDocks = Record<ContentStage, Dock>
 export type ContentRoute = { from: ContentStage; to: ContentStage; mix: number; amount: number; viewport: StageRect }
@@ -13,7 +13,7 @@ export function dockVisibility(rect: StageRect, header: number) {
 /** One reversible rail carries the existing scene through the actual résumé.
  * Endpoint rectangles follow native sticky/document layout, including resize. */
 export function contentRoute(scroll: number, docks: ContentDocks, header: number, height: number): ContentRoute {
-  const stages: ContentStage[] = ['film', 'project', 'experience', 'skills']
+  const stages: ContentStage[] = ['film', 'project', 'experience', 'skills', 'education']
   if (scroll <= docks.film.leave) return { from: 'film', to: 'film', mix: 0, amount: 0, viewport: docks.film.rect }
   for (let i = 0; i < stages.length - 1; i++) {
     const from = stages[i], to = stages[i + 1]
@@ -31,15 +31,15 @@ export function contentRoute(scroll: number, docks: ContentDocks, header: number
       const top = blend(rawTop, safeTop, Math.sin(t * Math.PI) ** 2)
       return { from, to, mix, amount: i === 0 ? mix : 1, viewport: { left: blend(a.left, b.left, mix), top, width: w, height: h } }
     }
-    if (scroll <= docks[to].leave || to === 'skills') return { from: to, to, mix: 0, amount: 1, viewport: docks[to].rect }
+    if (scroll <= docks[to].leave || to === 'education') return { from: to, to, mix: 0, amount: 1, viewport: docks[to].rect }
   }
-  return { from: 'skills', to: 'skills', mix: 0, amount: 1, viewport: docks.skills.rect }
+  return { from: 'education', to: 'education', mix: 0, amount: 1, viewport: docks.education.rect }
 }
 
-const subjects = { film: 2, project: 1, experience: 4, skills: 3 }
+const subjects = { film: 2, project: 1, experience: 4, skills: 3, education: 5 }
 export function contentPose(route: ContentRoute, index: number, compact: boolean) {
   const stage = route.to
-  const base = (key: ContentStage) => ({ x: 0, y: 0, z: 0, rx: key === 'skills' ? 0.04 : 0.015, ry: key === 'project' ? 0.14 : key === 'skills' ? 0.1 : 0.12, rz: key === 'skills' ? -0.04 : 0, scale: key === 'skills' ? 1.02 : key === 'experience' ? 1.22 : compact ? 1.2 : 1.05 })
+  const base = (key: ContentStage) => ({ x: 0, y: 0, z: 0, rx: key === 'skills' ? 0.04 : 0.015, ry: key === 'project' ? 0.14 : key === 'skills' ? 0.1 : 0.12, rz: key === 'skills' ? -0.04 : 0, scale: key === 'skills' ? 1.02 : key === 'experience' ? 1.22 : key === 'education' ? 1.7 : compact ? 1.2 : 1.05 })
   const pose = base(stage)
   if (route.from === route.to || route.from === 'film') return { ...pose, weight: index === subjects[stage] ? 1 : 0 }
   const q = route.mix, travel = compact ? 0.45 : 1

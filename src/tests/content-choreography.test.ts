@@ -6,21 +6,22 @@ const docks: ContentDocks = {
   project: { rect: { left: 70, top: 170, width: 600, height: 500 }, arrive: 1700, leave: 2200 },
   experience: { rect: { left: 70, top: 130, width: 550, height: 390 }, arrive: 2800, leave: 4000 },
   skills: { rect: { left: 70, top: 130, width: 480, height: 310 }, arrive: 4700, leave: 5200 },
+  education: { rect: { left: 700, top: 190, width: 450, height: 300 }, arrive: 5900, leave: 6200 },
 }
 const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
-const weights = (r: ContentRoute) => [0, 1, 2, 3, 4].map(i => contentPose(r, i, false).weight)
+const weights = (r: ContentRoute) => [0, 1, 2, 3, 4, 5].map(i => contentPose(r, i, false).weight)
 
 describe('Continuous résumé scene rail', () => {
   it('docks the laptop, organization identity, and React model into the actual content stages', () => {
     expect(route(800).amount).toBe(0)
-    for (const [scroll, stage, expected] of [[1800, 'project', [0, 1, 0, 0, 0]], [3300, 'experience', [0, 0, 0, 0, 1]], [4800, 'skills', [0, 0, 0, 1, 0]]] as const) {
+    for (const [scroll, stage, expected] of [[1800, 'project', [0, 1, 0, 0, 0, 0]], [3300, 'experience', [0, 0, 0, 0, 1, 0]], [4800, 'skills', [0, 0, 0, 1, 0, 0]], [6000, 'education', [0, 0, 0, 0, 0, 1]]] as const) {
       expect(route(scroll).to).toBe(stage)
       expect(route(scroll).viewport).toEqual(docks[stage].rect)
       expect(weights(route(scroll))).toEqual(expected)
     }
   })
   it('conserves opacity throughout both content-model handoffs', () => {
-    for (const [start, end] of [[2200, 2800], [4000, 4700]]) {
+    for (const [start, end] of [[2200, 2800], [4000, 4700], [5200, 5900]]) {
       for (let s = start; s <= end; s += 5) {
         const w = weights(route(s))
         expect(w.reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 8)
@@ -29,13 +30,13 @@ describe('Continuous résumé scene rail', () => {
     }
   })
   it('meets each destination without a viewport, camera, or visible-pose jump', () => {
-    for (const s of [1700, 2200, 2800, 4000, 4700]) {
+    for (const s of [1700, 2200, 2800, 4000, 4700, 5200, 5900]) {
       const a = route(s - 0.001), b = route(s + 0.001)
       for (const key of ['left', 'top', 'width', 'height'] as const) expect(Math.abs(a.viewport[key] - b.viewport[key])).toBeLessThan(0.001)
       if (s === 1700) continue // The film camera blends separately into this first arrival.
       const ca = contentCamera(a, false), cb = contentCamera(b, false)
       expect(Math.hypot(ca.x - cb.x, ca.y - cb.y, ca.z - cb.z)).toBeLessThan(0.001)
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         const pa = contentPose(a, i, false), pb = contentPose(b, i, false)
         if (pa.weight > 0.99 && pb.weight > 0.99) expect(Math.hypot(pa.x - pb.x, pa.y - pb.y, pa.z - pb.z)).toBeLessThan(0.001)
       }

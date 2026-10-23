@@ -20,6 +20,7 @@ import { technologyIcon } from '../data/technologies'
 import { ExperienceIdentities, type IdentityScore } from './ExperienceIdentities'
 import { organizationChapter } from './experienceChoreography'
 import { createSceneFramer } from './cameraFraming'
+import { EducationIdentities, type EducationScore } from './EducationIdentities'
 
 // Buffer decompression must not compete with touch scrolling on the main thread.
 const startDecoderWorkers = MeshoptDecoder.useWorkers
@@ -27,8 +28,8 @@ if (typeof Worker !== 'undefined') {
   try { startDecoderWorkers(1) } catch { /* Synchronous decoder remains available. */ }
 }
 
-type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement }
-type Score = { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
+type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement; education: HTMLElement }
+type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
 type OwnedMaterial = { material: Material; opacity: number }
 
 function documentTop(element: HTMLElement) {
@@ -218,7 +219,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
   </group>
 }
 
-function Ensemble({ score, model, motion, compact, mobile, warm, technology, environment, onReady, onError }: { score: Score; model: ModelId; motion: boolean; compact: boolean; mobile: boolean; warm: boolean; technology: string; environment: Texture; onReady: (ids: Set<ModelId>) => void; onError: () => void }) {
+function Ensemble({ score, model, motion, compact, mobile, warm, technology, school, environment, onReady, onError }: { score: Score; model: ModelId; motion: boolean; compact: boolean; mobile: boolean; warm: boolean; technology: string; school: string; environment: Texture; onReady: (ids: Set<ModelId>) => void; onError: () => void }) {
   const { scene, gl, camera, invalidate } = useThree()
   const [loaded, setLoaded] = useState<Set<ModelId>>(new Set())
   const targets = useMemo<SurfaceTargets>(() => Object.assign(new Map(), { pointCount: mobile ? 2400 : surfacePointCount }), [mobile])
@@ -267,6 +268,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     {modelIds.map((id, index) => (warm || id === model || id === 'systems-sculpture') && <Suspense key={id} fallback={null}><ObjectRig id={id} index={index} score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} onLoaded={markLoaded} /></Suspense>)}
     <Suspense fallback={null}><ReactCompanion score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} technology={technology} onLoaded={markLoaded} /></Suspense>
     {warm && <ExperienceIdentities score={score} targets={targets} motion={motion} compact={compact} />}
+    {warm && <Suspense fallback={null}><EducationIdentities score={score} targets={targets} school={school} motion={motion} compact={compact} /></Suspense>}
     <TravelParticles score={score} targets={targets} motion={motion} />
   </>
 }
@@ -275,10 +277,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const { gl, invalidate } = useThree()
   const [environment, setEnvironment] = useState<Texture | null>(null)
   const dirty = useRef(true)
-  const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect } | null>(null)
-  const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock } | null>(null)
+  const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect; education: DOMRect } | null>(null)
+  const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock; education: Dock } | null>(null)
   const fitScene = useMemo(createSceneFramer, [])
-  const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])] }), [anchors])
+  const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   useEffect(() => {
     const generator = new PMREMGenerator(gl)
@@ -293,7 +295,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const wake = () => invalidate(3)
     const remeasure = () => { dirty.current = true; wake() }
     const observer = new ResizeObserver(remeasure)
-    for (const anchor of [anchors.hero, anchors.journey, anchors.project, anchors.experience, anchors.skills, anchors.hero.closest('.personal-resume')!]) observer.observe(anchor)
+    for (const anchor of [anchors.hero, anchors.journey, anchors.project, anchors.experience, anchors.skills, anchors.education, anchors.hero.closest('.personal-resume')!]) observer.observe(anchor)
     window.addEventListener('scroll', wake, { passive: true })
     window.addEventListener('resize', remeasure, { passive: true })
     window.addEventListener('model-explore', wake)
@@ -315,10 +317,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     // repeated style/offset walks; scroll only refreshes the screen rectangles.
     if (dirty.current || !thresholds.current) thresholds.current = {
       film: documentTop(anchors.section) + anchors.section.offsetHeight - window.innerHeight - 60,
-      project: measureDock(anchors.project, header), experience: measureDock(anchors.experience, header), skills: measureDock(anchors.skills, header),
+      project: measureDock(anchors.project, header), experience: measureDock(anchors.experience, header), skills: measureDock(anchors.skills, header), education: measureDock(anchors.education, header),
     }
     if (dirty.current || !measurements.current || measurements.current.scroll !== scroll) measurements.current = {
-      scroll, hero: anchors.hero.getBoundingClientRect(), establishing: anchors.openingStage.getBoundingClientRect(), journey: anchors.journey.getBoundingClientRect(), frame: anchors.frame.getBoundingClientRect(), section: anchors.section.getBoundingClientRect(), heroSection: anchors.hero.closest('section')!.getBoundingClientRect(), project: anchors.project.getBoundingClientRect(), experience: anchors.experience.getBoundingClientRect(), skills: anchors.skills.getBoundingClientRect(),
+      scroll, hero: anchors.hero.getBoundingClientRect(), establishing: anchors.openingStage.getBoundingClientRect(), journey: anchors.journey.getBoundingClientRect(), frame: anchors.frame.getBoundingClientRect(), section: anchors.section.getBoundingClientRect(), heroSection: anchors.hero.closest('section')!.getBoundingClientRect(), project: anchors.project.getBoundingClientRect(), experience: anchors.experience.getBoundingClientRect(), skills: anchors.skills.getBoundingClientRect(), education: anchors.education.getBoundingClientRect(),
     }
     dirty.current = false
     const { hero, establishing, journey, frame, section, heroSection } = measurements.current
@@ -333,7 +335,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const hiddenFilm = journey.width === 0 || journey.height === 0
     const docks: ContentDocks = {
       film: { rect: journey, arrive: 0, leave: thresholds.current.film },
-      project: { ...thresholds.current.project, rect: measurements.current.project }, experience: { ...thresholds.current.experience, rect: measurements.current.experience }, skills: { ...thresholds.current.skills, rect: measurements.current.skills },
+      project: { ...thresholds.current.project, rect: measurements.current.project }, experience: { ...thresholds.current.experience, rect: measurements.current.experience }, skills: { ...thresholds.current.skills, rect: measurements.current.skills }, education: { ...thresholds.current.education, rect: measurements.current.education },
     }
     score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(scroll, docks, header, window.innerHeight)
     score.organizationFocus = MathUtils.clamp(Number(anchors.experience.dataset.experienceFocus || 0), 0, 2)
@@ -355,17 +357,23 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.particleTo = score.progress < 0.5 ? 1 : 2
     score.particleMix = score.progress < 0.5 ? filmWeights[1] : filmWeights[2]
     if (score.content.amount > 0) {
-      const subject = { film: 2, project: 1, experience: 7 + Math.round(score.organizationFocus), skills: anchors.skills.dataset.technology === 'React.js' ? 3 : 4 }
+      const subject = { film: 2, project: 1, experience: 7 + Math.round(score.organizationFocus), skills: anchors.skills.dataset.technology === 'React.js' ? 3 : 4, education: 10 + score.educationDisplayed }
       score.particleFrom = subject[score.content.from]; score.particleTo = subject[score.content.to]
       score.particleMix = score.content.mix
     }
-    score.exitOpacity = score.content.from === 'skills' && score.content.to === 'skills' ? dockVisibility(rect, header) : 1
+    score.exitOpacity = score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1
     score.active = running && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
     score.viewport = rect
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     nodes.companies.forEach(element => {
       const view = score.organizationExploration[Number(element.dataset.organizationExplorer)]
+      view.yaw = damp(view.yaw, Number(element.dataset.yaw || 0))
+      view.pitch = damp(view.pitch, Number(element.dataset.pitch || 0))
+      view.zoom = damp(view.zoom, Number(element.dataset.zoom || 0))
+    })
+    nodes.schools.forEach(element => {
+      const view = score.educationExploration[Number(element.dataset.schoolExplorer)]
       view.yaw = damp(view.yaw, Number(element.dataset.yaw || 0))
       view.pitch = damp(view.pitch, Number(element.dataset.pitch || 0))
       view.zoom = damp(view.zoom, Number(element.dataset.zoom || 0))
@@ -427,13 +435,14 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const [anchors, setAnchors] = useState<Anchors | null>(null)
   const [ready, setReady] = useState(false)
   const [technology, setTechnology] = useState('React.js')
+  const [school, setSchool] = useState('sti')
   const loadedModels = useRef<Set<ModelId>>(new Set())
   const sceneWindows = useRef<HTMLElement[]>([])
   const [warm, setWarm] = useState(Boolean(window.location.hash && window.location.hash !== '#'))
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFlux: 0, educationDissolve: 0, educationFrom: 10, educationTo: 10, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {
@@ -445,13 +454,15 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
       const project = root.current?.querySelector<HTMLElement>('[data-scene="project"]')
       const experience = root.current?.querySelector<HTMLElement>('[data-scene="experience"]')
       const skills = root.current?.querySelector<HTMLElement>('[data-scene="skills"]')
-      sceneWindows.current = [hero, journey, project, experience, skills].filter((element): element is HTMLElement => !!element)
+      const education = root.current?.querySelector<HTMLElement>('[data-scene="education"]')
+      sceneWindows.current = [hero, journey, project, experience, skills, education].filter((element): element is HTMLElement => !!element)
       if (skills?.dataset.technology) setTechnology(skills.dataset.technology)
-      if (hero && openingStage && journey && frame && section && project && experience && skills) setAnchors(previous => previous?.hero === hero && previous?.openingStage === openingStage && previous?.journey === journey && previous?.project === project && previous?.experience === experience && previous?.skills === skills ? previous : { hero, openingStage, journey, frame, section, project, experience, skills })
+      if (education?.dataset.school) setSchool(education.dataset.school)
+      if (hero && openingStage && journey && frame && section && project && experience && skills && education) setAnchors(previous => previous?.hero === hero && previous?.openingStage === openingStage && previous?.journey === journey && previous?.project === project && previous?.experience === experience && previous?.skills === skills && previous?.education === education ? previous : { hero, openingStage, journey, frame, section, project, experience, skills, education })
     }
     collect()
     const observer = new MutationObserver(collect)
-    observer.observe(root.current, { subtree: true, attributes: true, attributeFilter: ['data-technology'] })
+    observer.observe(root.current, { subtree: true, attributes: true, attributeFilter: ['data-technology', 'data-school'] })
     const move = (event: PointerEvent) => { pointer.current.x = event.clientX / window.innerWidth * 2 - 1; pointer.current.y = -(event.clientY / window.innerHeight * 2 - 1) }
     window.addEventListener('pointermove', move, { passive: true })
     return () => { observer.disconnect(); window.removeEventListener('pointermove', move) }
@@ -462,31 +473,31 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   }, [])
   const rendered = useCallback(() => {
     sceneWindows.current.forEach(element => {
-      const still = reduced && ['project', 'experience', 'skills'].includes(element.dataset.scene || '')
-      const available = element.dataset.scene === 'experience' ? warm && ready : loadedModels.current.has(element.dataset.sceneModel as ModelId)
+      const still = reduced && ['project', 'experience', 'skills', 'education'].includes(element.dataset.scene || '')
+      const available = element.dataset.scene === 'education' ? score.educationReady : element.dataset.scene === 'experience' ? warm && ready : loadedModels.current.has(element.dataset.sceneModel as ModelId)
       if (!still && available) {
         if (element.dataset.sceneReady !== 'true') element.dataset.sceneReady = 'true'
       } else if (element.dataset.sceneReady) delete element.dataset.sceneReady
     })
-  }, [reduced, warm, ready])
+  }, [reduced, warm, ready, score])
   useEffect(() => {
     // Reduced motion uses the section posters even when its hero-only WebGL
     // viewport is off screen and therefore cannot reach the render callback.
-    if (reduced) root.current?.querySelectorAll<HTMLElement>('[data-scene="project"], [data-scene="experience"], [data-scene="skills"]').forEach(element => { delete element.dataset.sceneReady })
+    if (reduced) root.current?.querySelectorAll<HTMLElement>('[data-scene="project"], [data-scene="experience"], [data-scene="skills"], [data-scene="education"]').forEach(element => { delete element.dataset.sceneReady })
   }, [root, reduced])
   useEffect(() => {
     if (!anchors || warm) return
     const observer = new IntersectionObserver(entries => {
       if (entries.some(entry => entry.isIntersecting)) { setWarm(true); observer.disconnect() }
     }, { rootMargin: '25% 0px' })
-    for (const stage of [anchors.section, anchors.project, anchors.experience, anchors.skills]) observer.observe(stage)
+    for (const stage of [anchors.section, anchors.project, anchors.experience, anchors.skills, anchors.education]) observer.observe(stage)
     return () => observer.disconnect()
   }, [anchors, warm])
   useEffect(() => () => { root.current?.querySelectorAll<HTMLElement>('[data-scene-ready]').forEach(element => { delete element.dataset.sceneReady }) }, [root])
   return <>
     <Canvas className="cinematic-renderer" dpr={[1, compact ? 1 : 1.35]} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping }}>
       {anchors && <Director anchors={anchors} score={score} model={model} turn={turn} reset={reset} motion={motion} reduced={reduced} running={running} ready={ready} pointer={pointer} onError={onError} onRendered={rendered}>{environment =>
-          <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready} technology={technology} environment={environment} onReady={loaded} onError={onError} />
+          <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready} technology={technology} school={school} environment={environment} onReady={loaded} onError={onError} />
       }</Director>}
     </Canvas>
   </>
