@@ -1,5 +1,5 @@
 import { clamp } from './choreography'
-import { experienceReader, experienceScrollTarget } from './experienceChoreography'
+import { experienceFocus, experienceReader, experienceScrollTarget } from './experienceChoreography'
 
 export function educationChapter(focus: number) {
   const mix = clamp(focus)
@@ -13,10 +13,19 @@ export function educationPose(focus: number, index: number) {
 }
 
 // The education records sit below their viewer at every breakpoint.
-export function educationReader(height: number, header: number, sceneHeight: number) {
-  return experienceReader(height, header, sceneHeight, true)
+export function educationReader(height: number, header: number, sceneHeight: number, pinned = true) {
+  return experienceReader(height, header, pinned ? sceneHeight : 0, pinned)
 }
 
-export function educationScrollTarget(top: number, entryHeight: number, height: number, header: number, sceneHeight: number) {
-  return experienceScrollTarget(top, entryHeight, height, header, sceneHeight, true)
+export function educationScrollTarget(top: number, entryHeight: number, height: number, header: number, sceneHeight: number, pinned = true) {
+  return pinned ? experienceScrollTarget(top, entryHeight, height, header, sceneHeight, true) : top - header - 24
+}
+
+/** A mobile story pins the viewer and its details together in separate rows. */
+export function educationStoryFocus(scroll: number, start: number, distance: number) {
+  return experienceFocus([start, start + Math.max(1, distance)], scroll)
+}
+
+export function educationStoryTarget(index: number, start: number, distance: number) {
+  return start + Math.max(1, distance) * (index === 0 ? 0.1 : 0.9)
 }

@@ -2,7 +2,6 @@ export const profile = {
   fullName: 'Vincent Layzie C. Del Rosario',
   name: 'Vincent Layzie C. Del Rosario',
   specialty: 'Information Technology · Web Development · Project Management',
-  currentRole: 'Website Developer at Assistly BPO Corporation',
   email: 'vincentdelrosario2004@gmail.com',
   phone: '(+63) 997-470-9845',
   phoneHref: 'tel:+639974709845',

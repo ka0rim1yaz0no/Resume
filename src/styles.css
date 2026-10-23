@@ -237,7 +237,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .resume-hero { min-height: 850px; }.resume-hero h1 { font-size: clamp(66px,7vw,100px); letter-spacing: -.065em; }
 .full-name { margin-top: 24px; font-size: 13px; color: var(--text); letter-spacing: .01em; }
 .specialty-line { margin-top: 12px; max-width: 430px; color: var(--muted); font-size: 11px; line-height: 1.8; }
-.hero-current-role { max-width: 430px; margin-top: 14px; color: var(--accent); font-size: 12px; line-height: 1.7; }
+.resume-hero .specialty-line { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .experience-entry.experience-current { border-top-color: #789d80; }
 .experience-entry { transition: border-color 400ms ease; }
 .experience-entry[data-active=true] { border-top-color: var(--organization-accent, var(--accent)); }
@@ -569,4 +569,25 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 @media (prefers-reduced-motion: reduce) {
   .education-selector button, .education-entry { transition: none; }
 }
-@media (max-height: 600px) { .education-entry { min-height: 160px; } }
+@media (max-height: 600px) {
+  .education-entry { min-height: 160px; }
+  .education-visual { position: relative; top: auto; }
+}
+
+/* On phones the model and the current school share one pinned composition.
+   Normal grid rows reserve the details' full height, outside the 3D viewport. */
+@media (max-width: 650px) {
+  body { min-width: 0; }
+  .resume-hero h1 { font-size: clamp(48px, 15vw, 86px); }
+  .education-visual { position: relative; top: auto; }
+  .education-list[data-education-layout=story] { --education-model-height: clamp(80px, calc(100svh - 500px), 260px); }
+  .education-list[data-education-layout=story] .education-layout { padding-bottom: 0; }
+  .education-list[data-education-layout=story] .education-layout::after { content: ''; display: block; height: max(480px, 90svh); }
+  .education-list[data-education-layout=story] .education-stage { position: sticky; top: 76px; z-index: 19; background: var(--bg); }
+  .education-list[data-education-layout=story] .education-visual { z-index: auto; margin-bottom: 0; padding-bottom: 16px; border-bottom: 0; }
+  .education-list[data-education-layout=story] .education-visual::after { content: none; }
+  .education-list[data-education-layout=story] .education-records { display: grid; border-top: 1px solid var(--line); }
+  .education-list[data-education-layout=story] .education-entry { grid-area: 1 / 1; min-height: 200px; border-top: 0; transition: opacity 250ms ease; }
+  .education-list[data-education-layout=story] .education-entry[data-active=false] { visibility: hidden; opacity: 0; pointer-events: none; }
+  .education-list[data-education-layout=story] .education-entry[data-active=true] { visibility: visible; opacity: 1; }
+}

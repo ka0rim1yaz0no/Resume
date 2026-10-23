@@ -1,11 +1,11 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Education } from '../resume/Education'
 import { education } from '../data/profile'
 import { schools } from '../data/schools'
 import { educationEmblem } from '../three/educationGeometry'
-import { educationChapter, educationPose, educationReader, educationScrollTarget } from '../three/educationChoreography'
+import { educationChapter, educationPose, educationReader, educationScrollTarget, educationStoryFocus, educationStoryTarget } from '../three/educationChoreography'
 import { experienceFocus } from '../three/experienceChoreography'
 
 describe('Education identities', () => {
@@ -16,8 +16,14 @@ describe('Education identities', () => {
     vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) { return this.id === 'education-sti' ? 1000 : this.id === 'education-marcelo' ? 1400 : 0 })
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) { return this.classList.contains('education-entry') ? 200 : this.classList.contains('education-visual') ? 400 : 0 })
     vi.spyOn(ScrollTrigger, 'create').mockImplementation(vars => { callbacks = vars; return { kill: vi.fn() } as unknown as ScrollTrigger })
+    const computedStyle = window.getComputedStyle.bind(window)
+    vi.spyOn(window, 'getComputedStyle').mockImplementation(element => {
+      const style = computedStyle(element)
+      if (element.classList.contains('education-visual')) style.position = 'sticky'
+      return style
+    })
   })
-  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
   const scroll = (top: number) => act(() => { vi.stubGlobal('scrollY', top); callbacks.onUpdate?.({} as ScrollTrigger) })
 
   it('keeps the original education record while the school buttons scroll to their matching entries', () => {
@@ -49,6 +55,42 @@ describe('Education identities', () => {
       expect(container.querySelector('.education-entry[data-active="true"]')).toHaveAttribute('id', `education-${id}`)
     }
   })
+  it('pins the mobile viewer and active school in separate rows and synchronizes the details with scroll', () => {
+    vi.stubGlobal('innerWidth', 390); vi.stubGlobal('innerHeight', 844)
+    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query: string) => ({ matches: query.includes('max-width: 650px'), media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
+    vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) { return this.classList.contains('education-layout') ? 1000 : 0 })
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('education-layout') ? 1400 : this.classList.contains('education-stage') ? 600 : this.classList.contains('education-visual') ? 400 : 200
+    })
+    const { container } = render(<Education />)
+    expect(container.querySelector('#education')).toHaveAttribute('data-education-layout', 'story')
+    const stage = container.querySelector('.education-stage')!
+    expect(stage).toContainElement(container.querySelector('.education-visual'))
+    expect(stage).toContainElement(container.querySelector('.education-records'))
+    for (const [index, school] of schools.entries()) {
+      fireEvent.click(screen.getByRole('button', { name: school.shortName }))
+      const top = educationStoryTarget(index, 924, 800)
+      expect(window.scrollTo).toHaveBeenLastCalledWith({ top, behavior: 'smooth' })
+      scroll(top)
+      expect(screen.getByRole('heading', { name: school.institution })).toBeVisible()
+      expect(screen.queryByRole('heading', { name: schools[1 - index].institution })).not.toBeInTheDocument()
+      expect(container.querySelector('.education-entry[data-active="true"]')).not.toHaveAttribute('aria-hidden')
+    }
+    scroll(1324)
+    expect(container.querySelector('[data-scene="education"]')).toHaveAttribute('data-education-focus', '0.50000')
+    scroll(1004)
+    expect(screen.getByRole('heading', { name: schools[0].institution })).toBeVisible()
+  })
+  it('holds each mobile school for reading and reverses the dust along the same scroll path', () => {
+    const start = 1000, distance = 800
+    expect(educationStoryFocus(start - 100, start, distance)).toBe(0)
+    expect(educationStoryFocus(start + distance + 100, start, distance)).toBe(1)
+    expect(educationStoryFocus(start + distance / 2, start, distance)).toBeCloseTo(0.5)
+    for (const index of [0, 1]) expect(educationStoryFocus(educationStoryTarget(index, start, distance), start, distance)).toBe(index)
+    const positions = [1000, 1200, 1300, 1400, 1500, 1600, 1800]
+    const pose = (position: number) => educationChapter(educationStoryFocus(position, start, distance))
+    expect(positions.map(pose)).toEqual([...positions].reverse().map(pose).reverse())
+  })
   it('uses a reversible surface dissolve with stable endpoints and keeps school headings below the viewer', () => {
     const centers = [500, 900]
     const positions = [400, 500, 600, 700, 800, 900, 1000]
@@ -63,6 +105,8 @@ describe('Education identities', () => {
       const top = 5000
       expect(top - educationScrollTarget(top, 260, height, header, viewer)).toBeGreaterThanOrEqual(header + viewer + 16)
     }
+    expect(educationScrollTarget(5000, 220, 390, 84, 260, false)).toBe(4892)
+    expect(educationReader(390, 84, 260, false)).toBeLessThan(300)
   })
   it('gives both school emblems real depth with valid face UVs and inexpensive geometry', () => {
     for (let index = 0; index < schools.length; index++) {
