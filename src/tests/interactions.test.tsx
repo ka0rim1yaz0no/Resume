@@ -8,6 +8,7 @@ import { About } from '../resume/About'
 import { Experience } from '../resume/Experience'
 import { credentials, education, experience, profile, project, skillGroups } from '../data/profile'
 import { technologyIcon } from '../data/technologies'
+import { organizations } from '../data/organizations'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -25,6 +26,9 @@ describe('Source-grounded résumé', () => {
     const { container } = render(<Experience />)
     const entries = container.querySelectorAll('.experience-entry')
     expect([...entries].map(entry => entry.querySelector('h3')?.textContent)).toEqual(['Assistly BPO Corporation', 'Knowles Training Institute', 'SYNTAX Organization'])
+    expect([...entries].map(entry => entry.querySelector('img')?.getAttribute('src'))).toEqual(organizations.map(org => org.logo))
+    expect(container.querySelector('[data-scene="experience"]')).toHaveAttribute('data-scene-model', 'organization')
+    expect(container.querySelector('[data-scene="experience"] img')?.getAttribute('src')).not.toContain('workflow-board')
     expect(entries[0]).toHaveTextContent('Current employment')
     expect(entries[0]).toHaveTextContent('Website Developer')
     expect(entries[0]).toHaveTextContent('July 15, 2026–Present')

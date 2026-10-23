@@ -1,6 +1,6 @@
 # Vincent Layzie C. Del Rosario
 
-An interactive resume and portfolio featuring cinematic 3D scenes, scroll transitions, and selectable technology emblems.
+An interactive resume and portfolio featuring cinematic 3D scenes, scroll transitions, selectable technology emblems, and company identities that follow the experience timeline.
 
 Built with React, TypeScript, Vite, Three.js, React Three Fiber, GSAP, and Lenis.
 
@@ -42,6 +42,7 @@ npm test
 - `src/tests/` — unit and interaction tests.
 - `public/models/` — optimized 3D models.
 - `public/icons/` — local technology icons and their license notices.
+- `public/organizations/` — company artwork for the experience timeline and its fallbacks.
 - `public/posters/` — model fallback images.
 - `scripts/` — model optimization and icon preparation utilities.
 

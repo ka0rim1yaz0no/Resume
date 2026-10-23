@@ -8,12 +8,12 @@ const docks: ContentDocks = {
   skills: { rect: { left: 70, top: 130, width: 480, height: 310 }, arrive: 4700, leave: 5200 },
 }
 const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
-const weights = (r: ContentRoute) => [0, 1, 2, 3].map(i => contentPose(r, i, false).weight)
+const weights = (r: ContentRoute) => [0, 1, 2, 3, 4].map(i => contentPose(r, i, false).weight)
 
 describe('Continuous résumé scene rail', () => {
-  it('docks the laptop, board, and React model into the actual content stages', () => {
+  it('docks the laptop, organization identity, and React model into the actual content stages', () => {
     expect(route(800).amount).toBe(0)
-    for (const [scroll, stage, expected] of [[1800, 'project', [0, 1, 0, 0]], [3300, 'experience', [0, 0, 1, 0]], [4800, 'skills', [0, 0, 0, 1]]] as const) {
+    for (const [scroll, stage, expected] of [[1800, 'project', [0, 1, 0, 0, 0]], [3300, 'experience', [0, 0, 0, 0, 1]], [4800, 'skills', [0, 0, 0, 1, 0]]] as const) {
       expect(route(scroll).to).toBe(stage)
       expect(route(scroll).viewport).toEqual(docks[stage].rect)
       expect(weights(route(scroll))).toEqual(expected)
@@ -35,7 +35,7 @@ describe('Continuous résumé scene rail', () => {
       if (s === 1700) continue // The film camera blends separately into this first arrival.
       const ca = contentCamera(a, false), cb = contentCamera(b, false)
       expect(Math.hypot(ca.x - cb.x, ca.y - cb.y, ca.z - cb.z)).toBeLessThan(0.001)
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 5; i++) {
         const pa = contentPose(a, i, false), pb = contentPose(b, i, false)
         if (pa.weight > 0.99 && pb.weight > 0.99) expect(Math.hypot(pa.x - pb.x, pa.y - pb.y, pa.z - pb.z)).toBeLessThan(0.001)
       }
@@ -51,7 +51,7 @@ describe('Continuous résumé scene rail', () => {
   })
   it('reduces mobile lateral motion without changing the subject weights', () => {
     const r = route(4350)
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       const mobile = contentPose(r, i, true), desktop = contentPose(r, i, false)
       expect(mobile.weight).toBe(desktop.weight)
       expect(Math.abs(mobile.x)).toBeLessThanOrEqual(Math.abs(desktop.x))

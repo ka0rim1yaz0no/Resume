@@ -17,9 +17,11 @@ import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { openingViewport } from './openingLayout'
 import { advanceSkillTransition, createSkillTransition, skillDissolve } from './skillTransition'
 import { technologyIcon } from '../data/technologies'
+import { ExperienceIdentities } from './ExperienceIdentities'
+import { organizationChapter } from './experienceChoreography'
 
 type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement }
-type Score = { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
+type Score = { progress: number; handoff: number; heroScroll: number; opening: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
 type OwnedMaterial = { material: Material; opacity: number }
 
 function documentTop(element: HTMLElement) {
@@ -255,6 +257,7 @@ function Ensemble({ score, model, motion, compact, technology, environment, onRe
     <StudioLights />
     {modelIds.map((id, index) => <Suspense key={id} fallback={null}><ObjectRig id={id} index={index} score={score} targets={targets} motion={motion} compact={compact} onLoaded={markLoaded} /></Suspense>)}
     <Suspense fallback={null}><ReactCompanion score={score} targets={targets} motion={motion} compact={compact} technology={technology} onLoaded={markLoaded} /></Suspense>
+    <ExperienceIdentities score={score} targets={targets} motion={motion} compact={compact} />
     <TravelParticles score={score} targets={targets} motion={motion} compact={compact} />
   </>
 }
@@ -314,6 +317,11 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       project: measureDock(anchors.project, header), experience: measureDock(anchors.experience, header), skills: measureDock(anchors.skills, header),
     }
     score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(scroll, docks, header, window.innerHeight)
+    score.organizationFocus = MathUtils.clamp(Number(anchors.experience.dataset.experienceFocus || 0), 0, 2)
+    const organization = organizationChapter(score.organizationFocus)
+    const settledExperience = score.content.to === 'experience' && (score.content.from === 'experience' || score.content.mix > 0.995)
+    score.organizationFlux = settledExperience ? organization.flux : 0
+    score.organizationFrom = 7 + organization.from; score.organizationTo = 7 + organization.to; score.organizationMix = organization.mix
     const introRect = openingActive ? openingViewport(hero, establishing, opening) : hiddenFilm ? hero : transition.progress >= 1 ? journey : transition.rect
     const rect = score.content.amount > 0 ? score.content.viewport : introRect
     score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
@@ -328,7 +336,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.particleTo = score.progress < 0.5 ? 1 : 2
     score.particleMix = score.progress < 0.5 ? filmWeights[1] : filmWeights[2]
     if (score.content.amount > 0) {
-      const subject = { film: 2, project: 1, experience: 2, skills: anchors.skills.dataset.technology === 'React.js' ? 3 : 4 }
+      const subject = { film: 2, project: 1, experience: 7 + Math.round(score.organizationFocus), skills: anchors.skills.dataset.technology === 'React.js' ? 3 : 4 }
       score.particleFrom = subject[score.content.from]; score.particleTo = subject[score.content.to]
       score.particleMix = score.content.mix
     }
@@ -390,7 +398,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {
@@ -422,7 +430,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
     pendingReady.current = false
     root.current?.querySelectorAll<HTMLElement>('[data-scene]').forEach(element => {
       if (reduced && ['project', 'experience', 'skills'].includes(element.dataset.scene || '')) delete element.dataset.sceneReady
-      else if (loadedModels.current.has(element.dataset.sceneModel as ModelId) && element.dataset.sceneReady !== 'true') element.dataset.sceneReady = 'true'
+      else if ((element.dataset.scene === 'experience' || loadedModels.current.has(element.dataset.sceneModel as ModelId)) && element.dataset.sceneReady !== 'true') element.dataset.sceneReady = 'true'
     })
   }, [root, reduced])
   useEffect(() => {

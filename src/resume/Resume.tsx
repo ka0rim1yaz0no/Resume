@@ -41,7 +41,7 @@ export default function Resume() {
       <div className="capability-strip"><div className="container"><p>Interfaces. Logic. Data.</p><div><span>Web development</span><span className="strip-join" aria-hidden="true">+</span><span>Systems thinking</span><span className="strip-join" aria-hidden="true">+</span><span>Project coordination</span></div></div></div>
       <ModelJourney paused={paused || reduced} systemReduced={reduced} toggleMotion={() => setPaused(value => !value)} />
       <FeaturedProject openDetails={() => setProjectOpen(true)} />
-      <Experience />
+      <Experience paused={paused || reduced} />
       <Capabilities />
       <About />
       <Credentials />

@@ -3,10 +3,12 @@ import { useFrame } from '@react-three/fiber'
 import { BufferGeometry, Float32BufferAttribute, Matrix4, Points, ShaderMaterial } from 'three'
 import { surfacePointCount, type SurfaceTarget, type SurfaceTargets } from './surfaceCloud'
 
-type DissolveScore = { active: boolean; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number }
+type DissolveScore = { active: boolean; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number }
 
 function dissolvePair(score: DissolveScore) {
-  return score.skillFlux > 0
+  return score.organizationFlux > 0.001
+    ? { from: score.organizationFrom, to: score.organizationTo, flux: score.organizationFlux, mix: score.organizationMix, attenuation: 1 }
+    : score.skillFlux > 0
     ? { from: score.skillFrom, to: score.skillTo, flux: score.skillFlux, mix: score.skillMix, attenuation: 1 }
     : { from: score.particleFrom, to: score.particleTo, flux: score.flux, mix: score.particleMix, attenuation: 0.88 }
 }
@@ -28,7 +30,8 @@ export function TravelParticles({ score, targets, motion, compact }: { score: Di
   useFrame(() => {
     const pair = dissolvePair(score)
     const ready = targets.has(pair.from) && targets.has(pair.to)
-    score.dissolve = motion && ready ? pair.flux * pair.attenuation : 0
+    score.organizationDissolve = motion && ready ? score.organizationFlux : 0
+    score.dissolve = score.organizationFlux > 0.001 ? 0 : motion && ready ? pair.flux * pair.attenuation : 0
   }, -2)
   useFrame(({ gl }) => {
     if (!points.current || !material.current) return

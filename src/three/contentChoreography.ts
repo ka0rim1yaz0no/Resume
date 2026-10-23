@@ -36,18 +36,18 @@ export function contentRoute(scroll: number, docks: ContentDocks, header: number
   return { from: 'skills', to: 'skills', mix: 0, amount: 1, viewport: docks.skills.rect }
 }
 
-const subjects = { film: 2, project: 1, experience: 2, skills: 3 }
+const subjects = { film: 2, project: 1, experience: 4, skills: 3 }
 export function contentPose(route: ContentRoute, index: number, compact: boolean) {
   const stage = route.to
-  const base = (key: ContentStage) => ({ x: 0, y: 0, z: 0, rx: key === 'skills' ? 0.04 : 0.015, ry: key === 'project' ? 0.14 : key === 'skills' ? 0.1 : 0.12, rz: key === 'skills' ? -0.04 : 0, scale: key === 'skills' ? 1.02 : key === 'experience' ? compact ? 1.3 : 1.28 : compact ? 1.2 : 1.05 })
+  const base = (key: ContentStage) => ({ x: 0, y: 0, z: 0, rx: key === 'skills' ? 0.04 : 0.015, ry: key === 'project' ? 0.14 : key === 'skills' ? 0.1 : 0.12, rz: key === 'skills' ? -0.04 : 0, scale: key === 'skills' ? 1.02 : key === 'experience' ? 1.22 : compact ? 1.2 : 1.05 })
   const pose = base(stage)
   if (route.from === route.to || route.from === 'film') return { ...pose, weight: index === subjects[stage] ? 1 : 0 }
   const q = route.mix, travel = compact ? 0.45 : 1
   if (index === subjects[route.from]) {
     const outgoing = base(route.from)
-    return { ...outgoing, weight: 1 - q, x: -q * 0.42 * travel, y: q * 0.08, z: -q * 0.55, ry: outgoing.ry + q * 0.32, scale: outgoing.scale - q * 0.08 }
+    return { ...outgoing, weight: 1 - q, x: outgoing.x - q * 0.42 * travel, y: q * 0.08, z: outgoing.z - q * 0.55, ry: outgoing.ry + q * 0.32, scale: outgoing.scale - q * 0.08 }
   }
-  return { ...pose, weight: index === subjects[stage] ? q : 0, x: (1 - q) * 0.42 * travel, y: -(1 - q) * 0.08, z: -(1 - q) * 0.55, ry: pose.ry - (1 - q) * 0.32, scale: pose.scale - (1 - q) * 0.08 }
+  return { ...pose, weight: index === subjects[stage] ? q : 0, x: pose.x + (1 - q) * 0.42 * travel, y: -(1 - q) * 0.08, z: pose.z - (1 - q) * 0.55, ry: pose.ry - (1 - q) * 0.32, scale: pose.scale - (1 - q) * 0.08 }
 }
 
 export function contentCamera(route: ContentRoute, compact: boolean) {
