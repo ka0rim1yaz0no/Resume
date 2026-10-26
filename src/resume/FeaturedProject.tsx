@@ -50,7 +50,7 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
           <div className="tags">{layer.stack.map(technology => <span key={technology}>{technology}</span>)}</div><p>{layer.description}</p><span className="project-analogy">A physical assembly illustrating the project’s software layers.</span>
         </div>
         <p className="section-label">{project.period}</p><h3>{project.title}</h3>{!expanded && <p>{project.description}</p>}
-        {!expanded && <><div className="tags">{project.technology.map(item => <span key={item}>{item}</span>)}</div><div className="contribution-summary"><p><Icon name="check" />Server-side logic & API endpoints</p><p><Icon name="check" />Authentication & data processing</p><p><Icon name="check" />PostgreSQL schema & queries</p><p><Icon name="check" />Frontend / backend integration</p></div></>}
+        {!expanded && <><dl className="project-metadata"><div><dt>Context</dt><dd>Collaborative capstone</dd></div><div><dt>My focus</dt><dd>Backend & database</dd></div></dl><div className="tags">{project.technology.map(item => <span key={item}>{item}</span>)}</div><div className="contribution-summary"><p><Icon name="check" />Server-side logic & API endpoints</p><p><Icon name="check" />Authentication & data processing</p><p><Icon name="check" />PostgreSQL schema & queries</p><p><Icon name="check" />Frontend / backend integration</p></div></>}
         <button className="text-link" onClick={openDetails}>Explore my contribution <Icon name="arrow" /></button>
       </div>
     </article>

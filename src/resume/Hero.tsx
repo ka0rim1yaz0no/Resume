@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { SceneWindow } from '../components/SceneWindow'
 import { Icon } from '../components/Icon'
 import { modelIds, modelRegistry, type ModelId } from '../data/assets'
@@ -5,6 +6,8 @@ import { assetUrl, documents, profile } from '../data/profile'
 import { useModelExploration } from '../hooks/useModelExploration'
 
 export function Hero({ model, selectModel, turnLeft, turnRight, resetView, paused, systemReduced, toggleMotion }: { model: ModelId; selectModel: (id: ModelId) => void; turnLeft: () => void; turnRight: () => void; resetView: () => void; paused: boolean; systemReduced: boolean; toggleMotion: () => void }) {
+  const objectIndex = Math.max(0, modelIds.indexOf(model))
+  const assetAccent = ['#d9bc83', '#b9c9b3', '#97bdc1'][objectIndex]
   const resume = documents[0]
   const exploration = useModelExploration(model, resetView)
   return <section className="hero resume-hero container" aria-labelledby="hero-title">
@@ -16,8 +19,8 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
       <div className="hero-enter hero-actions"><a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a><a className="text-link" href="#contact">Get in touch <Icon name="down" /></a></div>
       <div className="hero-enter resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
     </div>
-    <div className="hero-art">
-      <div className="art-coordinate art-coordinate-top">Interfaces / Logic / Data</div>
+    <div className="hero-art" data-object={model} style={{ '--asset-edge': assetAccent } as CSSProperties}>
+      <div className="art-coordinate art-coordinate-top"><span>{['Systems sculpture', 'Project laptop', 'Workflow board'][objectIndex]}</span><span>{String(objectIndex + 1).padStart(2, '0')} / 03</span></div>
       <div className="orbit orbit-outer" aria-hidden="true" /><div className="orbit orbit-inner" aria-hidden="true" />
       <div className="art-cross art-cross-one" aria-hidden="true">+</div><div className="art-cross art-cross-two" aria-hidden="true">+</div>
       <SceneWindow id={model} chapter="intro" className="hero-scene" />
@@ -32,7 +35,7 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
         <button className="icon-button" onClick={exploration.reset} aria-label="Reset model view"><Icon name="reset" /></button>
         <button className="icon-button" onClick={toggleMotion} disabled={systemReduced} title={systemReduced ? 'Your device requests reduced motion' : undefined} aria-label={systemReduced ? 'System reduced motion' : paused ? 'Enable animations' : 'Pause animations'} aria-pressed={paused}><Icon name={paused ? 'play' : 'pause'} /></button>
       </div>
-      <div className="model-selector" aria-label="Choose portfolio object">{modelIds.map((id, i) => <button key={id} onClick={() => selectModel(id)} aria-pressed={model === id}><span className="model-tab-dot" />{['Systems', 'Project', 'Workflow'][i]}</button>)}</div>
+      <div className="model-selector" aria-label="Choose portfolio object">{modelIds.map((id, i) => <button key={id} onClick={() => selectModel(id)} aria-pressed={model === id}><span className="model-tab-index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>{['Systems', 'Project', 'Workflow'][i]}</button>)}</div>
     </div>
     <div className="hero-bottom"><span>Thoughtful interfaces. Dependable foundations.</span><a href="#journey">Scroll to explore <Icon name="down" /></a></div>
   </section>

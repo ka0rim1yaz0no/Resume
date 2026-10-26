@@ -68,7 +68,7 @@ export function Education({ paused = false }: { paused?: boolean }) {
     <div className="education-stage">
     <figure className="education-visual content-stage">
       <div className="education-selector" role="group" aria-label="Explore education emblems">{schools.map((school, index) => <button key={school.id} aria-pressed={selected === index} onClick={() => focusSchool(index)}><span className="company-indicator" style={{ background: school.accent }} />{school.shortName}</button>)}</div>
-      <div className="education-model">
+      <div className="education-model" style={{ '--identity-accent': active.accent } as CSSProperties}>
         <div className="scene-window section-scene" data-scene="education" data-scene-model="school" data-school={active.id} aria-hidden="true">
           <div className={`scene-poster school-static school-static-${active.id}`}><img src={active.logo} alt="" width="447" height="447" loading="lazy" /></div>
           <span className="scene-window-glow" />

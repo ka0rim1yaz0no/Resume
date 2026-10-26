@@ -7,7 +7,7 @@ import { Credentials } from '../resume/Credentials'
 import { About } from '../resume/About'
 import { Experience } from '../resume/Experience'
 import { credentials, education, experience, profile, project, skillGroups } from '../data/profile'
-import { technologyIcon } from '../data/technologies'
+import { technologyIcon, technologyVisuals } from '../data/technologies'
 import { organizations } from '../data/organizations'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -58,7 +58,8 @@ describe('Source-grounded résumé', () => {
       const visual = container.querySelector('[data-scene="skills"]')!
       expect(visual).toHaveAttribute('data-technology', skill)
       expect(visual.querySelector('img')).toHaveAttribute('src', technologyIcon(skill))
-      expect(container.querySelector('.model-context')).toHaveTextContent(`${skill} · From my toolkit`)
+      expect(screen.getByRole('status')).toHaveTextContent(technologyVisuals[skill].description)
+      expect(container.querySelector('#skills')).toHaveStyle({ '--asset-accent': technologyVisuals[skill].accent })
     }
   })
   it('shows the selected credential and its position without suggesting a document preview', () => {
