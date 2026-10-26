@@ -8,7 +8,8 @@ import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
 // Offline cuts: no browser tessellation, extra downloads or repeated full-model
-// clipping passes. Run with a folder containing the two uncut web exports.
+// clipping passes. This is only for the sculpture's magnetic opening.
+// The laptop uses complete hardware components in build-project-laptop.mjs.
 const source = resolve(process.argv[2] || 'artifacts/assembly/source')
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder })
 await Promise.all([MeshoptDecoder.ready, MeshoptEncoder.ready])
@@ -100,7 +101,7 @@ function capFaces(segments, axis, limit, sign, pivot) {
   return values
 }
 
-for (const id of ['systems-sculpture', 'project-laptop']) for (const profile of ['desktop', 'mobile']) {
+for (const id of ['systems-sculpture']) for (const profile of ['desktop', 'mobile']) {
   const sculpture = id === 'systems-sculpture'
   const labels = sculpture ? ['Foundation', 'Data left', 'Data centre', 'Data right', 'Core', 'Bridge', 'Display'] : ['Interface', 'Application', 'Database']
   const input = await readFile(resolve(source, `${sculpture ? '' : 'project-'}${profile}.glb`))

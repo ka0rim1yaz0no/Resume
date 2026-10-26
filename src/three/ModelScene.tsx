@@ -83,7 +83,7 @@ function Model({ id, active, motion, turn, reset, onReady, scrollProgress }: { i
 export default function ModelScene({ id, active, motion, turn, reset, onReady, onContextLost, scrollProgress }: { id: ModelId; active: boolean; motion: boolean; turn: number; reset: number; onReady: () => void; onContextLost: () => void; scrollProgress?: { current: number } }) {
   return <Canvas
     dpr={[1, sceneQuality.dpr]} frameloop="demand"
-    camera={{ position: [0, 0.15, 6.7], fov: 35, near: 0.1, far: 50 }}
+    camera={{ position: id === 'project-laptop' ? [0.5, 1.9, 6.7] : [0, 0.15, 6.7], fov: 35, near: 0.1, far: 50 }}
     gl={{ antialias: true, alpha: true, powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping }}
     style={{ touchAction: 'pan-y' }}
   >

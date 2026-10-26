@@ -61,18 +61,18 @@ describe('Source-grounded résumé', () => {
       expect(container.querySelector('.model-context')).toHaveTextContent(`${skill} · From my toolkit`)
     }
   })
-  it('shows the selected credential while preserving the missing-preview state', () => {
+  it('shows the selected credential and its position without suggesting a document preview', () => {
     render(<Credentials />)
     fireEvent.click(screen.getByRole('button', { name: /AI Ready ASEAN/ }))
     expect(screen.getByRole('status')).toHaveTextContent('AI Ready ASEAN: ASEAN Foundation')
-    expect(screen.getByRole('status')).toHaveTextContent('Document preview not supplied.')
+    expect(screen.getByRole('status')).toHaveTextContent('02 / 10')
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
   it('does not generate broken links for missing résumé documents', () => {
     const { container } = render(<About />)
     expect(container.querySelectorAll('a[download]')).toHaveLength(0)
-    expect(screen.getByRole('button', { name: /Professional résumé/ })).toBeDisabled()
-    expect(screen.getByRole('button', { name: /Curriculum vitae/ })).toBeDisabled()
+    expect(screen.getByRole('link', { name: 'Request résumé' })).toHaveAttribute('href', `mailto:${profile.email}?subject=Request%3A%20Professional%20r%C3%A9sum%C3%A9`)
+    expect(screen.getByRole('link', { name: 'Request CV' })).toHaveAttribute('href', `mailto:${profile.email}?subject=Request%3A%20Curriculum%20vitae`)
   })
 })
 

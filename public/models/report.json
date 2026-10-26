@@ -41,39 +41,31 @@
   },
   {
     "id": "project-laptop",
-    "sourceBytes": 49314288,
-    "webBytes": 3129356,
-    "sourceTriangles": 912718,
-    "webTriangles": 205892,
+    "webBytes": 401700,
+    "webTriangles": 59256,
     "nodes": [
-      "Interface",
-      "Application",
-      "Database"
+      "Display assembly",
+      "Keyboard and trackpad deck",
+      "Lower chassis and internals"
     ],
     "animations": [],
     "textures": [
       {
         "size": [
-          2048,
-          2048
+          1440,
+          810
         ],
-        "mime": "image/webp"
+        "mime": "image/png"
       },
       {
         "size": [
-          2048,
-          2048
+          1024,
+          512
         ],
-        "mime": "image/webp"
-      },
-      {
-        "size": [
-          2048,
-          2048
-        ],
-        "mime": "image/webp"
+        "mime": "image/png"
       }
-    ]
+    ],
+    "source": "Constructed physical assembly"
   },
   {
     "id": "workflow-board",

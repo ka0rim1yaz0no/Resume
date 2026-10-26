@@ -15,7 +15,7 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
   const layer = projectLayers[selected]
   useEffect(() => { window.dispatchEvent(new Event('model-explore')) }, [expanded])
   useGSAP(() => {
-    if (expanded && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.fromTo('.project-layer-details', { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' })
+    if (expanded && !root.current?.closest('.motion-paused') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.fromTo('.project-layer-details', { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' })
   }, { scope: root, dependencies: [expanded, selected], revertOnUpdate: true })
   const close = () => { setExpanded(false); toggle.current?.focus({ preventScroll: true }) }
   const toggleModel = () => {
@@ -32,7 +32,7 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
         <span className="work-label">{project.label} · 2025</span>
         <SceneWindow id="project-laptop" chapter="project" className="section-scene project-scene" />
         <button ref={toggle} className="project-model-toggle" onClick={toggleModel} aria-label={expanded ? 'Reassemble project laptop' : 'Separate laptop to explore how the project was built'} aria-expanded={expanded} aria-controls="project-layer-details"><span className="work-open" aria-hidden="true">{expanded ? '↺' : '+'}</span></button>
-        <span className="visual-footnote">{expanded ? 'Conceptual layers · Select a part' : 'Click the laptop to explore the build'}</span>
+        <span className="visual-footnote">{expanded ? 'Exploded assembly · Select a component' : 'Click to disassemble · Explore the build'}</span>
       </div>
         <div className="project-annotations" hidden={!expanded}>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{projectLayers.map((part, index) => <g key={part.label} data-selected={selected === index}><path data-project-leader={index} /><circle data-project-dot={index} r="0.8" /></g>)}</svg>
@@ -46,8 +46,8 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
         </div>
       <div className="resume-project-copy" data-reveal>
         <div id="project-layer-details" className="project-layer-details" role="region" aria-labelledby={`project-part-${selected}`} aria-live="polite" hidden={!expanded}>
-          <p className="project-layer-caption">{selected + 1} / 3 · {layer.label}</p><h3>{layer.title}</h3>
-          <div className="tags">{layer.stack.map(technology => <span key={technology}>{technology}</span>)}</div><p>{layer.description}</p>
+          <p className="project-layer-caption">{selected + 1} / 3 · {layer.component}</p><h3>{layer.title}</h3>
+          <div className="tags">{layer.stack.map(technology => <span key={technology}>{technology}</span>)}</div><p>{layer.description}</p><span className="project-analogy">A physical assembly illustrating the project’s software layers.</span>
         </div>
         <p className="section-label">{project.period}</p><h3>{project.title}</h3>{!expanded && <p>{project.description}</p>}
         {!expanded && <><div className="tags">{project.technology.map(item => <span key={item}>{item}</span>)}</div><div className="contribution-summary"><p><Icon name="check" />Server-side logic & API endpoints</p><p><Icon name="check" />Authentication & data processing</p><p><Icon name="check" />PostgreSQL schema & queries</p><p><Icon name="check" />Frontend / backend integration</p></div></>}

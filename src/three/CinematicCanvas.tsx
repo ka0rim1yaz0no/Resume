@@ -172,7 +172,7 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     }
     const ends = compact ? [[21, 14], [78, 53], [21, 87]] : [[14, 15], [84, 53], [17, 87]]
     for (const part of projectAssembly.parts) {
-      const point = part.object.getWorldPosition(annotation.point).project(camera)
+      const point = part.object.localToWorld(annotation.point.copy(part.anchor)).project(camera)
       const x = (point.x + 1) * 50, y = (1 - point.y) * 50, [endX, endY] = ends[part.index]
       annotation.leaders[part.index]?.setAttribute('d', `M ${x.toFixed(2)} ${y.toFixed(2)} L ${endX + (part.index === 1 ? -7 : 7)} ${endY} L ${endX} ${endY}`)
       annotation.dots[part.index]?.setAttribute('cx', x.toFixed(2)); annotation.dots[part.index]?.setAttribute('cy', y.toFixed(2))
@@ -308,9 +308,9 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
       fov = blend(fov, target.fov, q)
     }
     state.camera.position.z -= Math.max(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
-    state.camera.position.x += score.projectExplosion * (compact ? 0.08 : 0.22)
-    state.camera.position.y += score.projectExplosion * 0.22
-    state.camera.position.z += score.projectExplosion * 0.3
+    state.camera.position.x += score.projectExplosion * (compact ? 0.18 : 0.48)
+    state.camera.position.y += score.projectExplosion * 0.55
+    state.camera.position.z += score.projectExplosion * 0.22
     lookY += score.projectExplosion * 0.06
     const impact = magneticShake(opening, compact)
     state.camera.position.x += impact.x; state.camera.position.y += impact.y

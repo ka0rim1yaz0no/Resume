@@ -1,11 +1,11 @@
-import type { Mesh, Object3D, Vector3 } from 'three'
+import type { Euler, Mesh, Object3D, Vector3 } from 'three'
 import { clamp } from './choreography'
 
 const ease = (value: number) => { const t = clamp(value); return t ** 3 * (t * (t * 6 - 15) + 10) }
 const paths = [
-  { offset: [-0.12, 0.76, -0.13], rotation: [-0.10, -0.06, -0.025], delay: 0 },
-  { offset: [0.15, 0.02, 0.28], rotation: [0.075, 0.06, 0.02], delay: 0.08 },
-  { offset: [-0.08, -0.60, 0.03], rotation: [-0.075, -0.05, -0.02], delay: 0.14 },
+  { offset: [-0.10, 0.95, -0.36], rotation: [-0.12, -0.08, -0.02], delay: 0 },
+  { offset: [0.10, 0.32, 0.28], rotation: [0.10, 0.035, 0.015], delay: 0.08 },
+  { offset: [-0.06, -0.48, 0.06], rotation: [0.025, -0.025, -0.01], delay: 0.14 },
 ] as const
 
 export function projectPartPose(index: number, expansion: number, compact: boolean) {
@@ -23,11 +23,15 @@ export function projectPresence(from: string, to: string, mix: number, amount: n
 }
 
 export function bindProjectAssembly(root: Object3D) {
-  const parts: { object: Object3D; position: Vector3; index: number }[] = [], caps: Object3D[] = []
+  const parts: { object: Object3D; position: Vector3; rotation: Euler; anchor: Vector3; index: number }[] = [], caps: Object3D[] = []
   root.traverse(object => {
     if ((object as Mesh).geometry?.userData.assemblyCap) caps.push(object)
     const index = object.userData.projectPiece
-    if (Number.isInteger(index) && index >= 0 && index < paths.length) parts.push({ object, position: object.position.clone(), index })
+    if (Number.isInteger(index) && index >= 0 && index < paths.length) {
+      const anchor = object.position.clone().set(0, 0, 0)
+      if (Array.isArray(object.userData.projectAnchor)) anchor.fromArray(object.userData.projectAnchor)
+      parts.push({ object, position: object.position.clone(), rotation: object.rotation.clone(), anchor, index })
+    }
   })
   let previous = -1, previousCompact = false
   return {
@@ -40,7 +44,7 @@ export function bindProjectAssembly(root: Object3D) {
       for (const part of parts) {
         const pose = projectPartPose(part.index, expansion, compact)
         part.object.position.set(part.position.x + pose.x, part.position.y + pose.y, part.position.z + pose.z)
-        part.object.rotation.set(pose.rx, pose.ry, pose.rz)
+        part.object.rotation.set(part.rotation.x + pose.rx, part.rotation.y + pose.ry, part.rotation.z + pose.rz)
         part.object.updateMatrix()
       }
     },

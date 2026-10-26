@@ -14,9 +14,10 @@ await MeshoptEncoder.ready
 await MeshoptSimplifier.ready
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder })
 const selected = process.argv.slice(3)
-const ids = selected.length ? selected : ['systems-sculpture', 'project-laptop', 'workflow-board', 'react-js']
+const ids = selected.length ? selected : ['systems-sculpture', 'workflow-board', 'react-js']
+if (ids.includes('project-laptop')) throw new Error('Use npm run assets:laptop for the constructed laptop assembly')
 if (ids.some(id => !['systems-sculpture', 'project-laptop', 'workflow-board', 'react-js'].includes(id))) throw new Error('Unknown model ID')
-const report = selected.length ? JSON.parse(await readFile('public/models/report.json', 'utf8')) : []
+const report = JSON.parse(await readFile('public/models/report.json', 'utf8'))
 for (const id of ids) {
   const input = resolve(source, `${id}.glb`)
   const document = await io.read(input)

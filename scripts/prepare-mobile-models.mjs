@@ -15,8 +15,10 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies(
 const folder = 'public/models/mobile'
 await mkdir(folder, { recursive: true })
 await mkdir('artifacts/performance', { recursive: true })
-const manifest = {}, report = []
-for (const id of ['systems-sculpture', 'project-laptop', 'workflow-board', 'react-js']) {
+// The laptop has its own lower-detail constructed geometry, rather than a
+// simplification pass that could collapse the keys, hinge or shell openings.
+const manifest = JSON.parse(await readFile('src/data/mobileModels.json', 'utf8')), report = []
+for (const id of ['systems-sculpture', 'workflow-board', 'react-js']) {
   const input = await readFile(`public/models/${id}.glb`)
   const doc = await io.readBinary(input)
   const triangles = () => doc.getRoot().listMeshes().flatMap(m => m.listPrimitives()).reduce((sum, p) => sum + (p.getIndices()?.getCount() || 0) / 3, 0)

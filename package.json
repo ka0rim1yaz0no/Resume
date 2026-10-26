@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "assets:prepare": "node scripts/prepare-models.mjs",
-    "assets:mobile": "node scripts/prepare-mobile-models.mjs"
+    "assets:mobile": "node scripts/prepare-mobile-models.mjs",
+    "assets:laptop": "node scripts/build-project-laptop.mjs"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",

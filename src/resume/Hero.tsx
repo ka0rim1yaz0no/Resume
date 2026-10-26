@@ -14,7 +14,7 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
       <p className="hero-enter specialty-line">{profile.specialty}</p>
       <p className="hero-enter hero-description">Interfaces. Logic. Data.<br />Connected with purpose.</p>
       <div className="hero-enter hero-actions"><a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a><a className="text-link" href="#contact">Get in touch <Icon name="down" /></a></div>
-      <div className="hero-enter resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <><button disabled>Download résumé <Icon name="down" /></button><span>PDF not supplied yet</span></>}</div>
+      <div className="hero-enter resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
     </div>
     <div className="hero-art">
       <div className="art-coordinate art-coordinate-top">Interfaces / Logic / Data</div>
