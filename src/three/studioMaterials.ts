@@ -1,7 +1,7 @@
 import { Material, MeshStandardMaterial } from 'three'
 
 export const studioFinish = { roughness: 0.96, metalness: 0.1, envMapIntensity: 0.45, normalStrength: 0.35 }
-export const studioLighting = { environment: 0.8, ambient: 0.65, key: 2.15, fill: 0.85, rim: 0.8 }
+export const studioLighting = { environment: 0.95, ambient: 0.7, key: 2.45, fill: 1.0, rim: 1.15 }
 
 // Customize owned clones. Packed-map channels must not multiply the satin
 // roughness back down. Authored colour maps and cached materials stay intact.

@@ -39,9 +39,9 @@ export function useMotion(paused: boolean) {
       lenis.on('scroll', ScrollTrigger.update)
       gsap.ticker.add(tick)
 
-      if (!root.current?.classList.contains('intro-opening')) gsap.from('.hero-enter', { y: 28, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', clearProps: 'all' })
+      if (!root.current?.classList.contains('intro-opening')) gsap.from('.hero-enter', { y: 18, opacity: 0.7, duration: 0.8, stagger: 0.07, ease: 'power3.out', clearProps: 'all' })
       gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((element) => {
-        gsap.from(element, { y: 24, opacity: 0, duration: 0.7, ease: 'power2.out', clearProps: 'all', scrollTrigger: { trigger: element, start: 'top 93%', once: true } })
+        gsap.from(element, { y: 16, opacity: 0.72, duration: 0.6, ease: 'power2.out', clearProps: 'all', scrollTrigger: { trigger: element, start: 'top 98%', once: true } })
       })
       gsap.utils.toArray<HTMLElement>('[data-counter]').forEach((element) => {
         const value = { count: 0 }
