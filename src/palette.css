@@ -175,8 +175,10 @@ body { background: var(--bg); }
   .hero-art { min-height: 520px; }
   .hero-art > .hero-scene { top: 0; height: 400px; }
   .model-controls { bottom: 106px; }
+  .art-coordinate-top { top: 0; }
   .art-caption { bottom: 82px; }
   .model-selector { bottom: 20px; }
+  .hero-bottom { bottom: 8px; }
 }
 @media (max-width: 980px) {
   .personal-resume .navigation { background: #2c4c58; border-color: #8ca7a9; }
