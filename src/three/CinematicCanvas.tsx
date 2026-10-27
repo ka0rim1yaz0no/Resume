@@ -25,6 +25,7 @@ import { educationChapter } from './educationChoreography'
 import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from './sculptureAssembly'
 import { followScroll } from './motionRail'
 import { bindProjectAssembly, projectPresence } from './projectAssembly'
+import { bindProjectHighlight } from './projectHighlight'
 
 // Buffer decompression must not compete with touch scrolling on the main thread.
 const startDecoderWorkers = MeshoptDecoder.useWorkers
@@ -98,6 +99,7 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
   const normalized = useModelAsset(id, mobile)
   const assembly = useMemo(() => bindSculptureAssembly(normalized.clone), [normalized])
   const projectAssembly = useMemo(() => bindProjectAssembly(normalized.clone), [normalized])
+  const projectHighlight = useMemo(() => id === 'project-laptop' ? bindProjectHighlight(normalized.clone) : null, [id, normalized])
   const annotation = useMemo(() => {
     const panel = projectAnchor.closest('.resume-project')?.querySelector<HTMLElement>('.project-annotations')
     return { panel, leaders: [...(panel?.querySelectorAll<SVGPathElement>('[data-project-leader]') || [])], dots: [...(panel?.querySelectorAll<SVGCircleElement>('[data-project-dot]') || [])], point: new Vector3(), rect: '' }
@@ -112,7 +114,7 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     onLoaded(id)
     return () => { targets.delete(index) }
   }, [id, index, normalized, assembly, projectAssembly, compact, targets, onLoaded])
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!group.current || !score.active) return
     const film = journeyPose(score.progress, index, compact)
     const hero = chapterPose(score.heroScroll, true, compact)
@@ -148,10 +150,15 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
       weight = blend(weight, target.weight, amount)
     }
     if (id === 'project-laptop') {
+      const presence = projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
+      const selected = MathUtils.clamp(Number(projectAnchor.parentElement?.dataset.projectSelected || 0), 0, 2)
+      projectHighlight?.update(selected, score.projectExplosion * presence, delta, motion && presence > 0.001)
       group.current.rotation.y -= score.projectExplosion * 0.12
       group.current.rotation.x += score.projectExplosion * 0.04
       gl.domElement.dataset.projectExplosion = score.projectExplosion.toFixed(3)
       gl.domElement.dataset.projectPieces = String(projectAssembly.parts.length)
+      gl.domElement.dataset.projectSelected = String(selected)
+      gl.domElement.dataset.projectFocus = projectHighlight?.weights.map(value => value.toFixed(3)).join(',') || ''
     }
     group.current.visible = weight > 0.001
     const solid = weight * (1 - score.dissolve) * score.exitOpacity

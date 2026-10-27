@@ -12,11 +12,10 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
   const toggle = useRef<HTMLButtonElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [selected, setSelected] = useState(0)
-  const layer = projectLayers[selected]
-  useEffect(() => { window.dispatchEvent(new Event('model-explore')) }, [expanded])
+  useEffect(() => { window.dispatchEvent(new Event('model-explore')) }, [expanded, selected])
   useGSAP(() => {
     if (expanded && !root.current?.closest('.motion-paused') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.fromTo('.project-layer-details', { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' })
-  }, { scope: root, dependencies: [expanded, selected], revertOnUpdate: true })
+  }, { scope: root, dependencies: [expanded], revertOnUpdate: true })
   const close = () => { setExpanded(false); toggle.current?.focus({ preventScroll: true }) }
   const toggleModel = () => {
     setExpanded(value => !value)
@@ -28,7 +27,7 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
   return <section ref={root} id="project" className="section work-section" aria-labelledby="project-title"><div className="container">
     <div className="section-heading" data-reveal><div><p className="section-label">Featured project</p><h2 id="project-title">A learning platform.<br />A connected foundation.</h2></div><p className="section-intro">Backend logic, structured data, and collaboration across the application.</p></div>
     <article className="resume-project">
-      <div className="resume-project-art architecture-project content-stage" data-project-exploded={expanded ? '1' : '0'}>
+      <div className="resume-project-art architecture-project content-stage" data-project-exploded={expanded ? '1' : '0'} data-project-selected={selected}>
         <span className="work-label">{project.label} · 2025</span>
         <SceneWindow id="project-laptop" chapter="project" className="section-scene project-scene" />
         <button ref={toggle} className="project-model-toggle" onClick={toggleModel} aria-label={expanded ? 'Reassemble project laptop' : 'Separate laptop to explore how the project was built'} aria-expanded={expanded} aria-controls="project-layer-details"><span className="work-open" aria-hidden="true">{expanded ? '↺' : '+'}</span></button>
@@ -46,8 +45,10 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
         </div>
       <div className="resume-project-copy" data-reveal>
         <div id="project-layer-details" className="project-layer-details" role="region" aria-labelledby={`project-part-${selected}`} aria-live="polite" hidden={!expanded}>
-          <p className="project-layer-caption">{selected + 1} / 3 · {layer.component}</p><h3>{layer.title}</h3>
-          <div className="tags">{layer.stack.map(technology => <span key={technology}>{technology}</span>)}</div><p>{layer.description}</p><span className="project-analogy">Explore the layers behind the learning management system.</span>
+          <div className="project-layer-panels">{projectLayers.map((part, index) => <div key={part.label} className="project-layer-panel" data-active={selected === index} aria-hidden={selected !== index}>
+            <p className="project-layer-caption">{index + 1} / 3 · {part.component}</p><h3>{part.title}</h3>
+            <div className="tags">{part.stack.map(technology => <span key={technology}>{technology}</span>)}</div><p>{part.description}</p><span className="project-analogy">Explore the layers behind the learning management system.</span>
+          </div>)}</div>
         </div>
         <p className="section-label">{project.period}</p><h3>{project.title}</h3>{!expanded && <p>{project.description}</p>}
         {!expanded && <><dl className="project-metadata"><div><dt>Context</dt><dd>Collaborative capstone</dd></div><div><dt>My focus</dt><dd>Backend & database</dd></div></dl><div className="tags">{project.technology.map(item => <span key={item}>{item}</span>)}</div><div className="contribution-summary"><p><Icon name="check" />Server-side logic & API endpoints</p><p><Icon name="check" />Authentication & data processing</p><p><Icon name="check" />PostgreSQL schema & queries</p><p><Icon name="check" />Frontend / backend integration</p></div></>}

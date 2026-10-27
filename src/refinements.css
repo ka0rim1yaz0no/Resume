@@ -32,7 +32,7 @@ h1, h2, h3 { text-wrap: balance; }
 }
 .architecture-project .work-label { letter-spacing: .025em; }
 .project-layer-details { padding-block: 2px 12px; }
-.project-layer-details > p:not(.project-layer-caption) { color: var(--muted); font-size: 14px; line-height: 1.85; margin-top: 16px; }
+.project-layer-panel > p:not(.project-layer-caption) { color: var(--muted); font-size: 14px; line-height: 1.85; margin-top: 16px; }
 .project-layer-details .project-layer-caption { font-size: 11px; line-height: 1.7; }
 .project-analogy { display: block; margin-top: 16px; font-size: 11px; line-height: 1.7; color: var(--quiet); }
 .resume-project-copy > p:not(.section-label) { font-size: var(--copy-size); line-height: var(--copy-leading); }

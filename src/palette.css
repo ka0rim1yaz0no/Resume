@@ -162,12 +162,25 @@ h2 { font-weight: 700; }
 .project-model-toggle:hover .work-open { background: #e9ff98; }
 .project-part { color: var(--on-ink); background: #48117df5; border-color: #b38ce0; font-size: 11px; }
 .project-part > span { border-color: #b38ce0; font-size: 10px; }
-.project-part[aria-pressed=true] { color: #fcfaff; background: #6424b5; border-color: var(--accent); }
+.project-part[aria-pressed=true] { color: var(--ink); background: var(--accent-fill); border-color: var(--accent-fill); box-shadow: 0 0 0 3px #dbf86b24; }
+.project-part[aria-pressed=true] > span { border-color: var(--ink); }
+.project-part:focus-visible { outline: 2px solid var(--stage-ink); outline-offset: 3px; }
 .project-part:hover { border-color: #f4e7ff; }
 .project-annotations path { stroke: #ba8fed; }
 .project-annotations circle { fill: #8550c9; }
-.project-annotations g[data-selected=true] path { stroke: #6d28d9; }
+.project-annotations path, .project-annotations circle { transition: stroke 240ms ease, fill 240ms ease; }
+.project-annotations g[data-selected=true] path { stroke: var(--accent-fill); }
+.project-annotations g[data-selected=true] circle { fill: var(--accent-fill); }
 .project-layer-details { border-color: var(--accent); }
+.project-layer-panels { display: grid; min-width: 0; }
+.project-layer-panel { grid-area: 1 / 1; min-width: 0; opacity: 0; visibility: hidden; transform: translate3d(0, -4px, 0); pointer-events: none; transition: opacity 100ms ease, transform 160ms ease, visibility 0s 100ms; }
+.project-layer-panel[data-active=true] { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity 220ms ease 80ms, transform 280ms ease 80ms, visibility 0s; }
+.motion-paused .project-layer-panel { transition: none; transform: none; }
+.motion-paused .project-annotations :is(path, circle), .motion-paused .project-part { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .project-layer-panel { transition: none; transform: none; }
+  .project-annotations :is(path, circle), .project-part { transition: none; }
+}
 .resume-project-art.content-stage > .project-scene { height: auto; }
 .project-layer-details .project-layer-caption, .project-analogy { color: var(--muted); }
 .experience-visual { border: 1px solid var(--stage-border); border-top: 3px solid var(--accent-fill); border-radius: 6px; background: var(--stage-gradient); }
@@ -394,6 +407,9 @@ h2 { font-weight: 700; }
   .experience-visual.content-stage > .section-scene, .experience-visual .company-explorer { height: var(--company-view-height); }
   .skill-preview.content-stage > .section-scene { height: clamp(140px, calc(100svh - 210px), 200px); }
   .personal-resume .resume-project-art.content-stage { height: calc(100svh - 108px); min-height: 180px; aspect-ratio: auto; top: 96px; }
+}
+@media (max-width: 650px) and (max-height: 600px) and (orientation: landscape) {
+  .personal-resume .resume-project-art.content-stage { top: auto; }
 }
 @media (max-width: 650px) and (orientation: portrait) {
   .journey-frame { min-height: 0; display: grid; grid-template-rows: 52px clamp(48px, 16vw, 72px) minmax(120px, 1fr) 116px 52px; gap: 6px; padding: 10px 20px; }

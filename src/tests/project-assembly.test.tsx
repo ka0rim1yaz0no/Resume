@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { Group } from 'three'
 import { FeaturedProject } from '../resume/FeaturedProject'
 import { project } from '../data/profile'
@@ -24,6 +24,9 @@ describe('Explorable project layers', () => {
     for (const layer of projectLayers) {
       fireEvent.click(screen.getByRole('button', { name: layer.label }))
       const panel = screen.getByRole('region', { name: layer.label })
+      expect(container.querySelector('[data-project-selected]')).toHaveAttribute('data-project-selected', String(projectLayers.indexOf(layer)))
+      expect(within(panel).getByRole('heading', { name: layer.title })).toBeInTheDocument()
+      for (const other of projectLayers.filter(value => value !== layer)) expect(within(panel).queryByRole('heading', { name: other.title })).not.toBeInTheDocument()
       expect(panel).toHaveTextContent(layer.title)
       expect(panel).toHaveTextContent(layer.description)
       layer.stack.forEach(technology => { expect(project.technology).toContain(technology); expect(panel).toHaveTextContent(technology) })
