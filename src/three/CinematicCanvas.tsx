@@ -8,7 +8,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { modelIds, modelRegistry, modelUrl, type ModelId } from '../data/assets'
 import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
-import { contentCamera, contentPose, contentRoute, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioGold, studioLighting } from './studioMaterials'
@@ -39,6 +39,11 @@ function documentTop(element: HTMLElement) {
   let top = 0
   for (let node: HTMLElement | null = element; node; node = node.offsetParent as HTMLElement | null) top += node.offsetTop + (node.offsetParent?.clientTop || 0)
   return top
+}
+
+function rootFlight(element: HTMLElement) {
+  const host = element.closest('.personal-resume')?.querySelector<HTMLElement>('.cinematic-canvas')
+  return { host, plate: host?.querySelector<HTMLElement>('[data-scene-flight]') }
 }
 
 function measureDock(element: HTMLElement, header: number): Dock {
@@ -301,8 +306,9 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     let lookX = blend(shot.lookX, film.lookX, t), lookY = blend(shot.lookY, film.lookY, t)
     const lens = state.camera as import('three').PerspectiveCamera
     let fov = blend(shot.fov, film.fov, t)
-    if (score.content.amount > 0) {
-      const target = contentCamera(score.content, compact), q = score.content.amount
+    const cameraMix = Math.max(score.content.amount, score.content.flight || 0)
+    if (cameraMix > 0) {
+      const target = contentCamera(score.content, compact), q = cameraMix
       const p = state.camera.position
       p.set(blend(p.x, target.x, q), blend(p.y, target.y, q), blend(p.z, target.z, q))
       lookX = blend(lookX, target.lookX, q); lookY = blend(lookY, target.lookY, q)
@@ -331,12 +337,13 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
 }
 
 function Director({ anchors, score, model, turn, reset, motion, reduced, running, ready, pointer, onError, onRendered, children }: { anchors: Anchors; score: Score; model: ModelId; turn: number; reset: number; motion: boolean; reduced: boolean; running: boolean; ready: boolean; pointer: RefObject<{ x: number; y: number }>; onError: () => void; onRendered: () => void; children: (environment: Texture) => React.ReactNode }) {
-  const { gl, invalidate } = useThree()
+  const { gl, invalidate, size } = useThree()
   const [environment, setEnvironment] = useState<Texture | null>(null)
   const dirty = useRef(true)
   const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect; education: DOMRect } | null>(null)
   const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock; education: Dock } | null>(null)
   const fitScene = useMemo(createSceneFramer, [])
+  const flight = useMemo(() => rootFlight(anchors.hero), [anchors])
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   useEffect(() => {
@@ -361,9 +368,11 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       window.removeEventListener('scroll', wake); window.removeEventListener('resize', remeasure)
       window.removeEventListener('model-explore', wake)
       observer.disconnect()
+      if (flight.plate) flight.plate.style.opacity = '0'
+      flight.host?.removeAttribute('data-flight-active')
       target.dispose(); generator.dispose(); room.dispose()
     }
-  }, [gl, invalidate, onError, anchors])
+  }, [gl, invalidate, onError, anchors, flight])
   useEffect(() => { score.elapsed = 0; invalidate() }, [score, reset, invalidate])
   useEffect(() => { invalidate(3) }, [model, turn, motion, running, ready, invalidate])
   useFrame((_, rawDelta) => {
@@ -394,7 +403,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       film: { rect: journey, arrive: 0, leave: thresholds.current.film },
       project: { ...thresholds.current.project, rect: measurements.current.project }, experience: { ...thresholds.current.experience, rect: measurements.current.experience }, skills: { ...thresholds.current.skills, rect: measurements.current.skills }, education: { ...thresholds.current.education, rect: measurements.current.education },
     }
-    score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(scroll, docks, header, window.innerHeight)
+    score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(scroll, docks, header, window.innerHeight, motion ? size.width : undefined)
     score.organizationFocus = MathUtils.clamp(Number(anchors.experience.dataset.experienceFocus || 0), 0, 2)
     const organization = organizationChapter(score.organizationFocus)
     const settledExperience = score.content.to === 'experience' && (score.content.from === 'experience' || score.content.mix > 0.995)
@@ -407,26 +416,35 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.educationFlux = settledEducation ? education.flux : 0
     score.educationFrom = 10 + education.from; score.educationTo = 10 + education.to; score.educationMix = education.mix
     const introRect = openingActive ? openingViewport(hero, establishing, opening) : hiddenFilm ? hero : transition.progress >= 1 ? journey : transition.rect
-    const rect = score.content.amount > 0 ? score.content.viewport : introRect
+    const inContent = score.content.from !== 'film' || score.content.to !== 'film'
+    const rect = inContent ? score.content.viewport : introRect
     score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
     score.opening = opening
     score.heroScroll = MathUtils.clamp(-heroSection.top / Math.max(1, heroSection.height), 0, 1)
     score.progress = Number(anchors.journey.dataset.sceneScore || 0)
     const filmWeights = modelIds.map((_, index) => journeyPose(score.progress, index, false).weight)
     const filmFlux = 2 * (1 - filmWeights.reduce((sum, weight) => sum + weight * weight, 0))
-    const contentFlux = score.content.from === score.content.to ? 0 : Math.sin(score.content.mix * Math.PI) ** 2
-    score.flux = blend(filmFlux, contentFlux, score.content.amount)
+    const cut = contentTransitionMix(score.content.mix)
+    const contentFlux = score.content.from === score.content.to ? 0 : Math.sin(cut * Math.PI) ** 2
+    score.flux = inContent ? contentFlux : filmFlux
     score.particleFrom = score.progress < 0.5 ? 0 : 1
     score.particleTo = score.progress < 0.5 ? 1 : 2
     score.particleMix = score.progress < 0.5 ? filmWeights[1] : filmWeights[2]
-    if (score.content.amount > 0) {
+    if (inContent) {
       const subject = { film: 2, project: 1, experience: 7 + Math.round(score.organizationFocus), skills: anchors.skills.dataset.technology === 'React.js' ? 3 : 4, education: 10 + score.educationDisplayed }
       score.particleFrom = subject[score.content.from]; score.particleTo = subject[score.content.to]
-      score.particleMix = score.content.mix
+      score.particleMix = cut
     }
     score.exitOpacity = score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1
     score.active = running && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
     score.viewport = rect
+    const flightAmount = motion && ready && score.active ? score.content.flight || 0 : 0
+    if (flight.plate) {
+      flight.plate.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0) scale(${rect.width / Math.max(1, size.width)}, ${rect.height / Math.max(1, size.height)})`
+      flight.plate.style.opacity = String(flightAmount * 0.96)
+    }
+    if (flight.host) flight.host.dataset.flightActive = String(flightAmount > 0.015)
+    gl.domElement.dataset.flight = flightAmount.toFixed(3)
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
@@ -457,7 +475,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     anchors.journey.dataset.sceneCurrent = current
     anchors.journey.dataset.sceneProgress = score.progress.toFixed(3)
     gl.domElement.dataset.handoff = score.handoff.toFixed(3)
-    gl.domElement.dataset.stage = score.content.amount > 0 ? score.content.from === score.content.to ? score.content.to : `${score.content.from}-to-${score.content.to}` : score.handoff > 0.5 ? 'journey' : 'hero'
+    gl.domElement.dataset.stage = inContent ? score.content.from === score.content.to ? score.content.to : `${score.content.from}-to-${score.content.to}` : score.handoff > 0.5 ? 'journey' : 'hero'
     gl.domElement.dataset.routeMix = score.content.mix.toFixed(3)
     gl.domElement.dataset.particles = score.flux.toFixed(3)
     gl.domElement.dataset.exitOpacity = score.exitOpacity.toFixed(3)
@@ -476,6 +494,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const aspect = rect.width / rect.height
     if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
     const retreat = fitScene(scene, lens, aspect, delta)
+    gl.domElement.dataset.cameraFinal = lens.position.toArray().map(value => value.toFixed(3)).join(',')
     const zoomOut = Math.min(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
     if (zoomOut < 0) { lens.position.z -= zoomOut; lens.updateMatrixWorld() }
     const left = rect.left - size.left

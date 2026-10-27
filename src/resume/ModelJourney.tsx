@@ -30,24 +30,21 @@ export function ModelJourney({ paused, systemReduced, toggleMotion }: { paused: 
   }
   useGSAP(() => {
     const sceneWindow = section.current?.querySelector<HTMLElement>('[data-scene="journey"]')
-    const score = { progress: 0 }
-    const update = () => {
-      // Context reversion restores the tween's starting value. It must not
-      // replace the visible chapter when the visitor presses Pause.
+    const update = (progress: number) => {
       if (pausedNow.current) return
-      if (sceneWindow) sceneWindow.dataset.sceneScore = String(score.progress)
-      setActive(score.progress < 0.33 ? 0 : score.progress < 0.68 ? 1 : 2)
+      if (sceneWindow) sceneWindow.dataset.sceneScore = String(progress)
+      setActive(progress < 0.33 ? 0 : progress < 0.68 ? 1 : 2)
     }
     if (paused) return
-    // This score drives both the type and the models. There is one playhead,
-    // including while numeric scrub catches up after fast wheel/touch input.
-    const tween = gsap.fromTo(score, { progress: 0 }, { progress: 1, ease: 'none', immediateRender: false, onUpdate: update, scrollTrigger: {
+    // Lenis already smooths native scroll. A single progress source keeps the
+    // captions and camera together, including deep links and reverse scrolling.
+    const trigger = ScrollTrigger.create({
       trigger: section.current,
       start: () => `top top+=${window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100}`,
-      end: 'bottom bottom', scrub: 0.85, invalidateOnRefresh: true,
-    } })
-    score.progress = tween.scrollTrigger?.progress || 0
-    update()
+      end: 'bottom bottom', onUpdate: self => update(self.progress), onRefresh: self => update(self.progress),
+    })
+    update(trigger.progress)
+    return () => trigger.kill()
   }, { scope: section, dependencies: [paused], revertOnUpdate: true })
   return <section id="journey" ref={section} className={`model-journey ${systemReduced ? 'journey-reduced' : ''}`} aria-label="Systems, interfaces, and workflow in motion">
     <div className="journey-frame" data-journey-chapter={active}>

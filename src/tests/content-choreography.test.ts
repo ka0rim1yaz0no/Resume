@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contentCamera, contentPose, contentRoute, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
 
 const docks: ContentDocks = {
   film: { rect: { left: 400, top: 180, width: 850, height: 600 }, arrive: 0, leave: 1000 },
@@ -12,6 +12,33 @@ const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
 const weights = (r: ContentRoute) => [0, 1, 2, 3, 4, 5].map(i => contentPose(r, i, false).weight)
 
 describe('Continuous résumé scene rail', () => {
+  it('opens a larger safe shot during the zoom and returns exactly to both docks', () => {
+    for (const width of [320, 390, 1280]) {
+      const height = width < 650 ? 844 : 900, header = width < 650 ? 76 : 100
+      const mobileDocks = Object.fromEntries(Object.entries(docks).map(([key, dock]) => [key, { ...dock, rect: { ...dock.rect, left: 20, width: Math.min(width - 40, dock.rect.width) } }])) as ContentDocks
+      const start = contentRoute(2200, mobileDocks, header, height, width)
+      const middle = contentRoute(2500, mobileDocks, header, height, width)
+      const end = contentRoute(2800, mobileDocks, header, height, width)
+      expect(start.viewport).toEqual(mobileDocks.project.rect)
+      expect(end.viewport).toEqual(mobileDocks.experience.rect)
+      expect(middle.viewport.width).toBeGreaterThan(start.viewport.width)
+      expect(middle.viewport.left).toBeGreaterThanOrEqual(0)
+      expect(middle.viewport.left + middle.viewport.width).toBeLessThanOrEqual(width)
+      expect(middle.viewport.top).toBeGreaterThanOrEqual(header + 16)
+      expect(middle.viewport.top + middle.viewport.height).toBeLessThanOrEqual(height - 16)
+      expect(contentCamera(middle, width < 650).z).toBeLessThan(contentCamera(start, width < 650).z)
+    }
+  })
+  it('keeps a complete subject through the push-in, exchanges it at the match cut, and settles before docking', () => {
+    expect(contentTransitionMix(0.2)).toBe(0)
+    expect(contentTransitionMix(0.5)).toBeCloseTo(0.5)
+    expect(contentTransitionMix(0.8)).toBe(1)
+    const sample = (mix: number) => ({ from: 'project', to: 'skills', amount: 1, mix, viewport: docks.skills.rect }) as ContentRoute
+    expect(contentPose(sample(0.2), 1, false).weight).toBe(1)
+    expect(contentPose(sample(0.2), 3, false).weight).toBe(0)
+    expect(contentPose(sample(0.8), 3, false).weight).toBe(1)
+    expect(contentPose(sample(0.5), 1, false).scale).toBeGreaterThan(contentPose(sample(0), 1, false).scale)
+  })
   it('docks the laptop, organization identity, and React model into the actual content stages', () => {
     expect(route(800).amount).toBe(0)
     for (const [scroll, stage, expected] of [[1800, 'project', [0, 1, 0, 0, 0, 0]], [3300, 'experience', [0, 0, 0, 0, 1, 0]], [4800, 'skills', [0, 0, 0, 1, 0, 0]], [6000, 'education', [0, 0, 0, 0, 0, 1]]] as const) {

@@ -7,7 +7,7 @@ import { useModelExploration } from '../hooks/useModelExploration'
 
 export function Hero({ model, selectModel, turnLeft, turnRight, resetView, paused, systemReduced, toggleMotion }: { model: ModelId; selectModel: (id: ModelId) => void; turnLeft: () => void; turnRight: () => void; resetView: () => void; paused: boolean; systemReduced: boolean; toggleMotion: () => void }) {
   const objectIndex = Math.max(0, modelIds.indexOf(model))
-  const assetAccent = ['#87622d', '#746148', '#987341'][objectIndex]
+  const assetAccent = ['#8d7c54', '#7a8585', '#ac9562'][objectIndex]
   const resume = documents[0]
   const exploration = useModelExploration(model, resetView)
   return <section className="hero resume-hero container" aria-labelledby="hero-title">

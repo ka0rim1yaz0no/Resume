@@ -22,17 +22,20 @@ describe('Consistent studio and surface dissolve', () => {
     expect(source.roughness).toBe(0.2)
     owned.dispose(); source.dispose(); colour.dispose(); packed.dispose()
   })
-  it('warms laptop hardware without changing the display pixels or cached source', () => {
+  it('separates titanium hardware and gold edges without changing display pixels or cached source', () => {
     const hardware = new MeshStandardMaterial({ color: '#3a5945', name: 'Satin aluminum' })
     const display = new MeshStandardMaterial({ color: '#ddffee', name: 'Display pixels', map: new Texture() })
     const brass = cloneStudioMaterial(hardware, 'project-laptop') as MeshStandardMaterial
+    const edgeSource = new MeshStandardMaterial({ name: 'Machined edges' })
+    const edge = cloneStudioMaterial(edgeSource, 'project-laptop') as MeshStandardMaterial
     const screen = cloneStudioMaterial(display, 'project-laptop') as MeshStandardMaterial
-    expect(brass.color.r).toBeGreaterThan(brass.color.g)
-    expect(brass.color.g).toBeGreaterThan(brass.color.b)
+    expect(brass.color.b).toBeGreaterThan(brass.color.r)
+    expect(edge.color.r).toBeGreaterThan(edge.color.g)
+    expect(edge.color.g).toBeGreaterThan(edge.color.b)
     expect(hardware.color).toEqual(new Color('#3a5945'))
     expect(screen.color).toEqual(display.color)
     expect(screen.map).toBe(display.map)
-    brass.dispose(); screen.dispose(); hardware.dispose(); display.map?.dispose(); display.dispose()
+    brass.dispose(); screen.dispose(); edge.dispose(); edgeSource.dispose(); hardware.dispose(); display.map?.dispose(); display.dispose()
   })
   it('keeps relief and lettering contrast when skill colours become gold', () => {
     const luminance = (c: Color) => c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722

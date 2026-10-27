@@ -47,6 +47,7 @@ export function ScrollExperience({ root, model, turn, reset, motion, running }: 
   }
   return <>
     <div className="cinematic-canvas" ref={host} aria-hidden="true" data-testid="cinematic-canvas" data-scene-status={!supported ? 'static' : failed ? 'error' : 'active'}>
+      <div className="cinematic-flight" data-scene-flight />
       {supported && !failed && <CanvasBoundary key={attempt} onError={error}><Suspense fallback={null}><CinematicCanvas root={root} model={model} turn={turn} reset={reset} motion={motion} running={running} mobile={mobile} onError={error} /></Suspense></CanvasBoundary>}
     </div>
     {failed && <div className="scene-retry" role="status">3D is unavailable. Static illustrations are shown. <button onClick={() => void retry()}>Retry 3D</button></div>}
