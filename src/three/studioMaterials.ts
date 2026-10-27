@@ -1,13 +1,13 @@
 import { Color, Material, MathUtils, MeshStandardMaterial } from 'three'
 import type { ModelId } from '../data/assets'
 
-export const studioFinish = { roughness: 0.86, metalness: 0.34, envMapIntensity: 0.55, normalStrength: 0.2 }
-export const studioLighting = { environment: 0.75, ambient: 0.42, key: 2.5, fill: 0.9, rim: 1.8 }
-export const studioLightColors = { key: '#fffaff', fill: '#dac5f1', rim: '#ebdbff' }
+export const studioFinish = { roughness: 0.86, metalness: 0.3, envMapIntensity: 0.5, normalStrength: 0.2 }
+export const studioLighting = { environment: 0.75, ambient: 0.35, key: 2.8, fill: 0.72, rim: 2.1 }
+export const studioLightColors = { key: '#fffaff', fill: '#c7a0ff', rim: '#eee4ff' }
 // Screen-door coverage keeps every fading surface in the depth buffer. Complex
 // GLBs cannot be triangle-sorted correctly by ordinary translucent blending.
 export const studioFade = { transparent: false, alphaHash: true, depthWrite: true }
-export const studioPalette = { amethyst: '#b192d4', edge: '#c5b4dc', body: '#392b4b', pearl: '#f4edfc', dust: '#9f5ccb' }
+export const studioPalette = { amethyst: '#b890ff', edge: '#ece4ff', body: '#31134f', pearl: '#fcfaff', dust: '#b87aff' }
 const luminance = (color: Color) => color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
 const normalizedTint = (hex: string) => { const color = new Color(hex); return color.multiplyScalar(1 / luminance(color)) }
 const amethystTint = normalizedTint(studioPalette.amethyst)
@@ -21,9 +21,9 @@ export function studioEnamelColor(source: Color) {
 }
 
 const laptopColors: Record<string, string> = {
-  'Satin aluminum': '#a79ab8', 'Machined edges': studioPalette.edge, 'Graphite bezel': studioPalette.body,
-  'Sculpted keycaps': '#44354f', 'Glass trackpad': '#887995', 'Circuit substrate': '#614471',
-  'Copper connections': '#a582c4', 'Thermal components': '#7b6b8c', 'Battery modules': '#493951',
+  'Satin aluminum': '#c0b2d4', 'Machined edges': studioPalette.edge, 'Graphite bezel': studioPalette.body,
+  'Sculpted keycaps': '#392149', 'Glass trackpad': '#9b85b6', 'Circuit substrate': '#633894',
+  'Copper connections': '#b990ec', 'Thermal components': '#837294', 'Battery modules': '#412650',
   Fasteners: studioPalette.edge, 'Indicator glass': studioPalette.pearl,
 }
 
