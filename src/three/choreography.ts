@@ -30,8 +30,9 @@ export function cinematicCamera(progress: number, compact: boolean) {
   const turn = p * Math.PI * 2
   const breathing = Math.sin(p * Math.PI)
   const pullback = Math.exp(-(((p - 0.33) / 0.095) ** 2)) + Math.exp(-(((p - 0.68) / 0.1) ** 2))
-  return { x: Math.cos(turn + 0.3) * 0.46 * amplitude, y: 0.2 + breathing * 0.15,
-    z: 7.05 - breathing * 0.12 + pullback * 0.65,
+  const closeup = Math.exp(-(((p - 0.1) / 0.16) ** 2)) + Math.exp(-(((p - 0.5) / 0.16) ** 2)) + Math.exp(-(((p - 0.92) / 0.16) ** 2))
+  return { x: Math.cos(turn + 0.3) * 0.56 * amplitude, y: 0.2 + breathing * 0.18,
+    z: 6.9 - closeup * 0.4 + pullback * 0.55,
     lookX: -Math.sin(turn) * 0.045 * amplitude, lookY: 0.035 + breathing * 0.035, fov: 35 + breathing * 0.55 }
 }
 

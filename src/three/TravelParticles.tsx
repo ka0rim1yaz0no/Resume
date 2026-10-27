@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { BufferGeometry, Float32BufferAttribute, Matrix4, Points, ShaderMaterial } from 'three'
+import { BufferGeometry, Color, Float32BufferAttribute, Matrix4, Points, ShaderMaterial } from 'three'
 import { surfacePointCount, type SurfaceTarget, type SurfaceTargets } from './surfaceCloud'
+import { studioGold } from './studioMaterials'
 
 type DissolveScore = { active: boolean; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number }
 
@@ -12,7 +13,7 @@ function dissolvePair(score: DissolveScore) {
     ? { from: score.organizationFrom, to: score.organizationTo, flux: score.organizationFlux, mix: score.organizationMix, attenuation: 1 }
     : score.skillFlux > 0
     ? { from: score.skillFrom, to: score.skillTo, flux: score.skillFlux, mix: score.skillMix, attenuation: 1 }
-    : { from: score.particleFrom, to: score.particleTo, flux: score.flux, mix: score.particleMix, attenuation: 0.88 }
+    : { from: score.particleFrom, to: score.particleTo, flux: score.flux, mix: score.particleMix, attenuation: 0.78 }
 }
 
 export function TravelParticles({ score, targets, motion }: { score: DissolveScore; targets: SurfaceTargets; motion: boolean }) {
@@ -27,14 +28,14 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
       .setAttribute('aTarget', new Float32BufferAttribute(new Float32Array(pointCount * 3), 3))
       .setAttribute('aSeed', new Float32BufferAttribute(seeds, 1))
   }, [pointCount])
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() } }), [])
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() }, uBronze: { value: new Color(studioGold.dust) }, uGold: { value: new Color(studioGold.brass) }, uChampagne: { value: new Color(studioGold.champagne) } }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   // Missing surfaces retain the solid transition instead of leaving a gap.
   useFrame(() => {
     const pair = dissolvePair(score)
     const ready = targets.has(pair.from) && targets.has(pair.to)
-    score.organizationDissolve = motion && ready ? score.organizationFlux : 0
-    score.educationDissolve = motion && ready ? score.educationFlux : 0
+    score.organizationDissolve = motion && ready ? score.organizationFlux * 0.9 : 0
+    score.educationDissolve = motion && ready ? score.educationFlux * 0.9 : 0
     score.dissolve = score.organizationFlux > 0.001 || score.educationFlux > 0.001 ? 0 : motion && ready ? pair.flux * pair.attenuation : 0
   }, -2)
   useFrame(({ gl }) => {
@@ -44,6 +45,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     const active = motion && score.active && transition.flux > 0.008 && !!from && !!to
     points.current.visible = active
     gl.domElement.dataset.dissolvePoints = active ? String(pointCount) : '0'
+    gl.domElement.dataset.dustPalette = 'bronze-gold-champagne'
     if (!active || !from || !to) return
     if (pair.current?.from !== from || pair.current?.to !== to) {
       const origin = geometry.attributes.position as Float32BufferAttribute
@@ -67,20 +69,27 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
         void main() {
           vec3 a = (uFrom * vec4(position, 1.0)).xyz;
           vec3 b = (uTo * vec4(aTarget, 1.0)).xyz;
-          float travel = smoothstep(0.12, 0.88, uMix);
+          float travel = smoothstep(0.08, 0.92, uMix);
           float angle = aSeed * 62.83185 + uTime * 0.09;
           vec3 scatter = vec3(cos(angle), sin(angle * 1.7), sin(angle * 0.7));
-          vec3 p = mix(a, b, travel) + scatter * uFlux * (0.25 + aSeed * 0.55);
+          // A rising curved ribbon links both silhouettes, then settles onto
+          // the destination. The same path reverses with the scroll playhead.
+          vec3 arc = vec3(sin(travel * 3.14159) * (aSeed - 0.5) * 0.45, sin(travel * 3.14159) * 0.24, 0.0);
+          vec3 p = mix(a, b, travel) + arc * uFlux + scatter * uFlux * (0.18 + aSeed * 0.48);
           vec4 view = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * view;
-          gl_PointSize = clamp((1.2 + aSeed) * 12.0 / -view.z, 1.4, 4.2) * uDpr;
+          gl_PointSize = clamp((1.15 + aSeed) * 12.0 / -view.z, 1.4, 3.8) * uDpr;
           vLight = aSeed;
         }`}
-      fragmentShader={`uniform float uFlux; varying float vLight;
+      fragmentShader={`uniform float uFlux; uniform vec3 uBronze, uGold, uChampagne; varying float vLight;
         void main() {
-          float disc = 1.0 - smoothstep(0.18, 0.5, length(gl_PointCoord - 0.5));
-          vec3 colour = mix(vec3(0.47, 0.68, 0.56), vec3(0.87, 0.9, 0.78), vLight);
-          gl_FragColor = vec4(colour, disc * uFlux * 0.88);
+          float radius = length(gl_PointCoord - 0.5);
+          float disc = 1.0 - smoothstep(0.2, 0.5, radius);
+          vec3 colour = mix(uBronze, uGold, smoothstep(0.12, 0.92, vLight));
+          colour = mix(colour, uChampagne, (1.0 - smoothstep(0.0, 0.13, radius)) * step(0.8, vLight));
+          gl_FragColor = vec4(colour, disc * uFlux * 0.96);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
         }`} />
   </points>
 }

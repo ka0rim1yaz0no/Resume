@@ -51,7 +51,9 @@ export function contentPose(route: ContentRoute, index: number, compact: boolean
 }
 
 export function contentCamera(route: ContentRoute, compact: boolean) {
-  const arc = route.from === route.to ? 0 : Math.sin(route.mix * Math.PI)
+  const arc = route.from === route.to ? 0 : Math.sin(route.mix * Math.PI) ** 2
   const side = (stage: ContentStage) => stage === 'skills' ? -0.18 : 0.24
-  return { x: blend(side(route.from), side(route.to), route.mix) * (compact ? 0.4 : 1), y: 0.18 + arc * 0.05, z: 6.9 + arc * 0.45, lookX: 0, lookY: 0, fov: 35 }
+  // Pull out for the dust match cut, then ease into a closer three-quarter
+  // portrait. The safety framer still contains every physical component.
+  return { x: (blend(side(route.from), side(route.to), route.mix) + arc * 0.16) * (compact ? 0.4 : 1), y: 0.18 + arc * 0.12, z: 6.35 + arc * 0.9, lookX: 0, lookY: 0, fov: 34 + arc * 1.5 }
 }

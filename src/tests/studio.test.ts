@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Texture, Vector3 } from 'three'
-import { cloneStudioMaterial } from '../three/studioMaterials'
+import { Box3, BoxGeometry, Color, Group, Mesh, MeshStandardMaterial, Texture, Vector3 } from 'three'
+import { cloneStudioMaterial, goldEnamelColor } from '../three/studioMaterials'
 import { sampleSurface } from '../three/surfaceCloud'
 import { dockVisibility } from '../three/contentChoreography'
 
@@ -13,13 +13,37 @@ describe('Consistent studio and surface dissolve', () => {
     expect(owned.map).toBe(colour)
     expect(owned.roughnessMap).toBeNull()
     expect(owned.metalnessMap).toBeNull()
-    expect(owned.roughness).toBeGreaterThan(0.9)
+    expect(owned.roughness).toBeGreaterThan(0.85)
+    expect(owned.metalness).toBeLessThan(0.4)
     expect(owned.forceSinglePass).toBe(true)
     expect(source.forceSinglePass).toBe(false)
     expect(source.roughnessMap).toBe(packed)
     expect(source.metalnessMap).toBe(packed)
     expect(source.roughness).toBe(0.2)
     owned.dispose(); source.dispose(); colour.dispose(); packed.dispose()
+  })
+  it('warms laptop hardware without changing the display pixels or cached source', () => {
+    const hardware = new MeshStandardMaterial({ color: '#3a5945', name: 'Satin aluminum' })
+    const display = new MeshStandardMaterial({ color: '#ddffee', name: 'Display pixels', map: new Texture() })
+    const brass = cloneStudioMaterial(hardware, 'project-laptop') as MeshStandardMaterial
+    const screen = cloneStudioMaterial(display, 'project-laptop') as MeshStandardMaterial
+    expect(brass.color.r).toBeGreaterThan(brass.color.g)
+    expect(brass.color.g).toBeGreaterThan(brass.color.b)
+    expect(hardware.color).toEqual(new Color('#3a5945'))
+    expect(screen.color).toEqual(display.color)
+    expect(screen.map).toBe(display.map)
+    brass.dispose(); screen.dispose(); hardware.dispose(); display.map?.dispose(); display.dispose()
+  })
+  it('keeps relief and lettering contrast when skill colours become gold', () => {
+    const luminance = (c: Color) => c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
+    for (const hex of ['#86bfc5', '#e9dc75', '#c7d6ca', '#262626']) {
+      const source = new Color(hex), before = source.clone(), result = goldEnamelColor(source)
+      expect(result.r).toBeGreaterThan(result.g)
+      expect(result.g).toBeGreaterThan(result.b)
+      expect(luminance(result)).toBeCloseTo(luminance(source), 6)
+      expect(source).toEqual(before)
+    }
+    expect(luminance(goldEnamelColor(new Color('#e9dc75')))).toBeGreaterThan(luminance(goldEnamelColor(new Color('#262626'))) * 5)
   })
   it('samples normalized surfaces independently of the live camera-stage pose', () => {
     const rig = new Group(), normalized = new Group()

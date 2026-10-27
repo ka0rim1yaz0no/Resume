@@ -53,11 +53,11 @@ function Model({ id, active, motion, turn, reset, onReady, scrollProgress }: { i
     const materials: Material[] = []
     clone.traverse(object => {
       if (!(object instanceof Mesh)) return
-      const copy = (source: Material) => { const owned = cloneStudioMaterial(source); materials.push(owned); return owned }
+      const copy = (source: Material) => { const owned = cloneStudioMaterial(source, id); materials.push(owned); return owned }
       object.material = Array.isArray(object.material) ? object.material.map(copy) : copy(object.material)
     })
     return { clone, scale, materials }
-  }, [scene, entry.scale])
+  }, [scene, entry.scale, id])
   useEffect(() => () => normalized.materials.forEach(material => material.dispose()), [normalized])
   useEffect(() => { onReady(); gl.domElement.dataset.model = id; invalidate() }, [onReady, gl, id, invalidate])
   useEffect(() => { elapsed.current = 0; invalidate() }, [reset, id, invalidate])

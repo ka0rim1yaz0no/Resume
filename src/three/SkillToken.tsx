@@ -7,7 +7,7 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { technologyIcon, technologyVisuals } from '../data/technologies'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { buildSkillEmblem, createSkillBody } from './skillGeometry'
-import { studioFinish } from './studioMaterials'
+import { studioFinish, studioGold } from './studioMaterials'
 
 gsap.registerPlugin(useGSAP)
 const finish = { roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity, transparent: true }
@@ -70,8 +70,8 @@ export function SkillToken({ technology, requestedTechnology, motion, visibility
   })
   return <group ref={root} rotation={[0.055, 0.16, 0]}>
     <mesh name="token-body" geometry={body}>
-      <meshStandardMaterial attach="material-0" {...finish} color="#2b302d" />
-      <meshStandardMaterial attach="material-1" {...finish} color="#222925" />
+      <meshStandardMaterial attach="material-0" {...finish} color={studioGold.graphite} />
+      <meshStandardMaterial attach="material-1" {...finish} color={studioGold.edge} />
     </mesh>
     {[...new Set([technology, requestedTechnology])].filter(name => name !== 'React.js').map(name => <Suspense key={name} fallback={null}>
       <Emblem technology={name} active={name === technology} targetRoot={root} targets={targets} onEmblemReady={onEmblemReady} />

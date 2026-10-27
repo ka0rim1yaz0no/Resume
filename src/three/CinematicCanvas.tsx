@@ -11,7 +11,7 @@ import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactC
 import { contentCamera, contentPose, contentRoute, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
-import { cloneStudioMaterial, studioLighting } from './studioMaterials'
+import { cloneStudioMaterial, studioGold, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
 import { sampleSurface, surfacePointCount, type SurfaceTargets } from './surfaceCloud'
 import { openingViewport } from './openingLayout'
@@ -78,7 +78,7 @@ function useModelAsset(id: ModelId, mobile: boolean) {
     clone.traverse(object => {
       if (!(object instanceof Mesh)) return
       const copy = (source: Material) => {
-        const material = cloneStudioMaterial(source)
+        const material = cloneStudioMaterial(source, id)
         material.transparent = true
         materials.push({ material, opacity: source.opacity })
         return material
@@ -88,7 +88,7 @@ function useModelAsset(id: ModelId, mobile: boolean) {
     const scale = entry.scale / Math.max(size.x, size.y, size.z)
     const bounds = new Box3(size.clone().multiplyScalar(-0.5 * scale), size.clone().multiplyScalar(0.5 * scale))
     return { clone, materials, scale, bounds }
-  }, [scene, entry.scale])
+  }, [scene, entry.scale, id])
   useEffect(() => () => normalized.materials.forEach(({ material }) => material.dispose()), [normalized])
   return normalized
 }
@@ -191,7 +191,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
   const [displayedTechnology, setDisplayedTechnology] = useState(technology)
   const [visibility] = useState(() => ({ weight: 0 }))
   const wire = useMemo(() => new BufferGeometry().setFromPoints([new Vector3(0.9, 0.65, 0.04), new Vector3(1.23, 0.65, 0.04), new Vector3(1.42, 1.23, 0.04)]), [])
-  const connector = useMemo(() => new Line(wire, new LineBasicMaterial({ color: '#b5d7c6', transparent: true, opacity: 0.25, depthWrite: false })), [wire])
+  const connector = useMemo(() => new Line(wire, new LineBasicMaterial({ color: studioGold.edge, transparent: true, opacity: 0.4, depthWrite: false })), [wire])
   const { gl, invalidate } = useThree()
   const emblemReady = useCallback((name: string, ready: boolean) => { if (ready) emblems.current.add(name); else emblems.current.delete(name); invalidate() }, [invalidate])
   useEffect(() => { useLoader.preload(SVGLoader, technologyIcon(technology)); invalidate(3) }, [technology, invalidate])
@@ -252,7 +252,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
     const reactWeight = solid * (1 - alternate)
     if (original.current) original.current.visible = reactWeight > 0.001
     normalized.materials.forEach(({ material, opacity }) => { material.opacity = opacity * reactWeight; material.depthWrite = reactWeight > 0.995 })
-    connector.material.opacity = amount > 0 ? 0 : weight * 0.25
+    connector.material.opacity = amount > 0 ? 0 : weight * 0.4
     gl.domElement.dataset.companion = 'react-js'
     gl.domElement.dataset.companionWeight = weight.toFixed(3)
     const shownTechnology = skillStage ? transition.current.displayed : 'React.js'
@@ -277,6 +277,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
   useEffect(() => {
     scene.environment = environment; scene.environmentIntensity = studioLighting.environment
     gl.domElement.dataset.assetProfile = mobile ? 'mobile' : 'desktop'
+    gl.domElement.dataset.studioFinish = 'brushed-gold'
     return () => { scene.environment = null }
   }, [scene, environment, mobile, gl])
   useEffect(() => {
