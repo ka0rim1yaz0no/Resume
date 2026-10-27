@@ -1,7 +1,7 @@
 import { Box2, Color, Curve, ExtrudeGeometry, MathUtils, Path, Shape, SRGBColorSpace, TubeGeometry, Vector2, Vector3, type BufferGeometry, type ShapePath } from 'three'
 import type { SVGResult } from 'three/addons/loaders/SVGLoader.js'
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
-import { studioEnamelColor } from './studioMaterials'
+import { studioEnamelColor, studioPalette } from './studioMaterials'
 
 export type EmblemPart = { geometry: BufferGeometry; color: Color; edge: Color }
 type PathStyle = { fill?: string; stroke?: string; strokeWidth?: number; fillOpacity?: number; strokeOpacity?: number }
@@ -49,7 +49,7 @@ export function buildSkillEmblem(data: SVGResult, accent: string): EmblemPart[] 
         toCreasedNormals(geometry, 0.5)
         const source = style.fill?.startsWith('url(') ? new Color(accent).offsetHSL(0, 0, (layer % 3 - 1) * 0.045) : path.color
         const color = enamelColor(source, accent)
-        parts.push({ geometry, color, edge: color.clone().multiplyScalar(0.46) })
+        parts.push({ geometry, color, edge: color.clone().lerp(new Color(studioPalette.edge), 0.5) })
       }
     }
     if (style.stroke && style.stroke !== 'none' && (style.strokeOpacity ?? 1) > 0) {

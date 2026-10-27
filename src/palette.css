@@ -22,7 +22,7 @@
   --journey-bg: #5420a4;
   --recognition-bg: #e7dcf6;
   --stage-border: #9670d2;
-  --stage-light: #8044ce;
+  --stage-light: #7135bb;
   --stage-shade: #421775;
   --stage-ink: #fcfaff;
   --stage-muted: #ede3ff;
@@ -275,8 +275,9 @@ h2 { font-weight: 700; }
 .dialog-project-art.dialog-architecture { background: #5420a4; border-color: #b47feb; }
 .diagram-meta, .diagram-note { fill: #e5caff; }
 .diagram-title { fill: #fff7ff; }
-.scene-window-glow { background: radial-gradient(ellipse, #b775f230, transparent 70%); }
-.section-scene .scene-window-glow { inset: auto 10% 5%; height: 12%; border-radius: 50%; background: radial-gradient(ellipse, #bb7fff38, #d3b0ff20 45%, transparent 72%); }
+.scene-window::before, .opening-stage::before { content: ''; position: absolute; inset: 5% 8% 7%; border-radius: 50%; background: radial-gradient(ellipse closest-side, #f4ecff42 0%, #ded0ff20 62%, transparent 100%); pointer-events: none; }
+.scene-window-glow { background: radial-gradient(ellipse, #f2e7ff38, transparent 70%); }
+.section-scene .scene-window-glow { inset: auto 10% 5%; height: 12%; border-radius: 50%; background: radial-gradient(ellipse, #f4ecff4a, #e2d5ff28 45%, transparent 72%); }
 .scene-window > img.scene-poster { mix-blend-mode: luminosity; filter: grayscale(1); }
 ::selection { background: #d2b2ff; color: var(--ink); }
 .skip-link { background: var(--accent-fill); color: var(--ink); }

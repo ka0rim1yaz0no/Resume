@@ -7,7 +7,7 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { technologyIcon, technologyVisuals } from '../data/technologies'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { buildSkillEmblem, createSkillBody } from './skillGeometry'
-import { studioFade, studioFinish, studioPalette } from './studioMaterials'
+import { studioEdgeFinish, studioFade, studioFinish, studioPalette } from './studioMaterials'
 
 gsap.registerPlugin(useGSAP)
 const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
@@ -37,7 +37,7 @@ function Emblem({ technology, active, targetRoot, targets, onEmblemReady }: { te
   return <group ref={group} position={[0, 0.04, 0]} visible={active}>
     {parts.map((part, index) => <mesh key={index} geometry={part.geometry} name="raised-emblem" renderOrder={2 + index}>
       <meshStandardMaterial attach="material-0" {...finish} color={part.color} />
-      <meshStandardMaterial attach="material-1" {...finish} color={part.edge} />
+      <meshStandardMaterial attach="material-1" {...finish} {...studioEdgeFinish} color={part.edge} />
     </mesh>)}
   </group>
 }
@@ -71,7 +71,7 @@ export function SkillToken({ technology, requestedTechnology, motion, visibility
   return <group ref={root} rotation={[0.055, 0.16, 0]}>
     <mesh name="token-body" geometry={body}>
       <meshStandardMaterial attach="material-0" {...finish} color={studioPalette.body} />
-      <meshStandardMaterial attach="material-1" {...finish} color={studioPalette.edge} />
+      <meshStandardMaterial attach="material-1" {...finish} {...studioEdgeFinish} color={studioPalette.edge} />
     </mesh>
     {[...new Set([technology, requestedTechnology])].filter(name => name !== 'React.js').map(name => <Suspense key={name} fallback={null}>
       <Emblem technology={name} active={name === technology} targetRoot={root} targets={targets} onEmblemReady={onEmblemReady} />

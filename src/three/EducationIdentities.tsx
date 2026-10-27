@@ -6,7 +6,7 @@ import { schools } from '../data/schools'
 import { contentPose, type ContentRoute } from './contentChoreography'
 import { educationEmblem } from './educationGeometry'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
-import { studioFade, studioFinish, studioPalette } from './studioMaterials'
+import { studioEdgeFinish, studioFade, studioFinish, studioPalette } from './studioMaterials'
 import { educationPose } from './educationChoreography'
 
 export type EducationScore = { active: boolean; elapsed: number; content: ContentRoute; dissolve: number; exitOpacity: number; educationReady: boolean; educationFocus: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number; educationDisplayed: number; educationExploration: { yaw: number; pitch: number; zoom: number }[] }
@@ -41,7 +41,7 @@ function SchoolEmblem({ index, score, targets, motion, compact }: { index: numbe
     })
   }, -0.1)
   return <group ref={root} visible={false}>
-    <mesh geometry={geometry.body}><meshStandardMaterial {...finish} color={studioPalette.edge} /></mesh>
+    <mesh geometry={geometry.body}><meshStandardMaterial {...finish} {...studioEdgeFinish} color={studioPalette.edge} /></mesh>
     <mesh geometry={geometry.face} position={[0, 0, 0.104]}><meshBasicMaterial {...studioFade} toneMapped={false} color="#ffffff" map={texture} /></mesh>
     <mesh geometry={geometry.face} position={[0, 0, -0.104]} rotation={[0, Math.PI, 0]}><meshBasicMaterial {...studioFade} toneMapped={false} color="#ffffff" map={texture} /></mesh>
     {'trim' in geometry && <><mesh geometry={geometry.trim} position={[0, 0, 0.075]}><meshStandardMaterial {...finish} color={studioPalette.amethyst} /></mesh><mesh geometry={geometry.trim} position={[0, 0, -0.075]}><meshStandardMaterial {...finish} color={studioPalette.amethyst} /></mesh></>}
