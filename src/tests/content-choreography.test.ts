@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contentCamera, contentPose, contentRoute, contentTransitionMix, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
 import { cinematicCamera } from '../three/choreography'
 
 const docks: ContentDocks = {
@@ -13,6 +13,17 @@ const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
 const weights = (r: ContentRoute) => [0, 1, 2, 3, 4, 5].map(i => contentPose(r, i, false).weight)
 
 describe('Continuous résumé scene rail', () => {
+  it('leaves long text passages clear and fades back in when the destination viewer appears', () => {
+    const reading = { ...docks, skills: { ...docks.skills, rect: { left: 20, top: -400, width: 320, height: 300 } }, education: { ...docks.education, arrive: 8000, rect: { left: 20, top: 1400, width: 320, height: 300 } } }
+    const handoff: ContentRoute = { from: 'skills', to: 'education', amount: 1, mix: 0.5, viewport: docks.skills.rect }
+    expect(contentVisibility(handoff, reading, 100, 1000)).toBe(0)
+    const entering = { ...reading, education: { ...reading.education, rect: { ...reading.education.rect, top: 910 } } }
+    expect(contentVisibility(handoff, entering, 100, 1000)).toBeCloseTo(0.5)
+    const arrived = { ...reading, education: { ...reading.education, rect: { ...reading.education.rect, top: 700 } } }
+    expect(contentVisibility(handoff, arrived, 100, 1000)).toBe(1)
+    expect(contentVisibility({ ...handoff, from: 'education' }, reading, 100, 1000)).toBe(1)
+    expect(contentVisibility(handoff, docks, 100, 1000)).toBe(1)
+  })
   it('moves directly between docks without expanding the viewport or pushing the camera closer', () => {
     for (const width of [320, 390, 1280]) {
       const height = width < 650 ? 844 : 900, header = width < 650 ? 76 : 100

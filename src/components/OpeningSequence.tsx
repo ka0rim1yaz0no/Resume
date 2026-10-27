@@ -50,7 +50,8 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       reveal = gsap.timeline({ onComplete: settle })
         .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => {
           scene.dataset.sceneOpening = String(shot.progress)
-          curtain.dataset.phase = openingPhase(shot.progress)
+          const phase = openingPhase(shot.progress)
+          if (curtain.dataset.phase !== phase) curtain.dataset.phase = phase
         } }, 0)
         .to('.opening-line span', { scaleX: 1, duration: duration * 0.8, ease: 'none' }, 0)
         .to('.opening-field', { opacity: 0.7, duration: 0.45, ease: 'sine.out' }, 0)
@@ -106,7 +107,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     </div>
     <p className="opening-note">A portfolio by {profile.fullName}</p>
     <div className="opening-type"><span><span className="opening-word">Interfaces.</span></span><span><span className="opening-word">Logic.</span></span><span><span className="opening-word">Data.</span></span></div>
-    <div className="opening-bottom"><span>Connected with purpose.</span><button tabIndex={-1}>Skip intro ↗</button></div>
+    <div className="opening-bottom"><div className="opening-status"><span className="opening-status-preparing">Preparing the scene.</span><span className="opening-status-gathering">Gathering the pieces.</span><span className="opening-status-magnetizing">Making the connections.</span><span className="opening-status-assembled">Connected with purpose.</span></div><button tabIndex={-1}>Skip intro ↗</button></div>
     <div className="opening-line"><span /></div>
   </div>
 }

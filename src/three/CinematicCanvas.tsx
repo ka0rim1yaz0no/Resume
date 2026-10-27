@@ -8,7 +8,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { modelIds, modelRegistry, modelUrl, type ModelId } from '../data/assets'
 import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
-import { contentCamera, contentPose, contentRoute, contentTransitionMix, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
@@ -342,6 +342,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   const rail = useRef<number | null>(null)
+  const lastInput = useRef(0)
+  const idleFrame = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     const generator = new PMREMGenerator(gl)
     const room = new RoomEnvironment()
@@ -352,23 +354,38 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     canvas.addEventListener('webglcontextlost', onError)
     // A short render burst lets the resized canvas and the browser's new
     // layout commit before returning to a still frame in demand mode.
-    const wake = () => invalidate(3)
+    const wake = () => {
+      lastInput.current = performance.now()
+      if (idleFrame.current !== null) { clearTimeout(idleFrame.current); idleFrame.current = null }
+      invalidate(3)
+    }
     const remeasure = () => { dirty.current = true; wake() }
     const observer = new ResizeObserver(remeasure)
     for (const anchor of [anchors.hero, anchors.journey, anchors.project, anchors.experience, anchors.skills, anchors.education, anchors.hero.closest('.personal-resume')!]) observer.observe(anchor)
     window.addEventListener('scroll', wake, { passive: true })
     window.addEventListener('resize', remeasure, { passive: true })
     window.addEventListener('model-explore', wake)
+    window.addEventListener('pointerdown', wake, { passive: true })
+    window.addEventListener('pointermove', wake, { passive: true })
+    window.addEventListener('keydown', wake, { passive: true })
     return () => {
       canvas.removeEventListener('webglcontextlost', onError)
       window.removeEventListener('scroll', wake); window.removeEventListener('resize', remeasure)
       window.removeEventListener('model-explore', wake)
+      window.removeEventListener('pointerdown', wake); window.removeEventListener('pointermove', wake)
+      window.removeEventListener('keydown', wake)
+      if (idleFrame.current !== null) { clearTimeout(idleFrame.current); idleFrame.current = null }
       observer.disconnect()
       target.dispose(); generator.dispose(); room.dispose()
     }
   }, [gl, invalidate, onError, anchors])
   useEffect(() => { score.elapsed = 0; invalidate() }, [score, reset, invalidate])
-  useEffect(() => { invalidate(3) }, [model, turn, motion, running, ready, invalidate])
+  useEffect(() => {
+    lastInput.current = performance.now()
+    if (idleFrame.current !== null) { clearTimeout(idleFrame.current); idleFrame.current = null }
+    invalidate(3)
+    return () => { if (idleFrame.current !== null) { clearTimeout(idleFrame.current); idleFrame.current = null } }
+  }, [model, turn, motion, running, ready, invalidate])
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05)
     const header = window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100
@@ -432,8 +449,9 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       score.particleFrom = subject[score.content.from]; score.particleTo = subject[score.content.to]
       score.particleMix = cut
     }
-    score.exitOpacity = score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1
-    score.active = running && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
+    const readingVisibility = contentVisibility(score.content, docks, header, window.innerHeight)
+    score.exitOpacity = readingVisibility * (score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1)
+    score.active = running && score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
     score.viewport = rect
     gl.domElement.dataset.scrollZoom = 'off'
     if (score.active && motion) score.elapsed += delta
@@ -473,7 +491,14 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     gl.domElement.dataset.exploration = [score.exploreYaw, score.explorePitch, score.exploreZoom].map(n => n.toFixed(3)).join(',')
     gl.domElement.dataset.viewport = [rect.left, rect.top, rect.width, rect.height].map(n => n.toFixed(1)).join(',')
     diagnostics.current.frames++
-    if (ready && motion && running && (score.active || Math.abs(sceneScroll - scroll) > 0.1)) invalidate()
+    if (ready && motion && running && (score.active || Math.abs(sceneScroll - scroll) > 0.1)) {
+      const changing = openingActive || Math.abs(sceneScroll - scroll) > 0.1 || score.flux > 0.001 || score.skillFlux > 0.001 || score.skillMix < 0.999 || score.organizationFlux > 0.001 || score.educationFlux > 0.001 || Math.abs(score.projectExplosion - requestedExpansion) > 0.0001
+      // Phone idle breathing needs fewer GPU frames. Input and every actual
+      // transition resume the native frame rate immediately.
+      if (window.innerWidth <= 650 && !changing && performance.now() - lastInput.current > 900) {
+        if (idleFrame.current === null) idleFrame.current = setTimeout(() => { idleFrame.current = null; invalidate() }, 1000 / 30)
+      } else invalidate()
+    }
   }, -3)
   useFrame(({ camera, scene, size, clock }, delta) => {
     gl.setScissorTest(false)

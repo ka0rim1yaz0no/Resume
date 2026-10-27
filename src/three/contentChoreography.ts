@@ -16,6 +16,17 @@ export function dockVisibility(rect: StageRect, header: number) {
   return 1 - ease(clamp((header - rect.top) / Math.max(1, rect.height * 0.2)))
 }
 
+/** Long reading passages belong to the text. Fade as the real source leaves,
+ * and return only when the next viewer enters the screen. */
+export function contentVisibility(route: ContentRoute, docks: ContentDocks, header: number, height: number) {
+  if (route.from === route.to || docks[route.to].arrive - docks[route.from].leave <= height * 1.15) return 1
+  const from = docks[route.from].rect, to = docks[route.to].rect
+  const edge = Math.min(180, height * 0.24)
+  const leaving = clamp((from.top + from.height - header) / edge)
+  const entering = clamp((height - to.top) / edge)
+  return ease(Math.max(leaving, entering))
+}
+
 /** One reversible rail carries the existing scene through the actual résumé.
  * Endpoint rectangles follow native sticky/document layout, including resize. */
 export function contentRoute(scroll: number, docks: ContentDocks, header: number, height: number, width?: number): ContentRoute {

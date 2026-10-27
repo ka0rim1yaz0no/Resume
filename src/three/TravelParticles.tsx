@@ -4,7 +4,7 @@ import { BufferGeometry, Color, Float32BufferAttribute, Matrix4, Points, ShaderM
 import { surfacePointCount, type SurfaceTarget, type SurfaceTargets } from './surfaceCloud'
 import { studioPalette } from './studioMaterials'
 
-type DissolveScore = { active: boolean; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number }
+type DissolveScore = { active: boolean; exitOpacity: number; flux: number; elapsed: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number }
 
 function dissolvePair(score: DissolveScore) {
   return score.educationFlux > 0.001
@@ -28,7 +28,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
       .setAttribute('aTarget', new Float32BufferAttribute(new Float32Array(pointCount * 3), 3))
       .setAttribute('aSeed', new Float32BufferAttribute(seeds, 1))
   }, [pointCount])
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() }, uViolet: { value: new Color(studioPalette.dust) }, uLavender: { value: new Color(studioPalette.amethyst) }, uPearl: { value: new Color(studioPalette.pearl) } }), [])
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uOpacity: { value: 1 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() }, uViolet: { value: new Color(studioPalette.dust) }, uLavender: { value: new Color(studioPalette.amethyst) }, uPearl: { value: new Color(studioPalette.pearl) } }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   // Missing surfaces retain the solid transition instead of leaving a gap.
   useFrame(() => {
@@ -60,6 +60,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     shader.uFrom.value.copy(from.root.matrixWorld); shader.uTo.value.copy(to.root.matrixWorld)
     shader.uTime.value = score.elapsed; shader.uFlux.value = transition.flux
     shader.uMix.value = transition.mix; shader.uDpr.value = gl.getPixelRatio()
+    shader.uOpacity.value = score.exitOpacity
   }, 0.5)
   return <points ref={points} geometry={geometry} frustumCulled={false} renderOrder={4}>
     <shaderMaterial ref={material} uniforms={uniforms} transparent depthWrite={false}
@@ -81,13 +82,13 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
           gl_PointSize = clamp((1.05 + aSeed) * 10.0 / -view.z, 1.15, 2.8) * uDpr;
           vLight = aSeed;
         }`}
-      fragmentShader={`uniform float uFlux; uniform vec3 uViolet, uLavender, uPearl; varying float vLight;
+      fragmentShader={`uniform float uFlux, uOpacity; uniform vec3 uViolet, uLavender, uPearl; varying float vLight;
         void main() {
           float radius = length(gl_PointCoord - 0.5);
           float disc = 1.0 - smoothstep(0.2, 0.5, radius);
           vec3 colour = mix(uViolet, uLavender, smoothstep(0.12, 0.92, vLight));
           colour = mix(colour, uPearl, (1.0 - smoothstep(0.0, 0.13, radius)) * step(0.8, vLight));
-          gl_FragColor = vec4(colour, disc * uFlux * 0.96);
+          gl_FragColor = vec4(colour, disc * uFlux * uOpacity * 0.96);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`} />

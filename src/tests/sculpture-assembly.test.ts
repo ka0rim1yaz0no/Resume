@@ -70,7 +70,7 @@ describe('Sculpture assembly', () => {
     expect(Math.abs(magneticShake(0.345, false).x)).toBeGreaterThan(0.01)
     for (let step = 0; step <= 100; step++) {
       const shake = magneticShake(step / 100, false)
-      expect(Math.hypot(shake.x, shake.y)).toBeLessThan(0.055)
+      expect(Math.hypot(shake.x, shake.y)).toBeLessThan(0.028)
     }
   })
 

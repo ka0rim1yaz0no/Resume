@@ -34,7 +34,7 @@ export function cinematicCamera(progress: number, compact: boolean) {
     lookX: -Math.sin(turn) * 0.025 * amplitude, lookY: 0.035 + breathing * 0.02, fov: 35 }
 }
 
-/** Elevated three-quarter establishing shot, curved dolly, exact hero landing.
+/** Elevated three-quarter establishing shot, curved pan, exact hero landing.
  * A quintic clock brings camera velocity to zero at both ends of the take. */
 export function openingCamera(progress: number, compact: boolean) {
   if (progress <= 0) return { x: 0, y: 0.15, z: 6.7, lookX: 0, lookY: 0, fov: 35 }
@@ -42,8 +42,8 @@ export function openingCamera(progress: number, compact: boolean) {
   const t = smooth(0, 0.72, clock), s = 1 - t, dock = smooth(0.79, 1, clock)
   const bezier = (a: number, b: number, c: number, d: number) => s ** 3 * a + 3 * s * s * t * b + 3 * s * t * t * c + t ** 3 * d
   return { x: blend(bezier(-1.75, -1.8, 1.35, 0.55), 0, dock) * (compact ? 0.6 : 1),
-    y: blend(bezier(0.95, 1.05, 0.42, 0.28), 0.15, dock), z: blend(bezier(7.6, 7.1, 6.25, 6.3), 6.7, dock),
-    lookX: bezier(-0.08, 0.07, 0.03, 0) * (1 - dock), lookY: blend(bezier(0.22, 0.2, 0.04, 0.04), 0, dock), fov: blend(blend(32.5, 33.5, t), 35, dock) }
+    y: blend(bezier(0.95, 1.05, 0.42, 0.28), 0.15, dock), z: 6.7,
+    lookX: bezier(-0.08, 0.07, 0.03, 0) * (1 - dock), lookY: blend(bezier(0.22, 0.2, 0.04, 0.04), 0, dock), fov: 35 }
 }
 
 /** The React tile follows a short arc beside the sculpture. Its visibility

@@ -22,7 +22,7 @@ export function Capabilities() {
       <div className="skill-groups" data-reveal>{skillGroups.map(group => <div className="skill-group" key={group.label}>
         <h3>{group.label}<span className="skill-group-count" aria-hidden="true">{String(group.skills.length).padStart(2, '0')}</span></h3>
         <div className="skill-buttons">{group.skills.map(skill => <button key={skill} aria-pressed={selected === skill} onClick={() => setSelected(skill)}>
-          <img className="skill-icon" src={technologyIcon(skill)} alt="" width="20" height="20" loading="lazy" />
+          <span className="skill-icon-frame" aria-hidden="true"><img className="skill-icon" src={technologyIcon(skill)} alt="" width="20" height="20" loading="lazy" /></span>
           <span className="skill-name">{skill}</span><span className="skill-selected-mark" aria-hidden="true"><Icon name="check" /></span>
         </button>)}</div>
       </div>)}</div>

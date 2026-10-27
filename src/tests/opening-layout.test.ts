@@ -27,7 +27,7 @@ describe('opening framing', () => {
     for (const p of [0.35, 0.28, 0.23, 0.21]) expect(openingViewport(hero, stage, p)).toEqual(stage)
     expect(openingViewport(hero, stage, 0.1).left).toBeGreaterThan(stage.left)
     expect(openingCamera(0.28, false).x).toBeGreaterThan(0.5)
-    expect(openingCamera(0.28, false).z).toBeLessThan(6.4)
+    expect(openingCamera(0.28, false).z).toBe(6.7)
   })
 
   it('moves from an elevated establishing shot to the exact hero camera without a velocity jump', () => {
@@ -36,7 +36,8 @@ describe('opening framing', () => {
     expect(end).toEqual({ x: 0, y: 0.15, z: 6.7, lookX: 0, lookY: 0, fov: 35 })
     expect(start.x).toBeLessThan(-1)
     expect(start.y).toBeGreaterThan(end.y)
-    expect(openingCamera(0.5, false).z).toBeLessThan(start.z)
+    expect(openingCamera(0.5, false).z).toBe(start.z)
+    expect(openingCamera(0.5, false).fov).toBe(start.fov)
     expect(Math.abs(openingCamera(0.5, true).x)).toBeLessThan(Math.abs(openingCamera(0.5, false).x))
     for (const endpoint of [0, 1]) {
       const near = openingCamera(endpoint === 0 ? 0.0001 : 0.9999, false)

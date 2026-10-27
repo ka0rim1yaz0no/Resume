@@ -48,8 +48,8 @@ export function assemblyPose(index: number, opening: number, compact: boolean) {
 export function magneticShake(opening: number, compact: boolean) {
   const impact = (1 - clamp(opening) - 0.64) / 0.10
   if (impact <= 0 || impact >= 1) return { x: 0, y: 0 }
-  const amplitude = (compact ? 0.024 : 0.042) * (1 - impact) ** 2
-  return { x: Math.sin(impact * Math.PI * 9) * amplitude, y: Math.sin(impact * Math.PI * 7) * amplitude * 0.65 }
+  const amplitude = (compact ? 0.014 : 0.022) * (1 - impact) ** 2
+  return { x: Math.sin(impact * Math.PI * 5) * amplitude, y: Math.sin(impact * Math.PI * 4) * amplitude * 0.55 }
 }
 
 export function assemblyTurn(opening: number) {
