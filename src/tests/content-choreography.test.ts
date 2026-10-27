@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
 import { cinematicCamera } from '../three/choreography'
 
 const docks: ContentDocks = {
@@ -13,6 +13,15 @@ const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
 const weights = (r: ContentRoute) => [0, 1, 2, 3, 4, 5].map(i => contentPose(r, i, false).weight)
 
 describe('Continuous résumé scene rail', () => {
+  it('fades partially off-screen mobile windows before they visibly cut through a model', () => {
+    const rect = { left: 16, top: 100, width: 288, height: 300 }
+    expect(viewportVisibility(rect, 76, 568)).toBe(1)
+    expect(viewportVisibility({ ...rect, top: 343 }, 76, 568)).toBeCloseTo(0.5)
+    expect(viewportVisibility({ ...rect, top: 403 }, 76, 568)).toBe(0)
+    expect(viewportVisibility({ ...rect, top: 1 }, 76, 568)).toBeCloseTo(0.5)
+    expect(viewportVisibility({ ...rect, top: -224 }, 76, 568)).toBe(0)
+    expect(viewportVisibility({ ...rect, height: 0 }, 76, 568)).toBe(0)
+  })
   it('leaves long text passages clear and fades back in when the destination viewer appears', () => {
     const reading = { ...docks, skills: { ...docks.skills, rect: { left: 20, top: -400, width: 320, height: 300 } }, education: { ...docks.education, arrive: 8000, rect: { left: 20, top: 1400, width: 320, height: 300 } } }
     const handoff: ContentRoute = { from: 'skills', to: 'education', amount: 1, mix: 0.5, viewport: docks.skills.rect }

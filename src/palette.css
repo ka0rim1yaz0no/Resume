@@ -118,7 +118,7 @@ h2 { font-weight: 700; }
 .opening-sequence[data-phase=gathering] .opening-status-gathering,
 .opening-sequence[data-phase=magnetizing] .opening-status-magnetizing,
 .opening-sequence:is([data-phase=assembled], [data-phase=landing]) .opening-status-assembled { opacity: 1; }
-.model-journey { background: var(--studio-grain) var(--journey-bg); border-color: #c7b3d7; }
+.model-journey { background: var(--studio-grain) var(--journey-bg); border-color: #c7b3d7; scroll-margin-top: -24px; }
 .journey-frame::before { background: radial-gradient(ellipse, #b281df40, #d9bdf110 48%, transparent 72%); }
 .journey-frame > .journey-scene { inset: 14% 6% 8% 28%; }
 .journey-titles { font-size: clamp(90px, 13.5vw, 195px); }
@@ -162,6 +162,7 @@ h2 { font-weight: 700; }
 .project-annotations circle { fill: #9c6abb; }
 .project-annotations g[data-selected=true] path { stroke: #8c5fac; }
 .project-layer-details { border-color: var(--accent); }
+.resume-project-art.content-stage > .project-scene { height: auto; }
 .project-layer-details .project-layer-caption, .project-analogy { color: var(--muted); }
 .experience-visual { border: 1px solid var(--stage-border); border-top: 3px solid var(--accent-fill); border-radius: 6px; background: var(--stage-gradient); }
 .company-explorer-controls, .experience-scene-caption { padding-inline: 18px; }
@@ -351,9 +352,28 @@ h2 { font-weight: 700; }
   .journey-footer .journey-stop, .journey-footer > button { font-size: 9px; }
   .skill-selected-mark, .skill-selected-mark .icon { width: 12px; height: 12px; }
 }
-@media (max-width: 980px) and (max-height: 600px) {
+@media (max-width: 980px) and (max-height: 600px) and (orientation: landscape) {
   .journey-panel p { font-size: 10px; }
   .journey-frame > .journey-scene { inset: 15% 2% 15% 43%; }
   .journey-titles { font-size: 55px; }
   .journey-copy { bottom: 20%; }
+  .experience-visual { --company-view-height: clamp(140px, calc(100svh - 230px), 200px); }
+  .experience-visual.content-stage > .section-scene, .experience-visual .company-explorer { height: var(--company-view-height); }
+  .skill-preview.content-stage > .section-scene { height: clamp(140px, calc(100svh - 210px), 200px); }
+  .personal-resume .resume-project-art.content-stage { height: calc(100svh - 108px); min-height: 180px; aspect-ratio: auto; top: 96px; }
+}
+@media (max-width: 650px) and (max-height: 700px) and (orientation: portrait) {
+  .journey-frame { min-height: 0; display: grid; grid-template-rows: 52px 48px minmax(120px, 1fr) 108px 52px; gap: 4px; padding: 8px 16px; }
+  .journey-heading { position: relative; inset: auto; width: 100%; align-items: start; gap: 10px; font-size: 10px; }
+  .journey-heading-links { width: 55%; gap: 0; }
+  .journey-heading-links a { min-height: 28px; font-size: 10px; }
+  .journey-heading > a { white-space: nowrap; font-size: 10px; gap: 6px; }
+  .journey-titles { position: relative; inset: auto; height: 48px; font-size: 44px; }
+  .journey-frame > .journey-scene { position: relative; inset: auto; width: 100%; height: 100%; }
+  .journey-copy { position: relative; inset: auto; width: auto; min-height: 0; }
+  .journey-panel h2 { font-size: 18px; line-height: 1.15; max-width: none; }
+  .journey-panel p { font-size: 11px; line-height: 1.45; margin-top: 8px; max-width: none; }
+  .journey-detail { display: none; }
+  .journey-footer { position: relative; inset: auto; padding-top: 6px; min-height: 0; gap: 8px; }
+  .journey-footer .journey-stop, .journey-footer > button { font-size: 10px; }
 }

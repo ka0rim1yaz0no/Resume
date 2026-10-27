@@ -59,7 +59,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
         .to('.opening-field', { opacity: 0, duration: 0.45 }, duration * 0.51)
         .to('.opening-impact', { scale: 0.85, opacity: 0.65, duration: 0.16, ease: 'power2.out' }, duration * 0.64)
         .to('.opening-impact', { scale: 1.35, opacity: 0, duration: 0.65, ease: 'power2.out' }, duration * 0.64 + 0.16)
-        .to('.opening-word', { yPercent: -110, opacity: 0, duration: 0.5, stagger: 0.05, ease: 'power2.in' }, duration * 0.71)
+        .to('.opening-type', { opacity: 0, y: -6, duration: 0.45, ease: 'sine.inOut' }, duration * 0.71)
         .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.5 }, duration * 0.77)
         .to(curtain, { opacity: 0, duration: duration * 0.19, ease: 'sine.inOut' }, copyStart)
         .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.15, stagger: 0.035, ease: 'power2.out' }, copyStart)

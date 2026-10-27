@@ -16,6 +16,15 @@ export function dockVisibility(rect: StageRect, header: number) {
   return 1 - ease(clamp((header - rect.top) / Math.max(1, rect.height * 0.2)))
 }
 
+/** Fade a carried object before a partly off-screen window cuts through it.
+ * Framing and the lens stay fixed; only opacity responds to the visible area. */
+export function viewportVisibility(rect: StageRect, header: number, height: number) {
+  const available = Math.min(rect.height, Math.max(0, height - header))
+  if (available <= 0) return 0
+  const visible = Math.max(0, Math.min(height, rect.top + rect.height) - Math.max(header, rect.top))
+  return ease(clamp((visible / available - 0.55) / 0.4))
+}
+
 /** Long reading passages belong to the text. Fade as the real source leaves,
  * and return only when the next viewer enters the screen. */
 export function contentVisibility(route: ContentRoute, docks: ContentDocks, header: number, height: number) {

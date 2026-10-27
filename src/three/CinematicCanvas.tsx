@@ -8,7 +8,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { modelIds, modelRegistry, modelUrl, type ModelId } from '../data/assets'
 import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
-import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, dockVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
@@ -284,11 +284,10 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
   useEffect(() => {
     if (!loaded.has(model) || !loaded.has('react-js')) return
     let disposed = false
-    // Show the establishing subjects as soon as their assets are available.
-    // Hidden chapters prepare in parallel without holding the opening blank.
-    onReady(loaded); invalidate()
+    // Prepare shader programs before the first visible draw, so the opening
+    // does not begin on a synchronous shader-compilation stall.
     gl.domElement.dataset.loadedModels = [...loaded].join(',')
-    void gl.compileAsync(scene, camera).then(() => { if (!disposed) invalidate() }).catch(() => { if (!disposed) onError() })
+    void gl.compileAsync(scene, camera).then(() => { if (!disposed) { onReady(loaded); invalidate() } }).catch(() => { if (!disposed) onError() })
     return () => { disposed = true }
   }, [loaded, model, gl, scene, camera, invalidate, onReady, onError])
   useFrame(state => {
@@ -332,7 +331,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
   </>
 }
 
-function Director({ anchors, score, model, turn, reset, motion, reduced, running, ready, pointer, onError, onRendered, children }: { anchors: Anchors; score: Score; model: ModelId; turn: number; reset: number; motion: boolean; reduced: boolean; running: boolean; ready: boolean; pointer: RefObject<{ x: number; y: number }>; onError: () => void; onRendered: () => void; children: (environment: Texture) => React.ReactNode }) {
+function Director({ anchors, score, model, turn, reset, motion, reduced, running, ready, mobile, pointer, onError, onRendered, children }: { anchors: Anchors; score: Score; model: ModelId; turn: number; reset: number; motion: boolean; reduced: boolean; running: boolean; ready: boolean; mobile: boolean; pointer: RefObject<{ x: number; y: number }>; onError: () => void; onRendered: () => void; children: (environment: Texture) => React.ReactNode }) {
   const { gl, invalidate, size } = useThree()
   const [environment, setEnvironment] = useState<Texture | null>(null)
   const dirty = useRef(true)
@@ -351,6 +350,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     setEnvironment(target.texture)
     const canvas = gl.domElement
     canvas.setAttribute('aria-hidden', 'true')
+    canvas.dataset.scrollZoom = 'off'
+    canvas.dataset.pixelRatioCap = mobile ? '1' : '1.35'
     canvas.addEventListener('webglcontextlost', onError)
     // A short render burst lets the resized canvas and the browser's new
     // layout commit before returning to a still frame in demand mode.
@@ -378,7 +379,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       observer.disconnect()
       target.dispose(); generator.dispose(); room.dispose()
     }
-  }, [gl, invalidate, onError, anchors])
+  }, [gl, invalidate, onError, anchors, mobile])
   useEffect(() => { score.elapsed = 0; invalidate() }, [score, reset, invalidate])
   useEffect(() => {
     lastInput.current = performance.now()
@@ -450,10 +451,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       score.particleMix = cut
     }
     const readingVisibility = contentVisibility(score.content, docks, header, window.innerHeight)
-    score.exitOpacity = readingVisibility * (score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1)
+    const screenVisibility = mobile && motion && (!openingActive || opening < 0.21) ? viewportVisibility(rect, header, window.innerHeight) : 1
+    score.exitOpacity = screenVisibility * readingVisibility * (score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1)
     score.active = running && score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
     score.viewport = rect
-    gl.domElement.dataset.scrollZoom = 'off'
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
@@ -495,8 +496,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       const changing = openingActive || Math.abs(sceneScroll - scroll) > 0.1 || score.flux > 0.001 || score.skillFlux > 0.001 || score.skillMix < 0.999 || score.organizationFlux > 0.001 || score.educationFlux > 0.001 || Math.abs(score.projectExplosion - requestedExpansion) > 0.0001
       // Phone idle breathing needs fewer GPU frames. Input and every actual
       // transition resume the native frame rate immediately.
-      if (window.innerWidth <= 650 && !changing && performance.now() - lastInput.current > 900) {
-        if (idleFrame.current === null) idleFrame.current = setTimeout(() => { idleFrame.current = null; invalidate() }, 1000 / 30)
+      if (mobile && !changing && performance.now() - lastInput.current > 900) {
+        if (idleFrame.current === null) idleFrame.current = setTimeout(() => { idleFrame.current = null; invalidate() }, 16)
       } else invalidate()
     }
   }, -3)
@@ -594,8 +595,8 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   }, [anchors, warm])
   useEffect(() => () => { root.current?.querySelectorAll<HTMLElement>('[data-scene-ready]').forEach(element => { delete element.dataset.sceneReady }) }, [root])
   return <>
-    <Canvas className="cinematic-renderer" dpr={[1, compact ? 1 : 1.35]} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping }}>
-      {anchors && <Director anchors={anchors} score={score} model={model} turn={turn} reset={reset} motion={motion} reduced={reduced} running={running} ready={ready} pointer={pointer} onError={onError} onRendered={rendered}>{environment =>
+    <Canvas className="cinematic-renderer" dpr={[1, mobile ? 1 : 1.35]} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping }}>
+      {anchors && <Director anchors={anchors} score={score} model={model} turn={turn} reset={reset} motion={motion} reduced={reduced} running={running} ready={ready} mobile={mobile} pointer={pointer} onError={onError} onRendered={rendered}>{environment =>
           <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready} technology={technology} environment={environment} projectAnchor={anchors.project} onReady={loaded} onError={onError} />
       }</Director>}
     </Canvas>
