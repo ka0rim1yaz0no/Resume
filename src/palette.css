@@ -160,6 +160,11 @@ h2 { font-weight: 700; }
 .architecture-project .visual-footnote { max-width: calc(100% - 100px); }
 .architecture-project .work-open { background: var(--accent-fill); color: var(--ink); }
 .project-model-toggle:hover .work-open { background: #e9ff98; }
+.project-model-toggle .work-open { width: 44px; height: 44px; right: 16px; bottom: 16px; }
+.resume-project-art[data-project-exploded="1"] .project-model-toggle { inset: auto 16px 16px auto; width: 44px; height: 44px; border-radius: 50%; }
+.resume-project-art[data-project-exploded="1"] .project-model-toggle .work-open { position: static; }
+.project-part-picker { position: absolute; inset: 40px 8px 64px; z-index: 21; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.resume-project-art:not(:has([data-scene-ready=true])) .project-part-picker { visibility: hidden; }
 .project-part { color: var(--on-ink); background: #48117df5; border-color: #b38ce0; font-size: 11px; }
 .project-part > span { border-color: #b38ce0; font-size: 10px; }
 .project-part[aria-pressed=true] { color: var(--ink); background: var(--accent-fill); border-color: var(--accent-fill); box-shadow: 0 0 0 3px #dbf86b24; }

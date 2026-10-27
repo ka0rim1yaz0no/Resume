@@ -6,12 +6,24 @@ import { projectLayers } from '../data/projectLayers'
 import { Icon } from '../components/Icon'
 import { SceneWindow } from '../components/SceneWindow'
 import { scrollToChapter } from '../hooks/useMotion'
+import { createProjectTap, projectPickRequest, projectPickSelected } from '../three/projectInteraction'
 
 export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
   const root = useRef<HTMLElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [selected, setSelected] = useState(0)
+  const [tap] = useState(createProjectTap)
+  useEffect(() => {
+    const element = root.current
+    if (!expanded || !element) return
+    const selectPart = (event: Event) => {
+      const index = (event as CustomEvent<number>).detail
+      if (Number.isInteger(index) && index >= 0 && index < projectLayers.length) setSelected(index)
+    }
+    element.addEventListener(projectPickSelected, selectPart)
+    return () => { element.removeEventListener(projectPickSelected, selectPart); tap.cancel() }
+  }, [expanded, tap])
   useEffect(() => { window.dispatchEvent(new Event('model-explore')) }, [expanded, selected])
   useGSAP(() => {
     if (expanded && !root.current?.closest('.motion-paused') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.fromTo('.project-layer-details', { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' })
@@ -30,8 +42,15 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
       <div className="resume-project-art architecture-project content-stage" data-project-exploded={expanded ? '1' : '0'} data-project-selected={selected}>
         <span className="work-label">{project.label} · 2025</span>
         <SceneWindow id="project-laptop" chapter="project" className="section-scene project-scene" />
+        {expanded && <div className="project-part-picker" aria-hidden="true"
+          onPointerDown={event => tap.begin(event, window.scrollY)} onPointerMove={event => tap.move(event)}
+          onPointerUp={event => {
+            const point = tap.end(event, window.scrollY)
+            if (point) root.current?.querySelector('[data-scene="project"]')?.dispatchEvent(new CustomEvent(projectPickRequest, { detail: point }))
+          }}
+          onPointerCancel={() => tap.cancel()} onPointerLeave={() => tap.cancel()} onContextMenu={() => tap.cancel()} />}
         <button ref={toggle} className="project-model-toggle" onClick={toggleModel} aria-label={expanded ? 'Reassemble project laptop' : 'Separate laptop to explore how the project was built'} aria-expanded={expanded} aria-controls="project-layer-details"><span className="work-open" aria-hidden="true">{expanded ? '↺' : '+'}</span></button>
-        <span className="visual-footnote">{expanded ? 'Project architecture · Select a layer' : 'Explore how the LMS was built'}</span>
+        <span className="visual-footnote">{expanded ? 'Select a part or layer' : 'Explore how the LMS was built'}</span>
       </div>
         <div className="project-annotations" hidden={!expanded}>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{projectLayers.map((part, index) => <g key={part.label} data-selected={selected === index}><path data-project-leader={index} /><circle data-project-dot={index} r="0.8" /></g>)}</svg>

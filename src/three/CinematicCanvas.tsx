@@ -26,6 +26,8 @@ import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, o
 import { followScroll } from './motionRail'
 import { bindProjectAssembly, projectPresence } from './projectAssembly'
 import { bindProjectHighlight } from './projectHighlight'
+import { createProjectPicker } from './projectPicking'
+import { projectPickRequest, projectPickSelected, type ProjectPickPoint } from './projectInteraction'
 
 // Buffer decompression must not compete with touch scrolling on the main thread.
 const startDecoderWorkers = MeshoptDecoder.useWorkers
@@ -100,12 +102,25 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
   const assembly = useMemo(() => bindSculptureAssembly(normalized.clone), [normalized])
   const projectAssembly = useMemo(() => bindProjectAssembly(normalized.clone), [normalized])
   const projectHighlight = useMemo(() => id === 'project-laptop' ? bindProjectHighlight(normalized.clone) : null, [id, normalized])
+  const projectPicker = useMemo(() => id === 'project-laptop' ? createProjectPicker(projectAssembly.parts) : null, [id, projectAssembly])
   const annotation = useMemo(() => {
     const panel = projectAnchor.closest('.resume-project')?.querySelector<HTMLElement>('.project-annotations')
     return { panel, leaders: [...(panel?.querySelectorAll<SVGPathElement>('[data-project-leader]') || [])], dots: [...(panel?.querySelectorAll<SVGCircleElement>('[data-project-dot]') || [])], point: new Vector3(), rect: '' }
   }, [projectAnchor])
   const group = useRef<Group>(null)
-  const { gl } = useThree()
+  const { gl, camera } = useThree()
+  useEffect(() => {
+    if (!projectPicker) return
+    const pick = (event: Event) => {
+      const point = (event as CustomEvent<ProjectPickPoint>).detail
+      if (!point || !score.active || score.exitOpacity < 0.95 || score.projectExplosion < 0.98 || score.content.from !== 'project' || score.content.to !== 'project' || projectAnchor.dataset.sceneReady !== 'true') return
+      const index = projectPicker(point, score.viewport, camera)
+      gl.domElement.dataset.projectPickResult = index === null ? 'miss' : String(index)
+      if (index !== null) projectAnchor.dispatchEvent(new CustomEvent(projectPickSelected, { detail: index, bubbles: true }))
+    }
+    projectAnchor.addEventListener(projectPickRequest, pick)
+    return () => projectAnchor.removeEventListener(projectPickRequest, pick)
+  }, [projectPicker, projectAnchor, score, camera, gl])
   useEffect(() => {
     // Dust samples describe the complete sculpture, never its opening pose.
     assembly.update(0, compact)

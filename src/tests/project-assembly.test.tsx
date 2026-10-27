@@ -7,12 +7,29 @@ import { project } from '../data/profile'
 import { projectLayers } from '../data/projectLayers'
 import mobileModels from '../data/mobileModels.json'
 import { bindProjectAssembly, projectPartPose, projectPresence } from '../three/projectAssembly'
+import { projectPickSelected } from '../three/projectInteraction'
 
 vi.mock('../hooks/useMotion', () => ({ scrollToChapter: vi.fn() }))
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('Explorable project layers', () => {
+  it('synchronizes mesh selections with the buttons and explanations only while open', () => {
+    const { container } = render(<FeaturedProject openDetails={vi.fn()} />)
+    const scene = container.querySelector('[data-scene="project"]')!
+    fireEvent.click(screen.getByRole('button', { name: /Separate laptop/ }))
+    for (const index of [2, 0, 1]) {
+      fireEvent(scene, new CustomEvent(projectPickSelected, { detail: index, bubbles: true }))
+      expect(screen.getByRole('button', { name: projectLayers[index].label })).toHaveAttribute('aria-pressed', 'true')
+      expect(within(screen.getByRole('region', { name: projectLayers[index].label })).getByRole('heading', { name: projectLayers[index].title })).toBeInTheDocument()
+      expect(container.querySelector('[data-project-selected]')).toHaveAttribute('data-project-selected', String(index))
+    }
+    fireEvent(scene, new CustomEvent(projectPickSelected, { detail: 9, bubbles: true }))
+    expect(container.querySelector('[data-project-selected]')).toHaveAttribute('data-project-selected', '1')
+    fireEvent.click(screen.getByRole('button', { name: /Reassemble project/ }))
+    fireEvent(scene, new CustomEvent(projectPickSelected, { detail: 2, bubbles: true }))
+    expect(container.querySelector('[data-project-selected]')).toHaveAttribute('data-project-selected', '1')
+  })
   it('separates the laptop on click, explains each confirmed layer and retains the full case study', () => {
     const openDetails = vi.fn()
     const { container } = render(<FeaturedProject openDetails={openDetails} />)
