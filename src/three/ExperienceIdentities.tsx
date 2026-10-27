@@ -7,10 +7,10 @@ import { contentPose, type ContentRoute } from './contentChoreography'
 import { organizationPose } from './experienceChoreography'
 import { assistlyRibbon, knowlesGlobe, syntaxGear } from './organizationGeometry'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
-import { studioFinish, studioGold } from './studioMaterials'
+import { studioFade, studioFinish, studioGold } from './studioMaterials'
 
 export type IdentityScore = { active: boolean; elapsed: number; content: ContentRoute; organizationFocus: number; organizationDissolve: number; dissolve: number; organizationExploration: { yaw: number; pitch: number; zoom: number }[] }
-const finish = { roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity, transparent: true }
+const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
 
 function SyntaxFace({ geometry }: { geometry: ReturnType<typeof syntaxGear>['face'] }) {
   const source = useTexture(organizations[2].logo)
@@ -52,7 +52,7 @@ function Identity({ index, score, targets, motion, compact }: { index: number; s
     root.current.scale.setScalar(stage.scale * pose.scale * (1 + exploration.zoom * 0.16))
     root.current.traverse(object => {
       if (!(object instanceof Mesh)) return
-      const apply = (material: Material) => { material.opacity = solid; material.depthWrite = solid > 0.995 }
+      const apply = (material: Material) => { material.opacity = solid }
       if (Array.isArray(object.material)) object.material.forEach(apply); else apply(object.material)
     })
   }, -0.1)

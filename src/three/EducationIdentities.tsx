@@ -6,11 +6,11 @@ import { schools } from '../data/schools'
 import { contentPose, type ContentRoute } from './contentChoreography'
 import { educationEmblem } from './educationGeometry'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
-import { studioFinish, studioGold } from './studioMaterials'
+import { studioFade, studioFinish, studioGold } from './studioMaterials'
 import { educationPose } from './educationChoreography'
 
 export type EducationScore = { active: boolean; elapsed: number; content: ContentRoute; dissolve: number; exitOpacity: number; educationReady: boolean; educationFocus: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number; educationDisplayed: number; educationExploration: { yaw: number; pitch: number; zoom: number }[] }
-const finish = { roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity, transparent: true }
+const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
 
 function SchoolEmblem({ index, score, targets, motion, compact }: { index: number; score: EducationScore; targets: SurfaceTargets; motion: boolean; compact: boolean }) {
   const root = useRef<Group>(null)
@@ -36,14 +36,14 @@ function SchoolEmblem({ index, score, targets, motion, compact }: { index: numbe
     const solid = weight * (1 - score.dissolve) * (1 - score.educationDissolve) * score.exitOpacity
     root.current.traverse(object => {
       if (!(object instanceof Mesh)) return
-      const apply = (material: Material) => { material.opacity = solid; material.depthWrite = solid > 0.995 }
+      const apply = (material: Material) => { material.opacity = solid }
       if (Array.isArray(object.material)) object.material.forEach(apply); else apply(object.material)
     })
   }, -0.1)
   return <group ref={root} visible={false}>
     <mesh geometry={geometry.body}><meshStandardMaterial {...finish} color={studioGold.edge} /></mesh>
-    <mesh geometry={geometry.face} position={[0, 0, 0.104]}><meshBasicMaterial transparent toneMapped={false} color="#fff7e8" map={texture} /></mesh>
-    <mesh geometry={geometry.face} position={[0, 0, -0.104]} rotation={[0, Math.PI, 0]}><meshBasicMaterial transparent toneMapped={false} color="#fff7e8" map={texture} /></mesh>
+    <mesh geometry={geometry.face} position={[0, 0, 0.104]}><meshBasicMaterial {...studioFade} toneMapped={false} color="#fff7e8" map={texture} /></mesh>
+    <mesh geometry={geometry.face} position={[0, 0, -0.104]} rotation={[0, Math.PI, 0]}><meshBasicMaterial {...studioFade} toneMapped={false} color="#fff7e8" map={texture} /></mesh>
     {'trim' in geometry && <><mesh geometry={geometry.trim} position={[0, 0, 0.075]}><meshStandardMaterial {...finish} color={studioGold.brass} /></mesh><mesh geometry={geometry.trim} position={[0, 0, -0.075]}><meshStandardMaterial {...finish} color={studioGold.brass} /></mesh></>}
   </group>
 }

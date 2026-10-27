@@ -33,7 +33,7 @@ export function useMotion(paused: boolean) {
     const media = gsap.matchMedia()
     media.add('(prefers-reduced-motion: no-preference)', () => {
       if (paused) return
-      const lenis = new Lenis({ duration: 0.85, smoothWheel: true, syncTouch: false, anchors: true, autoRaf: false })
+      const lenis = new Lenis({ duration: 0.65, smoothWheel: true, syncTouch: false, anchors: true, autoRaf: false })
       scrollEngine = lenis
       const tick = (time: number) => lenis.raf(time * 1000)
       lenis.on('scroll', ScrollTrigger.update)

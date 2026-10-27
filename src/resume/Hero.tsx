@@ -7,7 +7,7 @@ import { useModelExploration } from '../hooks/useModelExploration'
 
 export function Hero({ model, selectModel, turnLeft, turnRight, resetView, paused, systemReduced, toggleMotion }: { model: ModelId; selectModel: (id: ModelId) => void; turnLeft: () => void; turnRight: () => void; resetView: () => void; paused: boolean; systemReduced: boolean; toggleMotion: () => void }) {
   const objectIndex = Math.max(0, modelIds.indexOf(model))
-  const assetAccent = ['#8d7c54', '#7a8585', '#ac9562'][objectIndex]
+  const assetAccent = ['#d7bc75', '#c6cdb6', '#e0c88c'][objectIndex]
   const resume = documents[0]
   const exploration = useModelExploration(model, resetView)
   return <section className="hero resume-hero container" aria-labelledby="hero-title">
@@ -18,6 +18,7 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
       <p className="hero-enter hero-description">Interfaces. Logic. Data.<br />Connected with purpose.</p>
       <div className="hero-enter hero-actions"><a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a><a className="text-link" href="#contact">Get in touch <Icon name="down" /></a></div>
       <div className="hero-enter resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
+      <a className="hero-enter intro-replay" href="/">Replay opening <Icon name="play" /></a>
     </div>
     <div className="hero-art" data-object={model} style={{ '--asset-edge': assetAccent } as CSSProperties}>
       <div className="art-coordinate art-coordinate-top"><span>{['Systems sculpture', 'Project laptop', 'Workflow board'][objectIndex]}</span><span>{String(objectIndex + 1).padStart(2, '0')} / 03</span></div>

@@ -19,7 +19,7 @@ const pieces = [
 ] as const
 
 export const assemblyPieceCount = pieces.length
-export const openingDuration = (compact: boolean) => compact ? 4.6 : 5.2
+export const openingDuration = (compact: boolean) => compact ? 3.8 : 4.4
 export const openingPhase = (opening: number) => {
   const t = 1 - clamp(opening)
   return t < 0.58 ? 'gathering' : t < 0.74 ? 'magnetizing' : t < 0.79 ? 'assembled' : 'landing'
@@ -31,7 +31,7 @@ export function assemblyPose(index: number, opening: number, compact: boolean) {
   const arrive = ease(piece.start, piece.end, t)
   const remaining = 1 - arrive
   const contact = (t - piece.end) / 0.08
-  const snap = contact > 0 && contact < 1 ? Math.sin(contact * Math.PI * 4) * (1 - contact) ** 3 * 0.045 : 0
+  const snap = contact > 0 && contact < 1 ? Math.sin(contact * Math.PI * 2.5) * (1 - contact) ** 3 * 0.022 : 0
   if (remaining === 0 && snap === 0) return { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 }
   const arc = arrive === 0 || arrive === 1 ? 0 : Math.sin(arrive * Math.PI)
   const travelX = compact ? 0.38 : 1, travelY = compact ? 1.12 : 1
@@ -39,7 +39,7 @@ export function assemblyPose(index: number, opening: number, compact: boolean) {
     x: (piece.offset[0] * remaining + arc * piece.bend[0]) * travelX + snap,
     y: (piece.offset[1] * remaining + arc * piece.bend[1]) * travelY - snap * 0.6,
     z: (piece.offset[2] * remaining + arc * piece.bend[2]) * (compact ? 0.65 : 1),
-    rx: piece.rotation[0] * remaining, ry: piece.rotation[1] * remaining + snap * 0.4, rz: piece.rotation[2] * remaining + snap * 0.2,
+    rx: piece.rotation[0] * remaining * 0.7, ry: piece.rotation[1] * remaining * 0.7 + snap * 0.4, rz: piece.rotation[2] * remaining * 0.7 + snap * 0.2,
     assembled: arrive,
   }
 }

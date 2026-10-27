@@ -7,10 +7,10 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js'
 import { technologyIcon, technologyVisuals } from '../data/technologies'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { buildSkillEmblem, createSkillBody } from './skillGeometry'
-import { studioFinish, studioGold } from './studioMaterials'
+import { studioFade, studioFinish, studioGold } from './studioMaterials'
 
 gsap.registerPlugin(useGSAP)
-const finish = { roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity, transparent: true }
+const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
 
 function Emblem({ technology, active, targetRoot, targets, onEmblemReady }: { technology: string; active: boolean; targetRoot: React.RefObject<Group | null>; targets: SurfaceTargets; onEmblemReady: (name: string, ready: boolean) => void }) {
   const data = useLoader(SVGLoader, technologyIcon(technology))
@@ -63,7 +63,7 @@ export function SkillToken({ technology, requestedTechnology, motion, visibility
     root.current.visible = weight > 0.001
     root.current.traverse(object => {
       if (!(object instanceof Mesh)) return
-      const apply = (material: Material) => { material.opacity = weight; material.depthWrite = weight > 0.995 }
+      const apply = (material: Material) => { material.opacity = weight }
       if (Array.isArray(object.material)) object.material.forEach(apply)
       else apply(object.material)
     })

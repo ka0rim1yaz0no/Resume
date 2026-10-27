@@ -9,7 +9,8 @@ const ease = (t: number) => t ** 3 * (t * (t * 6 - 15) + 10)
 /** Keep the outgoing object intact during the push-in, then exchange subjects
  * at the middle of the travelling shot, before docking the incoming model. */
 export function contentTransitionMix(mix: number) {
-  return ease(clamp((mix - 0.4) / 0.2))
+  const t = clamp((mix - 0.28) / 0.44)
+  return t * t * (3 - 2 * t)
 }
 
 export function dockVisibility(rect: StageRect, header: number) {
@@ -30,7 +31,7 @@ export function contentRoute(scroll: number, docks: ContentDocks, header: number
       const mix = ease(t)
       const a = docks[from].rect, b = docks[to].rect
       let w = blend(a.width, b.width, mix), h = blend(a.height, b.height, mix)
-      const flight = width ? Math.sin(t * Math.PI) ** 4 : 0
+      const flight = width ? Math.sin(t * Math.PI) ** 2 : 0
       const available = Math.max(1, height - header - 32)
       // A real expansion of the render window makes the zoom visible even
       // when the safety camera must retreat to keep the complete model in shot.
@@ -71,5 +72,5 @@ export function contentCamera(route: ContentRoute, compact: boolean) {
   const side = (stage: ContentStage) => stage === 'skills' ? -0.18 : 0.24
   // Push through the match cut rather than pulling away from it. The render
   // window expands with the shot, and full-bounds fitting remains the final guard.
-  return { x: (blend(side(route.from), side(route.to), route.mix) + arc * 0.28) * (compact ? 0.4 : 1), y: 0.18 + arc * 0.1, z: 6.35 - arc * 1.4, lookX: 0, lookY: 0, fov: 34 - arc * 2.5 }
+  return { x: (blend(side(route.from), side(route.to), route.mix) + arc * 0.42) * (compact ? 0.4 : 1), y: 0.18 + arc * 0.12, z: 6.35 - arc * 0.85, lookX: 0, lookY: 0, fov: 34 - arc * 1.5 }
 }

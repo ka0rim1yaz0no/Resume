@@ -23,6 +23,7 @@ import { createSceneFramer } from './cameraFraming'
 import { EducationIdentities, type EducationScore } from './EducationIdentities'
 import { educationChapter } from './educationChoreography'
 import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from './sculptureAssembly'
+import { followScroll } from './motionRail'
 import { bindProjectAssembly, projectPresence } from './projectAssembly'
 
 // Buffer decompression must not compete with touch scrolling on the main thread.
@@ -84,7 +85,6 @@ function useModelAsset(id: ModelId, mobile: boolean) {
       if (!(object instanceof Mesh)) return
       const copy = (source: Material) => {
         const material = cloneStudioMaterial(source, id)
-        material.transparent = true
         materials.push({ material, opacity: source.opacity })
         return material
       }
@@ -160,7 +160,7 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     }
     group.current.visible = weight > 0.001
     const solid = weight * (1 - score.dissolve) * score.exitOpacity
-    normalized.materials.forEach(({ material, opacity }) => { material.opacity = opacity * solid; material.depthWrite = solid > 0.995 })
+    normalized.materials.forEach(({ material, opacity }) => { material.opacity = opacity * solid })
   })
   // The renderer fits the final camera at priority 1. Project physical part
   // pivots afterwards, so leader lines stay attached throughout the dolly.
@@ -257,7 +257,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
     visibility.weight = solid * alternate
     const reactWeight = solid * (1 - alternate)
     if (original.current) original.current.visible = reactWeight > 0.001
-    normalized.materials.forEach(({ material, opacity }) => { material.opacity = opacity * reactWeight; material.depthWrite = reactWeight > 0.995 })
+    normalized.materials.forEach(({ material, opacity }) => { material.opacity = opacity * reactWeight })
     connector.material.opacity = amount > 0 ? 0 : weight * 0.4
     gl.domElement.dataset.companion = 'react-js'
     gl.domElement.dataset.companionWeight = weight.toFixed(3)
@@ -347,6 +347,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const flight = useMemo(() => rootFlight(anchors.hero), [anchors])
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
+  const rail = useRef<number | null>(null)
   useEffect(() => {
     const generator = new PMREMGenerator(gl)
     const room = new RoomEnvironment()
@@ -380,6 +381,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const delta = Math.min(rawDelta, 0.05)
     const header = window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100
     const scroll = window.scrollY
+    rail.current = followScroll(rail.current, scroll, rawDelta, window.innerHeight, motion && running)
+    const sceneScroll = rail.current
     // Sticky thresholds only change with layout. Idle rotation does not need
     // repeated style/offset walks; scroll only refreshes the screen rectangles.
     if (dirty.current || !thresholds.current) thresholds.current = {
@@ -398,13 +401,13 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     // On a stacked phone hero, let visitors reach and explore the model
     // before carrying it into the next scene.
     const start = Math.min(end - 1, Math.max(Math.min(end * 0.2, 100), hero.top + scroll - header - 24))
-    const transition = stageHandoff({ left: hero.left, top: hero.top + scroll, width: hero.width, height: hero.height }, destination, scroll, start, end)
+    const transition = stageHandoff({ left: hero.left, top: hero.top + scroll, width: hero.width, height: hero.height }, destination, sceneScroll, start, end)
     const hiddenFilm = journey.width === 0 || journey.height === 0
     const docks: ContentDocks = {
       film: { rect: journey, arrive: 0, leave: thresholds.current.film },
       project: { ...thresholds.current.project, rect: measurements.current.project }, experience: { ...thresholds.current.experience, rect: measurements.current.experience }, skills: { ...thresholds.current.skills, rect: measurements.current.skills }, education: { ...thresholds.current.education, rect: measurements.current.education },
     }
-    score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(scroll, docks, header, window.innerHeight, motion ? size.width : undefined)
+    score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(sceneScroll, docks, header, window.innerHeight, motion ? size.width : undefined)
     score.organizationFocus = MathUtils.clamp(Number(anchors.experience.dataset.experienceFocus || 0), 0, 2)
     const organization = organizationChapter(score.organizationFocus)
     const settledExperience = score.content.to === 'experience' && (score.content.from === 'experience' || score.content.mix > 0.995)
@@ -421,8 +424,9 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const rect = inContent ? score.content.viewport : introRect
     score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
     score.opening = opening
-    score.heroScroll = MathUtils.clamp(-heroSection.top / Math.max(1, heroSection.height), 0, 1)
-    score.progress = Number(anchors.journey.dataset.sceneScore || 0)
+    score.heroScroll = MathUtils.clamp((sceneScroll - scroll - heroSection.top) / Math.max(1, heroSection.height), 0, 1)
+    const filmDistance = Math.max(1, anchors.section.offsetHeight - window.innerHeight + header)
+    score.progress = MathUtils.clamp(Number(anchors.journey.dataset.sceneScore || 0) + (sceneScroll - scroll) / filmDistance, 0, 1)
     const filmWeights = modelIds.map((_, index) => journeyPose(score.progress, index, false).weight)
     const filmFlux = 2 * (1 - filmWeights.reduce((sum, weight) => sum + weight * weight, 0))
     const cut = contentTransitionMix(score.content.mix)
@@ -483,7 +487,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     gl.domElement.dataset.exploration = [score.exploreYaw, score.explorePitch, score.exploreZoom].map(n => n.toFixed(3)).join(',')
     gl.domElement.dataset.viewport = [rect.left, rect.top, rect.width, rect.height].map(n => n.toFixed(1)).join(',')
     diagnostics.current.frames++
-    if (ready && score.active && motion) invalidate()
+    if (ready && motion && running && (score.active || Math.abs(sceneScroll - scroll) > 0.1)) invalidate()
   }, -3)
   useFrame(({ camera, scene, size, clock }, delta) => {
     gl.setScissorTest(false)

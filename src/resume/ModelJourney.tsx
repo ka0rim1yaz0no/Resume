@@ -48,7 +48,7 @@ export function ModelJourney({ paused, systemReduced, toggleMotion }: { paused: 
   }, { scope: section, dependencies: [paused], revertOnUpdate: true })
   return <section id="journey" ref={section} className={`model-journey ${systemReduced ? 'journey-reduced' : ''}`} aria-label="Systems, interfaces, and workflow in motion">
     <div className="journey-frame" data-journey-chapter={active}>
-      <div className="journey-heading"><span>Three dimensions of my work</span><a href="#project">Skip to résumé <Icon name="down" /></a></div>
+      <div className="journey-heading"><div className="journey-heading-links"><span>Three dimensions of my work</span><a href="/">Replay intro <Icon name="play" /></a></div><a href="#project">Skip to résumé <Icon name="down" /></a></div>
       <div className="journey-titles" aria-hidden="true">{chapters.map((chapter, i) => <span key={chapter.title} className={active === i ? 'is-active' : ''}>{chapter.title}</span>)}</div>
       <SceneWindow id={modelIds[active]} chapter="journey" className="journey-scene" />
       <div className="journey-copy">{chapters.map((chapter, i) => <div className={`journey-panel ${active === i ? 'is-active' : ''}`} key={chapter.title} aria-hidden={active !== i}><h2>{chapter.label}</h2><p>{chapter.copy}</p></div>)}</div>

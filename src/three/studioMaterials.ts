@@ -2,7 +2,10 @@ import { Color, Material, MathUtils, MeshStandardMaterial } from 'three'
 import type { ModelId } from '../data/assets'
 
 export const studioFinish = { roughness: 0.88, metalness: 0.3, envMapIntensity: 0.55, normalStrength: 0.28 }
-export const studioLighting = { environment: 0.8, ambient: 0.5, key: 2.9, fill: 0.75, rim: 1.9 }
+export const studioLighting = { environment: 0.8, ambient: 0.4, key: 2.7, fill: 0.65, rim: 2.1 }
+// Screen-door coverage keeps every fading surface in the depth buffer. Complex
+// GLBs cannot be triangle-sorted correctly by ordinary translucent blending.
+export const studioFade = { transparent: false, alphaHash: true, depthWrite: true }
 export const studioGold = { brass: '#d2bd85', edge: '#bda46b', graphite: '#252b2e', champagne: '#f0e7d0', dust: '#9a7d44' }
 const gold = new Color(studioGold.brass)
 const goldLuminance = gold.r * 0.2126 + gold.g * 0.7152 + gold.b * 0.0722
@@ -31,6 +34,7 @@ const goldAlbedo = `
 // roughness back down. Authored colour maps and cached materials stay intact.
 export function cloneStudioMaterial(source: Material, asset?: ModelId) {
   const material = source.clone()
+  Object.assign(material, studioFade)
   if (material instanceof MeshStandardMaterial) {
     // These solid assets only fade during dust handoffs. Rendering both sides
     // in one pass preserves their surfaces without drawing every triangle twice.
