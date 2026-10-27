@@ -378,7 +378,6 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 
 /* Opening shot: the real sculpture moves from the centre into the hero. */
 .opening-sequence { position: fixed; inset: 0; z-index: 19; background: #101412; visibility: hidden; opacity: 0; padding: 12vh 6vw 6vh; pointer-events: none; }
-.opening-note { position: absolute; top: calc(var(--opening-header, 100px) + 24px); left: 6vw; max-width: 88%; color: var(--muted); font-size: 12px; }
 .opening-stage { position: absolute; left: 45%; top: 18%; width: 49%; aspect-ratio: 960 / 760; }
 .poster-preview, .poster-preview.poster-systems-sculpture, .poster-preview.poster-workflow-board { background: #101412; }
 .intro-opening { overflow-x: clip; }
@@ -432,7 +431,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .journey-reduced { display: none; }
 @media (max-width: 980px) { .journey-frame { top: 84px; height: calc(100svh - 84px); }.journey-copy { width: 25vw; }.journey-detail { max-width: 200px; } }
 @media (max-width: 650px) {
-  .opening-type { bottom: 96px; font-size: clamp(18px, 5.5vw, 24px); }.opening-note { font-size: 10px; }.opening-bottom { font-size: 10px; }
+  .opening-type { bottom: 96px; font-size: clamp(18px, 5.5vw, 24px); }.opening-bottom { font-size: 10px; }
   .model-journey { height: 290svh; }.journey-frame { top: 76px; height: calc(100svh - 76px); min-height: 590px; }
   .journey-heading { inset: 12px 20px auto; font-size: 9px; }.journey-heading a { gap: 8px; }
   .journey-titles { left: 18px; right: 18px; top: 10%; font-size: clamp(61px, 17vw, 105px); }

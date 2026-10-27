@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
-import { profile } from '../data/profile'
 import { openingFrame } from '../three/openingLayout'
 import { openingDuration, openingPhase } from '../three/sculptureAssembly'
 
@@ -25,7 +24,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     scene.dataset.sceneOpening = '1'
     curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
     gsap.set(stage, { left: frame.left, top: frame.top, width: frame.width, height: frame.height })
-    gsap.set(curtain, { autoAlpha: 1, '--opening-header': `${header}px` })
+    gsap.set(curtain, { autoAlpha: 1 })
     gsap.set(heroCopy, { opacity: 0, y: 18 })
     gsap.set('.opening-impact', { scale: 0.68, opacity: 0 })
     gsap.set('.opening-field', { scale: 1.12, opacity: 0 })
@@ -60,7 +59,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
         .to('.opening-impact', { scale: 0.85, opacity: 0.65, duration: 0.16, ease: 'power2.out' }, duration * 0.64)
         .to('.opening-impact', { scale: 1.35, opacity: 0, duration: 0.65, ease: 'power2.out' }, duration * 0.64 + 0.16)
         .to('.opening-type', { opacity: 0, y: -6, duration: 0.4, ease: 'sine.inOut' }, duration * 0.74)
-        .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.5 }, duration * 0.77)
+        .to('.opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.5 }, duration * 0.77)
         .to(curtain, { opacity: 0, duration: duration * 0.19, ease: 'sine.inOut' }, copyStart)
         .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.15, stagger: 0.035, ease: 'power2.out' }, copyStart)
     }
@@ -104,7 +103,6 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       <svg className="opening-orbit" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" pathLength="1" stroke="currentColor" strokeWidth="0.18" strokeDasharray="1" /></svg>
       <div className="opening-impact" />
     </div>
-    <p className="opening-note">A portfolio by {profile.fullName}</p>
     <div className="opening-type"><span><span className="opening-word">Interfaces.</span></span><span><span className="opening-word">Logic.</span></span><span><span className="opening-word">Data.</span></span></div>
     <div className="opening-bottom"><div className="opening-status"><span className="opening-status-preparing">Preparing the scene.</span><span className="opening-status-gathering">Gathering the pieces.</span><span className="opening-status-magnetizing">Making the connections.</span><span className="opening-status-assembled">Connected with purpose.</span></div><button tabIndex={-1}>Skip intro ↗</button></div>
     <div className="opening-line"><span /></div>
