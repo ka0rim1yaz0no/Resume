@@ -586,18 +586,27 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
     if (reduced) root.current?.querySelectorAll<HTMLElement>('[data-scene="project"], [data-scene="experience"], [data-scene="skills"], [data-scene="education"]').forEach(element => { delete element.dataset.sceneReady })
   }, [root, reduced])
   useEffect(() => {
-    if (!anchors || warm) return
+    if (!anchors || warm || reduced) return
+    let approaching = false
+    // Keep hidden chapter decoding and shader compilation out of the opening.
+    // A skipped or completed take releases any already-nearby destinations.
+    const warmNearby = () => {
+      if (!approaching || root.current?.classList.contains('intro-opening')) return
+      setWarm(true); observer.disconnect(); openingObserver.disconnect()
+    }
     const observer = new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) { setWarm(true); observer.disconnect() }
+      if (entries.some(entry => entry.isIntersecting)) { approaching = true; warmNearby() }
     }, { rootMargin: '25% 0px' })
+    const openingObserver = new MutationObserver(warmNearby)
+    if (root.current) openingObserver.observe(root.current, { attributes: true, attributeFilter: ['class'] })
     for (const stage of [anchors.section, anchors.project, anchors.experience, anchors.skills, anchors.education]) observer.observe(stage)
-    return () => observer.disconnect()
-  }, [anchors, warm])
+    return () => { observer.disconnect(); openingObserver.disconnect() }
+  }, [anchors, warm, reduced, root])
   useEffect(() => () => { root.current?.querySelectorAll<HTMLElement>('[data-scene-ready]').forEach(element => { delete element.dataset.sceneReady }) }, [root])
   return <>
     <Canvas className="cinematic-renderer" dpr={[1, mobile ? 1 : 1.35]} frameloop="demand" gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', toneMapping: ACESFilmicToneMapping }}>
       {anchors && <Director anchors={anchors} score={score} model={model} turn={turn} reset={reset} motion={motion} reduced={reduced} running={running} ready={ready} mobile={mobile} pointer={pointer} onError={onError} onRendered={rendered}>{environment =>
-          <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready} technology={technology} environment={environment} projectAnchor={anchors.project} onReady={loaded} onError={onError} />
+          <Ensemble score={score} model={model} motion={motion} compact={compact} mobile={mobile} warm={warm && ready && !reduced} technology={technology} environment={environment} projectAnchor={anchors.project} onReady={loaded} onError={onError} />
       }</Director>}
     </Canvas>
   </>

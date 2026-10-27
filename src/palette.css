@@ -106,10 +106,15 @@ h2 { font-weight: 700; }
 .opening-note { font-size: 12px; line-height: 1.6; }
 .opening-type { color: #fdfbff; font-weight: 650; letter-spacing: -.035em; }
 .opening-orbit { color: #e7d0ff82; }
-.opening-poster { opacity: 0; }
 .opening-field i:nth-child(-n+2) { background: linear-gradient(90deg, transparent, #e7d0ff80); }
 .opening-field i:nth-child(n+3) { background: linear-gradient(transparent, #e7d0ff80); }
-.opening-impact { border-color: #e8d6ffbd; box-shadow: 0 0 40px #d5a7ff24, inset 0 0 40px #d5a7ff14; }
+.opening-field i::after { content: ''; position: absolute; right: 0; bottom: 0; width: 3px; height: 3px; border-radius: 50%; background: var(--accent-fill); }
+.opening-field i:nth-child(n+5) { left: auto; right: auto; bottom: auto; width: 20%; height: 1px; background: linear-gradient(90deg, transparent, #e7d0ff80); }
+.opening-field i:nth-child(5) { left: 8%; top: 17%; transform: rotate(35deg); }
+.opening-field i:nth-child(6) { right: 8%; top: 17%; transform: rotate(145deg); }
+.opening-field i:nth-child(7) { left: 8%; top: 83%; transform: rotate(-35deg); }
+.opening-field i:nth-child(8) { right: 8%; top: 83%; transform: rotate(-145deg); }
+.opening-impact { border-color: #dbf86b99; box-shadow: 0 0 40px #dbf86b14, inset 0 0 40px #e8d6ff14; }
 .opening-line { background: #ddc4ff45; }
 .opening-line span { background: #dbf86b; }
 .opening-bottom button { font-weight: 600; }
@@ -125,7 +130,7 @@ h2 { font-weight: 700; }
 .journey-frame > .journey-scene { inset: 14% 6% 8% 28%; }
 .journey-titles { font-size: clamp(90px, 13.5vw, 195px); }
 .journey-copy { bottom: 25%; }
-.journey-titles { color: #decaff12; -webkit-text-stroke: 1px #dfc7f180; font-weight: 750; letter-spacing: -.07em; }
+.journey-titles { color: #f4ebff; -webkit-text-stroke: 0; font-weight: 800; letter-spacing: -.07em; text-shadow: 0 3px 0 #3e146f55; }
 .journey-heading, .journey-footer, .journey-scroll-note { color: #ede3ff; }
 .journey-heading { font-size: 12px; }
 .journey-heading-links { display: flex; align-items: center; gap: 24px; }

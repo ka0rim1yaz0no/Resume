@@ -380,9 +380,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .opening-sequence { position: fixed; inset: 0; z-index: 19; background: #101412; visibility: hidden; opacity: 0; padding: 12vh 6vw 6vh; pointer-events: none; }
 .opening-note { position: absolute; top: calc(var(--opening-header, 100px) + 24px); left: 6vw; max-width: 88%; color: var(--muted); font-size: 12px; }
 .opening-stage { position: absolute; left: 45%; top: 18%; width: 49%; aspect-ratio: 960 / 760; }
-.opening-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mask-image: radial-gradient(ellipse, #000 24%, transparent 70%); transition: opacity 350ms ease; }
 .poster-preview, .poster-preview.poster-systems-sculpture, .poster-preview.poster-workflow-board { background: #101412; }
-.opening-sequence[data-scene-ready=true] .opening-poster { opacity: 0; transition: none; }
 .intro-opening { overflow-x: clip; }
 .opening-orbit { position: absolute; inset: 2% 0; width: 100%; height: 96%; color: #b9cbb27a; }
 .opening-field { position: absolute; inset: 0; opacity: 0; transform-origin: 50% 50%; }

@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
-import { assetUrl, profile } from '../data/profile'
+import { profile } from '../data/profile'
 import { openingFrame } from '../three/openingLayout'
 import { openingDuration, openingPhase } from '../three/sculptureAssembly'
 
@@ -54,12 +54,12 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
           if (curtain.dataset.phase !== phase) curtain.dataset.phase = phase
         } }, 0)
         .to('.opening-line span', { scaleX: 1, duration: duration * 0.8, ease: 'none' }, 0)
-        .to('.opening-field', { opacity: 0.7, duration: 0.45, ease: 'sine.out' }, 0)
-        .to('.opening-field', { scale: 0.72, duration: duration * 0.58, ease: 'power2.inOut' }, 0)
-        .to('.opening-field', { opacity: 0, duration: 0.45 }, duration * 0.51)
+        .to('.opening-field', { opacity: 0.6, duration: 0.45, ease: 'sine.out' }, 0)
+        .to('.opening-field', { scale: 0.12, duration: duration * 0.68, ease: 'power2.inOut' }, 0)
+        .to('.opening-field', { opacity: 0, duration: duration * 0.14 }, duration * 0.58)
         .to('.opening-impact', { scale: 0.85, opacity: 0.65, duration: 0.16, ease: 'power2.out' }, duration * 0.64)
         .to('.opening-impact', { scale: 1.35, opacity: 0, duration: 0.65, ease: 'power2.out' }, duration * 0.64 + 0.16)
-        .to('.opening-type', { opacity: 0, y: -6, duration: 0.45, ease: 'sine.inOut' }, duration * 0.71)
+        .to('.opening-type', { opacity: 0, y: -6, duration: 0.4, ease: 'sine.inOut' }, duration * 0.74)
         .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.5 }, duration * 0.77)
         .to(curtain, { opacity: 0, duration: duration * 0.19, ease: 'sine.inOut' }, copyStart)
         .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.15, stagger: 0.035, ease: 'power2.out' }, copyStart)
@@ -100,8 +100,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
   }, { scope: overlay, dependencies: [disabled], revertOnUpdate: true })
   return <div ref={overlay} className="opening-sequence" aria-hidden="true">
     <div className="opening-stage" data-opening-stage>
-      <img className="opening-poster" src={assetUrl('posters/systems-sculpture.jpg')} width="960" height="760" alt="" fetchPriority="high" />
-      <div className="opening-field"><i /><i /><i /><i /></div>
+      <div className="opening-field">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</div>
       <svg className="opening-orbit" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" pathLength="1" stroke="currentColor" strokeWidth="0.18" strokeDasharray="1" /></svg>
       <div className="opening-impact" />
     </div>

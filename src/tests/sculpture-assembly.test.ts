@@ -28,7 +28,7 @@ describe('Sculpture assembly', () => {
 
   it('locks the base before the display and returns every cut to its exact original pose', () => {
     expect(assemblyPose(0, 0.6, false).assembled).toBe(1)
-    expect(assemblyPose(6, 0.6, false).assembled).toBeLessThan(0.6)
+    expect(assemblyPose(6, 0.6, false).assembled).toBeLessThan(0.82)
     for (let index = 0; index < assemblyPieceCount; index++) {
       expect(assemblyPose(index, 0, false)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
       let prior = 0
@@ -59,6 +59,14 @@ describe('Sculpture assembly', () => {
       expect(piece.rotation.toArray()).toEqual([0, 0, 0, 'XYZ'])
     })
     expect(original.children[6].position.y).toBeCloseTo(1.2)
+  })
+
+  it('catches an incoming piece near its joint before the final magnetic connection', () => {
+    const caught = assemblyPose(6, 0.5, false)
+    expect(caught.assembled).toBeCloseTo(0.82)
+    expect(assemblyPose(6, 0.46, false)).toEqual(caught)
+    expect(assemblyPose(6, 0.4, false).assembled).toBeGreaterThan(caught.assembled)
+    expect(assemblyPose(6, 0.27, false)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
   })
 
   it('receives fragments from every screen edge and settles the magnetic impact before docking', () => {

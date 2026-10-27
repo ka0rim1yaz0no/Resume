@@ -3,7 +3,7 @@ import { blend, clamp } from './choreography'
 
 const ease = (start: number, end: number, value: number) => {
   const t = clamp((value - start) / (end - start))
-  return t * t * t * (t * (t * 6 - 15) + 10)
+  return clamp(t * t * t * (t * (t * 6 - 15) + 10))
 }
 
 // Screen-edge arrivals share a clock, but each physical cut has its own
@@ -19,7 +19,7 @@ const pieces = [
 ] as const
 
 export const assemblyPieceCount = pieces.length
-export const openingDuration = (compact: boolean) => compact ? 3.8 : 4.4
+export const openingDuration = (compact: boolean) => compact ? 4.2 : 4.8
 export const openingPhase = (opening: number) => {
   const t = 1 - clamp(opening)
   return t < 0.58 ? 'gathering' : t < 0.74 ? 'magnetizing' : t < 0.79 ? 'assembled' : 'landing'
@@ -28,7 +28,9 @@ export const openingPhase = (opening: number) => {
 export function assemblyPose(index: number, opening: number, compact: boolean) {
   const piece = pieces[index]
   const t = 1 - clamp(opening)
-  const arrive = ease(piece.start, piece.end, t)
+  // Catch each incoming piece just outside its joint, then magnetize the last
+  // short distance. Both moves end at rest; the contact ripple stays bounded.
+  const arrive = 0.82 * ease(piece.start, piece.end - 0.16, t) + 0.18 * ease(piece.end - 0.09, piece.end, t)
   const remaining = 1 - arrive
   const contact = (t - piece.end) / 0.08
   const snap = contact > 0 && contact < 1 ? Math.sin(contact * Math.PI * 2.5) * (1 - contact) ** 3 * 0.022 : 0
