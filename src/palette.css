@@ -79,9 +79,9 @@ h2 { font-weight: 600; }
 .capability-strip { background: #e3eae4; border-color: #bac5bd; }
 .capability-strip p { color: var(--accent); }
 .capability-strip > div > div { color: var(--text); }
-.opening-sequence { background: radial-gradient(ellipse at 50% 43%, #f1f5f0, #e7eee8 60%, #f5f7f4 100%); }
+.opening-sequence { background: radial-gradient(ellipse at 50% 45%, #ffffff 4%, #f0f3ef 52%, #e1e7e3 100%); }
 .opening-note, .opening-bottom { color: var(--muted); }
-.opening-orbit { color: #8d957f80; }
+.opening-orbit { color: #9b9f8f52; }
 .opening-poster { mix-blend-mode: multiply; opacity: .08; }
 .model-journey { background: var(--studio-grain) var(--journey-bg); border-color: #bac5bd; }
 .journey-frame::before { background: radial-gradient(ellipse, #67757224, #bca76b18 48%, transparent 72%); }

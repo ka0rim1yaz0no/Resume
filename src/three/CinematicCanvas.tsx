@@ -22,7 +22,7 @@ import { organizationChapter } from './experienceChoreography'
 import { createSceneFramer } from './cameraFraming'
 import { EducationIdentities, type EducationScore } from './EducationIdentities'
 import { educationChapter } from './educationChoreography'
-import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion } from './sculptureAssembly'
+import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from './sculptureAssembly'
 import { bindProjectAssembly, projectPresence } from './projectAssembly'
 
 // Buffer decompression must not compete with touch scrolling on the main thread.
@@ -125,12 +125,13 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     let weight = blend(score.weights[index], film.weight, t)
     const opening = motion ? score.opening : 0
     const turn = assemblyTurn(id === 'systems-sculpture' ? opening : 0)
-    group.current.userData.openingFrameBounds = id === 'systems-sculpture' && opening > 0.23 ? normalized.bounds : undefined
+    group.current.userData.openingFrameBounds = id === 'systems-sculpture' && opening > 0.28 ? normalized.bounds : undefined
     assembly.update(opening, compact)
     projectAssembly.update(score.projectExplosion, compact)
     if (id === 'systems-sculpture') {
       gl.domElement.dataset.assemblyPieces = String(assembly.count)
       gl.domElement.dataset.assemblyProgress = (1 - opening).toFixed(3)
+      gl.domElement.dataset.openingPhase = opening > 0 ? openingPhase(opening) : 'complete'
     }
     const idle = motion ? Math.sin(score.elapsed * 0.32) * 0.018 * (1 - opening) : 0
     // Update hidden poses too: the incoming object is already in place when

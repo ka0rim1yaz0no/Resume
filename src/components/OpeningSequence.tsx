@@ -3,7 +3,7 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { assetUrl, profile } from '../data/profile'
 import { openingFrame } from '../three/openingLayout'
-import { openingDuration } from '../three/sculptureAssembly'
+import { openingDuration, openingPhase } from '../three/sculptureAssembly'
 
 export function OpeningSequence({ disabled }: { disabled: boolean }) {
   const overlay = useRef<HTMLDivElement>(null)
@@ -27,6 +27,8 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     gsap.set(stage, { left: frame.left, top: frame.top, width: frame.width, height: frame.height })
     gsap.set(curtain, { autoAlpha: 1, '--opening-header': `${header}px` })
     gsap.set(heroCopy, { opacity: 0, y: 18 })
+    gsap.set('.opening-impact', { scale: 0.68, opacity: 0 })
+    gsap.set('.opening-field', { scale: 1.12, opacity: 0 })
     gsap.from('.opening-word', { yPercent: 110, duration: 0.7, stagger: 0.08, ease: 'power3.out' })
     gsap.set('.opening-line span', { scaleX: 0 })
     gsap.fromTo('.opening-orbit circle', { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut' })
@@ -34,6 +36,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       settled = true
       root.classList.remove('intro-opening')
       delete scene.dataset.sceneOpening
+      delete curtain.dataset.phase
       gsap.set(heroCopy, { clearProps: 'opacity,transform' })
       gsap.set(curtain, { autoAlpha: 0 })
     }
@@ -43,14 +46,22 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       if (instant) { settle(); return }
       const shot = { progress: 1 }
       const duration = openingDuration(compact)
-      const copyStart = duration * 0.77
+      const copyStart = duration * 0.81
       reveal = gsap.timeline({ onComplete: settle })
-        .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => { scene.dataset.sceneOpening = String(shot.progress) } }, 0)
+        .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => {
+          scene.dataset.sceneOpening = String(shot.progress)
+          curtain.dataset.phase = openingPhase(shot.progress)
+        } }, 0)
         .to('.opening-line span', { scaleX: 1, duration: duration * 0.8, ease: 'none' }, 0)
-        .to('.opening-word', { yPercent: -110, opacity: 0, duration: 0.5, stagger: 0.05, ease: 'power2.in' }, duration * 0.64)
-        .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.6 }, duration * 0.72)
-        .to(curtain, { opacity: 0, duration: 0.8, ease: 'sine.inOut' }, copyStart)
-        .to(heroCopy, { y: 0, opacity: 1, duration: 0.75, stagger: 0.045, ease: 'power2.out' }, copyStart)
+        .to('.opening-field', { opacity: 0.7, duration: 0.45, ease: 'sine.out' }, 0)
+        .to('.opening-field', { scale: 0.72, duration: duration * 0.58, ease: 'power2.inOut' }, 0)
+        .to('.opening-field', { opacity: 0, duration: 0.45 }, duration * 0.51)
+        .to('.opening-impact', { scale: 0.85, opacity: 0.65, duration: 0.16, ease: 'power2.out' }, duration * 0.64)
+        .to('.opening-impact', { scale: 1.35, opacity: 0, duration: 0.65, ease: 'power2.out' }, duration * 0.64 + 0.16)
+        .to('.opening-word', { yPercent: -110, opacity: 0, duration: 0.5, stagger: 0.05, ease: 'power2.in' }, duration * 0.71)
+        .to('.opening-note, .opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.5 }, duration * 0.77)
+        .to(curtain, { opacity: 0, duration: duration * 0.19, ease: 'sine.inOut' }, copyStart)
+        .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.15, stagger: 0.035, ease: 'power2.out' }, copyStart)
     }
     const readyCall = gsap.delayedCall(1, () => finish()).pause()
     const schedule = () => {
@@ -89,7 +100,9 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
   return <div ref={overlay} className="opening-sequence" aria-hidden="true">
     <div className="opening-stage" data-opening-stage>
       <img className="opening-poster" src={assetUrl('posters/systems-sculpture.jpg')} width="960" height="760" alt="" fetchPriority="high" />
+      <div className="opening-field"><i /><i /><i /><i /></div>
       <svg className="opening-orbit" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" pathLength="1" stroke="currentColor" strokeWidth="0.18" strokeDasharray="1" /></svg>
+      <div className="opening-impact" />
     </div>
     <p className="opening-note">A portfolio by {profile.fullName}</p>
     <div className="opening-type"><span><span className="opening-word">Interfaces.</span></span><span><span className="opening-word">Logic.</span></span><span><span className="opening-word">Data.</span></span></div>

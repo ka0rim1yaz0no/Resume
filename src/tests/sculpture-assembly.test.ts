@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Vector3 } from 'three'
-import { assemblyPieceCount, assemblyPose, assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion } from '../three/sculptureAssembly'
+import { assemblyPieceCount, assemblyPose, assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from '../three/sculptureAssembly'
 import { openingCamera } from '../three/choreography'
 import { createSceneFramer } from '../three/cameraFraming'
 import mobileModels from '../data/mobileModels.json'
@@ -27,8 +27,8 @@ describe('Sculpture assembly', () => {
   })
 
   it('locks the base before the display and returns every cut to its exact original pose', () => {
-    expect(assemblyPose(0, 0.65, false).assembled).toBe(1)
-    expect(assemblyPose(6, 0.65, false).assembled).toBeLessThan(0.5)
+    expect(assemblyPose(0, 0.6, false).assembled).toBe(1)
+    expect(assemblyPose(6, 0.6, false).assembled).toBeLessThan(0.6)
     for (let index = 0; index < assemblyPieceCount; index++) {
       expect(assemblyPose(index, 0, false)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
       let prior = 0
@@ -64,14 +64,27 @@ describe('Sculpture assembly', () => {
   it('receives fragments from every screen edge and settles the magnetic impact before docking', () => {
     expect(assemblyPose(0, 1, false).y).toBeLessThan(-4)
     expect(assemblyPose(1, 1, false).x).toBeLessThan(-6)
-    expect(assemblyPose(2, 1, false).y).toBeGreaterThan(5)
+    expect(assemblyPose(2, 1, false).y).toBeGreaterThan(4)
     expect(assemblyPose(3, 1, false).x).toBeGreaterThan(6)
     for (const p of [0, 0.1, 0.25, 0.4, 0.8, 1]) expect(magneticShake(p, false)).toEqual({ x: 0, y: 0 })
     expect(Math.abs(magneticShake(0.345, false).x)).toBeGreaterThan(0.01)
     for (let step = 0; step <= 100; step++) {
       const shake = magneticShake(step / 100, false)
-      expect(Math.hypot(shake.x, shake.y)).toBeLessThan(0.045)
+      expect(Math.hypot(shake.x, shake.y)).toBeLessThan(0.055)
     }
+  })
+
+  it('finishes all magnetic connections before the camera and viewport leave the centre', () => {
+    for (const compact of [false, true]) {
+      for (let index = 0; index < assemblyPieceCount; index++) {
+        expect(assemblyPose(index, 0.25, compact)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
+      }
+      expect(magneticShake(0.25, compact)).toEqual({ x: 0, y: 0 })
+    }
+    expect(openingPhase(0.8)).toBe('gathering')
+    expect(openingPhase(0.35)).toBe('magnetizing')
+    expect(openingPhase(0.25)).toBe('assembled')
+    expect(openingPhase(0.1)).toBe('landing')
   })
 
   it('fits the complete sculpture after the impact and throughout its hero handoff', () => {

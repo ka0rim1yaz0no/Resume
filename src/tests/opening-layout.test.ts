@@ -18,8 +18,16 @@ describe('opening framing', () => {
     expect(openingViewport(hero, poster, 1)).toEqual(poster)
     expect(openingViewport(hero, poster, 0)).toEqual(hero)
     expect(openingViewport(hero, poster, 0.5)).toEqual(poster)
-    const docking = openingViewport(hero, poster, 0.135)
+    const docking = openingViewport(hero, poster, 0.105)
     expect(docking.width).toBeCloseTo((hero.width + poster.width) / 2)
+  })
+
+  it('holds the completed sculpture in the central stage before the hero handoff', () => {
+    const stage = openingFrame(1280, 800, 100), hero = { left: 660, top: 180, width: 550, height: 530 }
+    for (const p of [0.35, 0.28, 0.23, 0.21]) expect(openingViewport(hero, stage, p)).toEqual(stage)
+    expect(openingViewport(hero, stage, 0.1).left).toBeGreaterThan(stage.left)
+    expect(openingCamera(0.28, false).x).toBeGreaterThan(0.5)
+    expect(openingCamera(0.28, false).z).toBeLessThan(6.4)
   })
 
   it('moves from an elevated establishing shot to the exact hero camera without a velocity jump', () => {
