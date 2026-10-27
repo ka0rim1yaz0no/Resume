@@ -62,6 +62,18 @@ describe('Reversible 3D scroll choreography', () => {
     expect(cinematicCamera(-1, false)).toEqual(cinematicCamera(0, false))
     expect(cinematicCamera(2, false)).toEqual(cinematicCamera(1, false))
   })
+  it('keeps the scroll lens, camera distance and each subject scale fixed', () => {
+    for (let i = 0; i <= 100; i++) {
+      const p = i / 100
+      expect(cinematicCamera(p, false).z).toBe(cinematicCamera(0, false).z)
+      expect(cinematicCamera(p, false).fov).toBe(cinematicCamera(0, false).fov)
+      expect(chapterPose(p, true, false).scale).toBe(1)
+      for (let index = 0; index < 3; index++) {
+        expect(journeyPose(p, index, false).scale).toBe(journeyPose(0, index, false).scale)
+        expect(journeyPose(p, index, false).z).toBe(0)
+      }
+    }
+  })
   it('lands the opening camera exactly on the hero and keeps its travel bounded', () => {
     expect(openingCamera(0, false)).toEqual({ x: 0, y: 0.15, z: 6.7, lookX: 0, lookY: 0, fov: 35 })
     for (let i = 0; i <= 100; i++) {

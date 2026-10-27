@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { contentCamera, contentPose, contentRoute, contentTransitionMix, type ContentDocks, type ContentRoute, type ContentStage } from '../three/contentChoreography'
+import { cinematicCamera } from '../three/choreography'
 
 const docks: ContentDocks = {
   film: { rect: { left: 400, top: 180, width: 850, height: 600 }, arrive: 0, leave: 1000 },
@@ -12,7 +13,7 @@ const route = (scroll: number) => contentRoute(scroll, docks, 100, 1000)
 const weights = (r: ContentRoute) => [0, 1, 2, 3, 4, 5].map(i => contentPose(r, i, false).weight)
 
 describe('Continuous résumé scene rail', () => {
-  it('opens a larger safe shot during the zoom and returns exactly to both docks', () => {
+  it('moves directly between docks without expanding the viewport or pushing the camera closer', () => {
     for (const width of [320, 390, 1280]) {
       const height = width < 650 ? 844 : 900, header = width < 650 ? 76 : 100
       const mobileDocks = Object.fromEntries(Object.entries(docks).map(([key, dock]) => [key, { ...dock, rect: { ...dock.rect, left: 20, width: Math.min(width - 40, dock.rect.width) } }])) as ContentDocks
@@ -21,15 +22,19 @@ describe('Continuous résumé scene rail', () => {
       const end = contentRoute(2800, mobileDocks, header, height, width)
       expect(start.viewport).toEqual(mobileDocks.project.rect)
       expect(end.viewport).toEqual(mobileDocks.experience.rect)
-      expect(middle.viewport.width).toBeGreaterThan(start.viewport.width)
+      expect(middle.viewport.width).toBeLessThanOrEqual(Math.max(start.viewport.width, end.viewport.width))
+      expect(middle.viewport.height).toBeLessThanOrEqual(Math.max(start.viewport.height, end.viewport.height))
       expect(middle.viewport.left).toBeGreaterThanOrEqual(0)
       expect(middle.viewport.left + middle.viewport.width).toBeLessThanOrEqual(width)
       expect(middle.viewport.top).toBeGreaterThanOrEqual(header + 16)
       expect(middle.viewport.top + middle.viewport.height).toBeLessThanOrEqual(height - 16)
-      expect(contentCamera(middle, width < 650).z).toBeLessThan(contentCamera(start, width < 650).z)
+      expect(contentCamera(middle, width < 650).z).toBe(contentCamera(start, width < 650).z)
+      expect(contentCamera(middle, width < 650).fov).toBe(contentCamera(start, width < 650).fov)
+      expect(contentCamera(middle, width < 650).z).toBe(cinematicCamera(1, width < 650).z)
+      expect(contentCamera(middle, width < 650).fov).toBe(cinematicCamera(1, width < 650).fov)
     }
   })
-  it('keeps a complete subject through the push-in, exchanges it at the match cut, and settles before docking', () => {
+  it('keeps scale and depth steady while exchanging subjects through dust', () => {
     expect(contentTransitionMix(0.2)).toBe(0)
     expect(contentTransitionMix(0.5)).toBeCloseTo(0.5)
     expect(contentTransitionMix(0.8)).toBe(1)
@@ -37,7 +42,11 @@ describe('Continuous résumé scene rail', () => {
     expect(contentPose(sample(0.2), 1, false).weight).toBe(1)
     expect(contentPose(sample(0.2), 3, false).weight).toBe(0)
     expect(contentPose(sample(0.8), 3, false).weight).toBe(1)
-    expect(contentPose(sample(0.5), 1, false).scale).toBeGreaterThan(contentPose(sample(0), 1, false).scale)
+    for (let i = 0; i <= 100; i++) {
+      expect(contentPose(sample(i / 100), 1, false).scale).toBe(contentPose(sample(0), 1, false).scale)
+      expect(contentPose(sample(i / 100), 1, false).z).toBe(0)
+      expect(contentPose(sample(i / 100), 3, false).scale).toBe(contentPose(sample(1), 3, false).scale)
+    }
   })
   it('docks the laptop, organization identity, and React model into the actual content stages', () => {
     expect(route(800).amount).toBe(0)

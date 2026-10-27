@@ -23,17 +23,15 @@ export function stageHandoff(hero: StageRect, destination: StageRect, scroll: nu
   } }
 }
 
-/** A continuous orbit and dolly; pull back slightly as each subject enters. */
+/** A small lateral orbit with a fixed lens and distance throughout the scroll. */
 export function cinematicCamera(progress: number, compact: boolean) {
   const p = clamp(progress)
   const amplitude = compact ? 0.4 : 1
   const turn = p * Math.PI * 2
   const breathing = Math.sin(p * Math.PI)
-  const pullback = Math.exp(-(((p - 0.33) / 0.095) ** 2)) + Math.exp(-(((p - 0.68) / 0.1) ** 2))
-  const closeup = Math.exp(-(((p - 0.1) / 0.16) ** 2)) + Math.exp(-(((p - 0.5) / 0.16) ** 2)) + Math.exp(-(((p - 0.92) / 0.16) ** 2))
-  return { x: Math.cos(turn + 0.3) * 0.56 * amplitude, y: 0.2 + breathing * 0.18,
-    z: 6.9 - closeup * 0.4 + pullback * 0.55,
-    lookX: -Math.sin(turn) * 0.045 * amplitude, lookY: 0.035 + breathing * 0.035, fov: 35 + breathing * 0.55 }
+  return { x: Math.cos(turn + 0.3) * 0.3 * amplitude, y: 0.2 + breathing * 0.06,
+    z: 6.9,
+    lookX: -Math.sin(turn) * 0.025 * amplitude, lookY: 0.035 + breathing * 0.02, fov: 35 }
 }
 
 /** Elevated three-quarter establishing shot, curved dolly, exact hero landing.
@@ -68,14 +66,14 @@ export function chapterPose(progress: number, intro: boolean, compact: boolean) 
   return {
     x: ((1 - arrive) * 0.55 - leave * 0.48) * travel,
     y: (-(1 - arrive) * 0.42 + leave * 0.3) * travel,
-    z: -(1 - arrive) * 0.7 - leave * 0.25,
+    z: 0,
     rx: (1 - arrive) * 0.16 + leave * 0.1,
     ry: -(1 - arrive) * 0.7 + leave * 0.85,
     rz: ((1 - arrive) * -0.065 + leave * 0.045) * travel,
-    scale: 0.83 + arrive * 0.17 - leave * 0.08,
+    scale: 1,
     // A camera cut becomes a dimensional crossfade, in both scroll directions.
     mix: smooth(intro ? 0.2 : 0.73, intro ? 0.68 : 0.98, p),
-    cameraZ: 7.1 - arrive * 0.4 + leave * 0.45,
+    cameraZ: 6.7,
   }
 }
 
@@ -85,7 +83,7 @@ export function journeyPose(progress: number, index: number, compact: boolean) {
   const second = smooth(0.57, 0.79, p)
   const travel = compact ? 0.45 : 1
   const weights = [1 - first, first * (1 - second), second]
-  if (index === 0) return { weight: weights[0], x: -first * 0.65 * travel, y: first * 0.1, z: -first * 0.65, rx: 0.02, ry: -0.45 + smooth(0, 0.47, p) * 1.05, rz: first * 0.025, scale: 1.08 - first * 0.14 }
-  if (index === 1) return { weight: weights[1], x: ((1 - first) * 0.7 - second * 0.65) * travel, y: -(1 - first) * 0.16 + second * 0.1, z: -(1 - first) * 0.9 - second * 0.65, rx: 0.03, ry: 0.65 - smooth(0.2, 0.8, p) * 1.1, rz: -(1 - first) * 0.035, scale: 0.9 + first * 0.15 - second * 0.14 }
-  return { weight: weights[2], x: (1 - second) * 0.7 * travel, y: -(1 - second) * 0.16, z: -(1 - second) * 0.9, rx: 0.08 * (1 - second), ry: -0.65 + smooth(0.55, 1, p) * 0.95, rz: -(1 - second) * 0.035, scale: 0.9 + second * 0.18 }
+  if (index === 0) return { weight: weights[0], x: -first * 0.45 * travel, y: first * 0.06, z: 0, rx: 0.02, ry: -0.35 + smooth(0, 0.47, p) * 0.7, rz: first * 0.015, scale: 1.08 }
+  if (index === 1) return { weight: weights[1], x: ((1 - first) * 0.45 - second * 0.45) * travel, y: -(1 - first) * 0.1 + second * 0.06, z: 0, rx: 0.03, ry: 0.4 - smooth(0.2, 0.8, p) * 0.75, rz: -(1 - first) * 0.02, scale: 1.05 }
+  return { weight: weights[2], x: (1 - second) * 0.45 * travel, y: -(1 - second) * 0.1, z: 0, rx: 0.05 * (1 - second), ry: -0.4 + smooth(0.55, 1, p) * 0.7, rz: -(1 - second) * 0.02, scale: 1.08 }
 }

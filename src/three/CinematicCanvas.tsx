@@ -42,11 +42,6 @@ function documentTop(element: HTMLElement) {
   return top
 }
 
-function rootFlight(element: HTMLElement) {
-  const host = element.closest('.personal-resume')?.querySelector<HTMLElement>('.cinematic-canvas')
-  return { host, plate: host?.querySelector<HTMLElement>('[data-scene-flight]') }
-}
-
 function measureDock(element: HTMLElement, header: number): Dock {
   const rect = element.getBoundingClientRect()
   const top = documentTop(element)
@@ -307,7 +302,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     let lookX = blend(shot.lookX, film.lookX, t), lookY = blend(shot.lookY, film.lookY, t)
     const lens = state.camera as import('three').PerspectiveCamera
     let fov = blend(shot.fov, film.fov, t)
-    const cameraMix = Math.max(score.content.amount, score.content.flight || 0)
+    const cameraMix = score.content.amount
     if (cameraMix > 0) {
       const target = contentCamera(score.content, compact), q = cameraMix
       const p = state.camera.position
@@ -344,7 +339,6 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect; education: DOMRect } | null>(null)
   const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock; education: Dock } | null>(null)
   const fitScene = useMemo(createSceneFramer, [])
-  const flight = useMemo(() => rootFlight(anchors.hero), [anchors])
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   const rail = useRef<number | null>(null)
@@ -370,11 +364,9 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       window.removeEventListener('scroll', wake); window.removeEventListener('resize', remeasure)
       window.removeEventListener('model-explore', wake)
       observer.disconnect()
-      if (flight.plate) flight.plate.style.opacity = '0'
-      flight.host?.removeAttribute('data-flight-active')
       target.dispose(); generator.dispose(); room.dispose()
     }
-  }, [gl, invalidate, onError, anchors, flight])
+  }, [gl, invalidate, onError, anchors])
   useEffect(() => { score.elapsed = 0; invalidate() }, [score, reset, invalidate])
   useEffect(() => { invalidate(3) }, [model, turn, motion, running, ready, invalidate])
   useFrame((_, rawDelta) => {
@@ -443,13 +435,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.exitOpacity = score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1
     score.active = running && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
     score.viewport = rect
-    const flightAmount = motion && ready && score.active ? score.content.flight || 0 : 0
-    if (flight.plate) {
-      flight.plate.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0) scale(${rect.width / Math.max(1, size.width)}, ${rect.height / Math.max(1, size.height)})`
-      flight.plate.style.opacity = String(flightAmount * 0.96)
-    }
-    if (flight.host) flight.host.dataset.flightActive = String(flightAmount > 0.015)
-    gl.domElement.dataset.flight = flightAmount.toFixed(3)
+    gl.domElement.dataset.scrollZoom = 'off'
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)

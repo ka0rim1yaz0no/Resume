@@ -45,7 +45,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     const active = motion && score.active && transition.flux > 0.008 && !!from && !!to
     points.current.visible = active
     gl.domElement.dataset.dissolvePoints = active ? String(pointCount) : '0'
-    gl.domElement.dataset.dustPalette = 'bronze-gold-champagne'
+    gl.domElement.dataset.dustPalette = 'lavender-champagne'
     if (!active || !from || !to) return
     if (pair.current?.from !== from || pair.current?.to !== to) {
       const origin = geometry.attributes.position as Float32BufferAttribute

@@ -6,7 +6,7 @@ export const studioLighting = { environment: 0.8, ambient: 0.4, key: 2.7, fill: 
 // Screen-door coverage keeps every fading surface in the depth buffer. Complex
 // GLBs cannot be triangle-sorted correctly by ordinary translucent blending.
 export const studioFade = { transparent: false, alphaHash: true, depthWrite: true }
-export const studioGold = { brass: '#d2bd85', edge: '#bda46b', graphite: '#252b2e', champagne: '#f0e7d0', dust: '#9a7d44' }
+export const studioGold = { brass: '#d2bd85', edge: '#bda46b', graphite: '#252b2e', champagne: '#f0e7d0', dust: '#b995df' }
 const gold = new Color(studioGold.brass)
 const goldLuminance = gold.r * 0.2126 + gold.g * 0.7152 + gold.b * 0.0722
 
