@@ -1,33 +1,38 @@
 import { Color, Material, MathUtils, MeshStandardMaterial } from 'three'
 import type { ModelId } from '../data/assets'
 
-export const studioFinish = { roughness: 0.88, metalness: 0.3, envMapIntensity: 0.55, normalStrength: 0.28 }
-export const studioLighting = { environment: 0.8, ambient: 0.4, key: 2.7, fill: 0.65, rim: 2.1 }
+export const studioFinish = { roughness: 0.86, metalness: 0.34, envMapIntensity: 0.55, normalStrength: 0.2 }
+export const studioLighting = { environment: 0.75, ambient: 0.42, key: 2.5, fill: 0.9, rim: 1.8 }
+export const studioLightColors = { key: '#fffaff', fill: '#dac5f1', rim: '#ebdbff' }
 // Screen-door coverage keeps every fading surface in the depth buffer. Complex
 // GLBs cannot be triangle-sorted correctly by ordinary translucent blending.
 export const studioFade = { transparent: false, alphaHash: true, depthWrite: true }
-export const studioGold = { brass: '#d2bd85', edge: '#bda46b', graphite: '#252b2e', champagne: '#f0e7d0', dust: '#b995df' }
-const gold = new Color(studioGold.brass)
-const goldLuminance = gold.r * 0.2126 + gold.g * 0.7152 + gold.b * 0.0722
+export const studioPalette = { amethyst: '#b192d4', edge: '#c5b4dc', body: '#392b4b', pearl: '#f4edfc', dust: '#9f5ccb' }
+const luminance = (color: Color) => color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
+const normalizedTint = (hex: string) => { const color = new Color(hex); return color.multiplyScalar(1 / luminance(color)) }
+const amethystTint = normalizedTint(studioPalette.amethyst)
+const silverTint = normalizedTint(studioPalette.edge)
 
 /** Keep the original light/dark structure, including lettering and recesses. */
-export function goldEnamelColor(source: Color) {
-  const light = source.r * 0.2126 + source.g * 0.7152 + source.b * 0.0722
-  return new Color().setScalar(light).lerp(gold.clone().multiplyScalar(light / goldLuminance), 0.08 + MathUtils.smoothstep(light, 0.03, 0.3) * 0.6)
+export function studioEnamelColor(source: Color) {
+  const light = luminance(source)
+  const tint = amethystTint.clone().lerp(silverTint, MathUtils.smoothstep(light, 0.05, 0.72))
+  return new Color().setScalar(light).lerp(tint.multiplyScalar(light), 0.78)
 }
 
 const laptopColors: Record<string, string> = {
-  'Satin aluminum': '#899397', 'Machined edges': '#ccb884', 'Graphite bezel': '#1c2428',
-  'Sculpted keycaps': '#232b2e', 'Glass trackpad': '#657175', 'Circuit substrate': '#2a3437',
-  'Copper connections': '#c4ac72', 'Thermal components': '#3e4b4d', 'Battery modules': '#20272b',
-  Fasteners: '#d2bd85', 'Indicator glass': '#e5d5ad',
+  'Satin aluminum': '#a79ab8', 'Machined edges': studioPalette.edge, 'Graphite bezel': studioPalette.body,
+  'Sculpted keycaps': '#44354f', 'Glass trackpad': '#887995', 'Circuit substrate': '#614471',
+  'Copper connections': '#a582c4', 'Thermal components': '#7b6b8c', 'Battery modules': '#493951',
+  Fasteners: studioPalette.edge, 'Indicator glass': studioPalette.pearl,
 }
 
 // Recolour the sampled albedo before lighting, leaving alpha, texture detail,
 // normals and geometry intact. This adds no texture, pass or per-frame work.
-const goldAlbedo = `
+const studioAlbedo = `
   float studioLuma = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-  diffuseColor.rgb = mix(vec3(studioLuma), vec3(${gold.toArray().map(n => n.toFixed(6)).join(',')}) * (studioLuma / ${goldLuminance.toFixed(6)}), 0.08 + smoothstep(0.03, 0.3, studioLuma) * 0.6);
+  vec3 studioTint = mix(vec3(${amethystTint.toArray().map(n => n.toFixed(6)).join(',')}), vec3(${silverTint.toArray().map(n => n.toFixed(6)).join(',')}), smoothstep(0.05, 0.72, studioLuma));
+  diffuseColor.rgb = mix(vec3(studioLuma), studioTint * studioLuma, 0.78);
 `
 
 // Customize owned clones. Packed-map channels must not multiply the satin
@@ -52,9 +57,9 @@ export function cloneStudioMaterial(source: Material, asset?: ModelId) {
       const compile = material.onBeforeCompile
       material.onBeforeCompile = function (shader, renderer) {
         compile.call(this, shader, renderer)
-        shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>\n${goldAlbedo}`)
+        shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>\n${studioAlbedo}`)
       }
-      material.customProgramCacheKey = () => 'studio-platinum-gold-albedo-v2'
+      material.customProgramCacheKey = () => 'studio-amethyst-silver-albedo-v1'
     }
   }
   return material

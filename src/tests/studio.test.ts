@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Box3, BoxGeometry, Color, Group, Mesh, MeshStandardMaterial, Texture, Vector3 } from 'three'
-import { cloneStudioMaterial, goldEnamelColor } from '../three/studioMaterials'
+import { cloneStudioMaterial, studioEnamelColor } from '../three/studioMaterials'
 import { sampleSurface } from '../three/surfaceCloud'
 import { dockVisibility } from '../three/contentChoreography'
 
@@ -25,31 +25,32 @@ describe('Consistent studio and surface dissolve', () => {
     expect(source.roughness).toBe(0.2)
     owned.dispose(); source.dispose(); colour.dispose(); packed.dispose()
   })
-  it('separates titanium hardware and gold edges without changing display pixels or cached source', () => {
+  it('gives laptop hardware a silver-violet finish without changing display pixels or cached source', () => {
     const hardware = new MeshStandardMaterial({ color: '#3a5945', name: 'Satin aluminum' })
     const display = new MeshStandardMaterial({ color: '#ddffee', name: 'Display pixels', map: new Texture() })
-    const brass = cloneStudioMaterial(hardware, 'project-laptop') as MeshStandardMaterial
+    const body = cloneStudioMaterial(hardware, 'project-laptop') as MeshStandardMaterial
     const edgeSource = new MeshStandardMaterial({ name: 'Machined edges' })
     const edge = cloneStudioMaterial(edgeSource, 'project-laptop') as MeshStandardMaterial
     const screen = cloneStudioMaterial(display, 'project-laptop') as MeshStandardMaterial
-    expect(brass.color.b).toBeGreaterThan(brass.color.r)
+    expect(body.color.b).toBeGreaterThan(body.color.r)
+    expect(body.color.r).toBeGreaterThan(body.color.g)
+    expect(edge.color.b).toBeGreaterThan(edge.color.r)
     expect(edge.color.r).toBeGreaterThan(edge.color.g)
-    expect(edge.color.g).toBeGreaterThan(edge.color.b)
     expect(hardware.color).toEqual(new Color('#3a5945'))
     expect(screen.color).toEqual(display.color)
     expect(screen.map).toBe(display.map)
-    brass.dispose(); screen.dispose(); edge.dispose(); edgeSource.dispose(); hardware.dispose(); display.map?.dispose(); display.dispose()
+    body.dispose(); screen.dispose(); edge.dispose(); edgeSource.dispose(); hardware.dispose(); display.map?.dispose(); display.dispose()
   })
-  it('keeps relief and lettering contrast when skill colours become gold', () => {
+  it('keeps relief and lettering luminance when skill colours become amethyst', () => {
     const luminance = (c: Color) => c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
     for (const hex of ['#86bfc5', '#e9dc75', '#c7d6ca', '#262626']) {
-      const source = new Color(hex), before = source.clone(), result = goldEnamelColor(source)
+      const source = new Color(hex), before = source.clone(), result = studioEnamelColor(source)
+      expect(result.b).toBeGreaterThan(result.r)
       expect(result.r).toBeGreaterThan(result.g)
-      expect(result.g).toBeGreaterThan(result.b)
       expect(luminance(result)).toBeCloseTo(luminance(source), 6)
       expect(source).toEqual(before)
     }
-    expect(luminance(goldEnamelColor(new Color('#e9dc75')))).toBeGreaterThan(luminance(goldEnamelColor(new Color('#262626'))) * 5)
+    expect(luminance(studioEnamelColor(new Color('#e9dc75')))).toBeGreaterThan(luminance(studioEnamelColor(new Color('#262626'))) * 5)
   })
   it('samples normalized surfaces independently of the live camera-stage pose', () => {
     const rig = new Group(), normalized = new Group()

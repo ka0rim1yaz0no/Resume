@@ -11,7 +11,7 @@ import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactC
 import { contentCamera, contentPose, contentRoute, contentTransitionMix, dockVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
-import { cloneStudioMaterial, studioGold, studioLighting } from './studioMaterials'
+import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
 import { sampleSurface, surfacePointCount, type SurfaceTargets } from './surfaceCloud'
 import { openingViewport } from './openingLayout'
@@ -192,7 +192,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
   const [displayedTechnology, setDisplayedTechnology] = useState(technology)
   const [visibility] = useState(() => ({ weight: 0 }))
   const wire = useMemo(() => new BufferGeometry().setFromPoints([new Vector3(0.9, 0.65, 0.04), new Vector3(1.23, 0.65, 0.04), new Vector3(1.42, 1.23, 0.04)]), [])
-  const connector = useMemo(() => new Line(wire, new LineBasicMaterial({ color: studioGold.edge, transparent: true, opacity: 0.4, depthWrite: false })), [wire])
+  const connector = useMemo(() => new Line(wire, new LineBasicMaterial({ color: studioPalette.edge, transparent: true, opacity: 0.4, depthWrite: false })), [wire])
   const { gl, invalidate } = useThree()
   const emblemReady = useCallback((name: string, ready: boolean) => { if (ready) emblems.current.add(name); else emblems.current.delete(name); invalidate() }, [invalidate])
   useEffect(() => { useLoader.preload(SVGLoader, technologyIcon(technology)); invalidate(3) }, [technology, invalidate])
@@ -278,7 +278,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
   useEffect(() => {
     scene.environment = environment; scene.environmentIntensity = studioLighting.environment
     gl.domElement.dataset.assetProfile = mobile ? 'mobile' : 'desktop'
-    gl.domElement.dataset.studioFinish = 'brushed-gold'
+    gl.domElement.dataset.studioFinish = 'satin-amethyst-silver'
     return () => { scene.environment = null }
   }, [scene, environment, mobile, gl])
   useEffect(() => {

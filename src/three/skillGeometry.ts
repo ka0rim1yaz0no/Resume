@@ -1,7 +1,7 @@
 import { Box2, Color, Curve, ExtrudeGeometry, MathUtils, Path, Shape, SRGBColorSpace, TubeGeometry, Vector2, Vector3, type BufferGeometry, type ShapePath } from 'three'
 import type { SVGResult } from 'three/addons/loaders/SVGLoader.js'
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
-import { goldEnamelColor } from './studioMaterials'
+import { studioEnamelColor } from './studioMaterials'
 
 export type EmblemPart = { geometry: BufferGeometry; color: Color; edge: Color }
 type PathStyle = { fill?: string; stroke?: string; strokeWidth?: number; fillOpacity?: number; strokeOpacity?: number }
@@ -10,7 +10,7 @@ function enamelColor(source: Color, accent: string) {
   const hsl = source.getHSL({ h: 0, s: 0, l: 0 }, SRGBColorSpace)
   const color = new Color().setHSL(hsl.h, hsl.s * 0.82, MathUtils.clamp(hsl.l * 0.9, 0.055, 0.74), SRGBColorSpace).multiplyScalar(0.85)
   if (hsl.s > 0.1) color.lerp(new Color(accent), 0.12)
-  return goldEnamelColor(color)
+  return studioEnamelColor(color)
 }
 
 class StrokeCurve extends Curve<Vector3> {
@@ -66,7 +66,7 @@ export function buildSkillEmblem(data: SVGResult, accent: string): EmblemPart[] 
   return parts
 }
 
-/** A continuous rounded charcoal body rather than a square picture frame. */
+/** A continuous rounded plum body for the raised studio emblems. */
 export function createSkillBody() {
   const half = 1.58, radius = 0.4, edge = half - radius
   const shape = new Shape()

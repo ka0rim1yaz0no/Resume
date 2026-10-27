@@ -7,7 +7,7 @@ import { contentPose, type ContentRoute } from './contentChoreography'
 import { organizationPose } from './experienceChoreography'
 import { assistlyRibbon, knowlesGlobe, syntaxGear } from './organizationGeometry'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
-import { studioFade, studioFinish, studioGold } from './studioMaterials'
+import { studioFade, studioFinish, studioPalette } from './studioMaterials'
 
 export type IdentityScore = { active: boolean; elapsed: number; content: ContentRoute; organizationFocus: number; organizationDissolve: number; dissolve: number; organizationExploration: { yaw: number; pitch: number; zoom: number }[] }
 const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
@@ -59,15 +59,15 @@ function Identity({ index, score, targets, motion, compact }: { index: number; s
   return <group ref={root} visible={false}>
     {'ribbons' in geometry && geometry.ribbons?.map((ribbon, i) => <mesh geometry={ribbon} key={i}>
       <meshStandardMaterial attach="material-0" {...finish} color="#703ab6" />
-      <meshStandardMaterial attach="material-1" {...finish} color={studioGold.edge} />
+      <meshStandardMaterial attach="material-1" {...finish} color={studioPalette.edge} />
     </mesh>)}
     {'panels' in geometry && <>
-      <mesh geometry={geometry.core}><meshStandardMaterial {...finish} color={studioGold.champagne} /></mesh>
+      <mesh geometry={geometry.core}><meshStandardMaterial {...finish} color={studioPalette.pearl} /></mesh>
       <mesh geometry={geometry.panels}><meshStandardMaterial {...finish} color="#6095b7" /></mesh>
     </>}
     {'ring' in geometry && <>
-      <mesh geometry={geometry.ring}><meshStandardMaterial attach="material-0" {...finish} color={studioGold.brass} /><meshStandardMaterial attach="material-1" {...finish} color={studioGold.edge} /></mesh>
-      <mesh geometry={geometry.body}><meshStandardMaterial {...finish} color={studioGold.graphite} /></mesh>
+      <mesh geometry={geometry.ring}><meshStandardMaterial attach="material-0" {...finish} color={studioPalette.amethyst} /><meshStandardMaterial attach="material-1" {...finish} color={studioPalette.edge} /></mesh>
+      <mesh geometry={geometry.body}><meshStandardMaterial {...finish} color={studioPalette.body} /></mesh>
       <Suspense fallback={null}><SyntaxFace geometry={geometry.face} /></Suspense>
     </>}
   </group>
