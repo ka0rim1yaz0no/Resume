@@ -3,6 +3,7 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { openingFrame } from '../three/openingLayout'
 import { openingDuration, openingPhase } from '../three/sculptureAssembly'
+import { resetOpeningScroll } from '../hooks/useMotion'
 
 export function OpeningSequence({ disabled }: { disabled: boolean }) {
   const overlay = useRef<HTMLDivElement>(null)
@@ -20,6 +21,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     const began = performance.now()
     let disposed = false, finished = false, settled = false, fontsReady = false
     let reveal: gsap.core.Timeline | undefined
+    resetOpeningScroll()
     root.classList.add('intro-opening')
     scene.dataset.sceneOpening = '1'
     curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
@@ -43,6 +45,9 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       if (finished || disposed) return
       finished = true; played.current = true; observer.disconnect(); readyCall.pause()
       if (instant) { settle(); return }
+      // Font/layout restoration can land after the initial mount. Synchronize
+      // Lenis before the take, while wheel/touch skips remain free to scroll.
+      resetOpeningScroll()
       const shot = { progress: 1 }
       const duration = openingDuration(compact)
       const copyStart = duration * 0.81

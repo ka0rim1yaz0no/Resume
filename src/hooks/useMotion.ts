@@ -7,6 +7,11 @@ import Lenis from 'lenis'
 gsap.registerPlugin(useGSAP, ScrollTrigger)
 let scrollEngine: Lenis | null = null
 
+export function resetOpeningScroll() {
+  if (scrollEngine) scrollEngine.scrollTo(0, { immediate: true, force: true })
+  else window.scrollTo({ top: 0, behavior: 'instant' })
+}
+
 export function scrollToChapter(top: number, paused: boolean) {
   if (scrollEngine && !paused) scrollEngine.scrollTo(top, { duration: 2, easing: t => -(Math.cos(Math.PI * t) - 1) / 2 })
   else window.scrollTo({ top, behavior: paused ? 'instant' : 'smooth' })
