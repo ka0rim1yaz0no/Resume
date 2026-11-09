@@ -89,7 +89,7 @@
 .credential-preview { border-radius: 14px; border: 1px solid #c5abdf; background: #f8f5fc; box-shadow: 0 3px 0 #d4bee9; }
 .recognition-year { color: #6025b5; letter-spacing: -.075em; }
 .recognition-years .is-active { color: #6025b5; }
-.credential-selected { animation: studio-selection 280ms ease both; }
+.credential-selected > h3 { animation: studio-selection 280ms ease both; }
 .credential-selected h3 { color: var(--text); }
 .credential-list button { border-color: #cdb7e3; border-radius: 0; transition: background 180ms ease, color 180ms ease; }
 .credential-list button:hover { background: #f6f0fc; }
@@ -166,5 +166,5 @@
   .capabilities-section .skill-buttons { grid-template-columns: 1fr; }
   .capabilities-section .skill-buttons button { min-height: 52px; }
 }
-@media (prefers-reduced-motion: reduce) { .credential-selected { animation: none; } }
-.motion-paused .credential-selected { animation: none; }
+@media (prefers-reduced-motion: reduce) { .credential-selected > h3 { animation: none; } }
+.motion-paused .credential-selected > h3 { animation: none; }
