@@ -20,6 +20,7 @@ import { technologyIcon } from '../data/technologies'
 import { ExperienceIdentities, type IdentityScore } from './ExperienceIdentities'
 import { organizationChapter } from './experienceChoreography'
 import { createSceneFramer } from './cameraFraming'
+import { skillFrameBounds } from './skillFraming'
 import { EducationIdentities, type EducationScore } from './EducationIdentities'
 import { educationChapter } from './educationChoreography'
 import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from './sculptureAssembly'
@@ -206,6 +207,7 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
 
 function ReactCompanion({ score, targets, motion, compact, mobile, technology, onLoaded }: { score: Score; targets: SurfaceTargets; motion: boolean; compact: boolean; mobile: boolean; technology: string; onLoaded: (id: ModelId) => void }) {
   const normalized = useModelAsset('react-js', mobile)
+  const skillBounds = useMemo(() => skillFrameBounds(normalized.bounds), [normalized])
   const root = useRef<Group>(null)
   const tile = useRef<Group>(null)
   const original = useRef<Group>(null)
@@ -269,6 +271,7 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
     }
     root.current.visible = weight > 0.001
     const skillStage = score.content.from === 'skills' || score.content.to === 'skills'
+    tile.current.userData.frameBounds = skillStage ? skillBounds : undefined
     const alternate = skillStage && transition.current.displayed !== 'React.js' ? 1 : 0
     const solid = weight * (1 - score.dissolve) * score.exitOpacity
     visibility.weight = solid * alternate

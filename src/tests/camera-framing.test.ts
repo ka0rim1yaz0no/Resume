@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Box3, BoxGeometry, Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Vector3, type Matrix4 } from 'three'
 import { cameraRetreat, createSceneFramer } from '../three/cameraFraming'
+import { skillFrameBounds } from '../three/skillFraming'
 
 function expectInside(camera: PerspectiveCamera, box: Box3, world?: Matrix4) {
   for (let i = 0; i < 8; i++) {
@@ -14,6 +15,30 @@ function expectInside(camera: PerspectiveCamera, box: Box3, world?: Matrix4) {
 }
 
 describe('Full model framing', () => {
+  it('holds one camera frame while skill solids dissolve, change identity, and return', () => {
+    const react = new Mesh(new BoxGeometry(3.6, 3.4, 0.8), new MeshBasicMaterial())
+    const token = new Mesh(new BoxGeometry(3.36, 3.36, 0.85), new MeshBasicMaterial())
+    token.position.z = 0.175
+    const tokenTurn = new Group(); tokenTurn.add(token)
+    const tile = new Group(); tile.add(react, tokenTurn)
+    tile.rotation.set(0.04, 0.1, -0.04); tile.scale.setScalar(1.02)
+    react.geometry.computeBoundingBox(); token.geometry.computeBoundingBox()
+    tile.userData.frameBounds = skillFrameBounds(react.geometry.boundingBox!)
+    for (const aspect of [0.65, 1, 1.8, 2.4]) {
+      const camera = new PerspectiveCamera(35, aspect, 0.1, 40), fit = createSceneFramer()
+      let previous: Vector3 | undefined
+      for (const [reactVisible, tokenVisible, yaw] of [[true, false, 0], [false, false, 0], [false, true, -0.18], [false, true, 0.16], [true, false, 0]] as const) {
+        react.visible = reactVisible; tokenTurn.visible = tokenVisible; tokenTurn.rotation.set(0.055, yaw, 0)
+        camera.position.set(-0.072, 0.18, 6.9); camera.lookAt(0, 0, 0)
+        fit(tile, camera, aspect, 1 / 60)
+        if (previous) expect(camera.position.distanceTo(previous)).toBeLessThan(0.000001)
+        previous = camera.position.clone()
+        if (reactVisible) expectInside(camera, react.geometry.boundingBox!, react.matrixWorld)
+        if (tokenVisible) expectInside(camera, token.geometry.boundingBox!, token.matrixWorld)
+      }
+    }
+    react.geometry.dispose(); token.geometry.dispose(); react.material.dispose(); token.material.dispose()
+  })
   it('keeps the opening destination large while fragments arrive from off screen, then restores full fitting', () => {
     const root = new Group(), geometry = new BoxGeometry(1, 1, 1), material = new MeshBasicMaterial(), fragment = new Mesh(geometry, material)
     fragment.position.x = 8; root.add(fragment)

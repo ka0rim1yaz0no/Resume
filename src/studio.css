@@ -121,6 +121,8 @@
   .skill-icon-frame { width: 26px; height: 30px; }
 }
 @media (max-width: 650px) {
+  .capabilities-section { --skill-caption-height: clamp(104px, calc(85.25px + 5vw), 120px); --skill-scene-height: clamp(140px, 22svh, 190px); }
+  .skills-layout > .skill-preview.content-stage { position: sticky; top: 76px; }
   .resume-hero .hero-copy { padding-block: 6px 0; }
   .resume-hero h1 { font-size: clamp(48px, 14vw, 78px); margin-bottom: 18px; }
   .resume-hero .hero-kicker { margin-bottom: 22px; font-size: 11px; }
@@ -142,8 +144,11 @@
   .project-layer-details { padding-left: 16px; }
   .experience-entry-heading h3 { font-size: 27px; }
   .skill-group + .skill-group { margin-top: 24px; padding-top: 24px; }
+  .capabilities-section .skill-preview.content-stage > .section-scene { height: var(--skill-scene-height); }
+  .skill-preview .skill-selection { min-height: var(--skill-caption-height); }
   .skill-buttons button { min-height: 60px; padding-inline: 10px; }
   .skill-buttons button .skill-name { font-size: 12px; }
+  .skill-buttons button { scroll-margin-top: calc(var(--skill-scene-height) + var(--skill-caption-height) + 141px); }
   .competency-grid { gap: 16px; }
   .competency-grid > div { padding: 24px 22px; }
   .personal-resume .contact-section h2 { font-size: clamp(38px, 10vw, 52px); }
@@ -164,7 +169,7 @@
   .skill-preview .skill-selection > span { font-size: 10px; }
   .skill-preview .skill-selection p, .skill-preview-note { display: none; }
   .capabilities-section .skill-buttons { grid-template-columns: 1fr; }
-  .capabilities-section .skill-buttons button { min-height: 52px; }
+  .capabilities-section .skill-buttons button { min-height: 52px; scroll-margin-top: 108px; }
 }
 @media (prefers-reduced-motion: reduce) { .credential-selected > h3 { animation: none; } }
 .motion-paused .credential-selected > h3 { animation: none; }

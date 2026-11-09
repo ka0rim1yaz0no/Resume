@@ -26,10 +26,10 @@ export function createSceneFramer() {
     scene.updateMatrixWorld()
     const visit = (object: Object3D) => {
       if (!object.visible) return
-      const authoredBounds = object.userData.openingFrameBounds as Box3 | undefined
+      const authoredBounds = (object.userData.frameBounds || object.userData.openingFrameBounds) as Box3 | undefined
       if (authoredBounds) {
-        // Incoming opening fragments intentionally begin beyond the frame.
-        // Fit their assembled destination, keeping the central subject large.
+        // Skills share a complete envelope through fades. Opening fragments
+        // fit their assembled destination while arriving from off screen.
         required = Math.max(required, cameraRetreat(camera, authoredBounds, aspect, 0.035, object.matrixWorld))
         return
       }
