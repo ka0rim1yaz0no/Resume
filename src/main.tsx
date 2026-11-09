@@ -5,6 +5,7 @@ import 'lenis/dist/lenis.css'
 import './styles.css'
 import './refinements.css'
 import './palette.css'
+import './studio.css'
 import App from './resume/Resume'
 
 const Preview = import.meta.env.DEV ? lazy(() => import('./dev/ModelPreview')) : null

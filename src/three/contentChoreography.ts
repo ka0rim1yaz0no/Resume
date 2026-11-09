@@ -28,7 +28,8 @@ export function viewportVisibility(rect: StageRect, header: number, height: numb
 /** Long reading passages belong to the text. Fade as the real source leaves,
  * and return only when the next viewer enters the screen. */
 export function contentVisibility(route: ContentRoute, docks: ContentDocks, header: number, height: number) {
-  if (route.from === route.to || docks[route.to].arrive - docks[route.from].leave <= height * 1.15) return 1
+  if (route.from === route.to) return route.from === 'skills' || route.from === 'education' ? dockVisibility(route.viewport, header) : 1
+  if (docks[route.to].arrive - docks[route.from].leave <= height * 1.15) return 1
   const from = docks[route.from].rect, to = docks[route.to].rect
   const edge = Math.min(180, height * 0.24)
   const leaving = clamp((from.top + from.height - header) / edge)
@@ -36,11 +37,19 @@ export function contentVisibility(route: ContentRoute, docks: ContentDocks, head
   return ease(Math.max(leaving, entering))
 }
 
-/** One reversible rail carries the existing scene through the actual résumé.
- * Endpoint rectangles follow native sticky/document layout, including resize. */
+/** A reversible rail connects the work sections and ends at skills.
+ * Education uses its own native window, keeping About free of carried models. */
 export function contentRoute(scroll: number, docks: ContentDocks, header: number, height: number, width?: number): ContentRoute {
-  const stages: ContentStage[] = ['film', 'project', 'experience', 'skills', 'education']
+  const stages: ContentStage[] = ['film', 'project', 'experience', 'skills']
   if (scroll <= docks.film.leave) return { from: 'film', to: 'film', mix: 0, amount: 0, viewport: docks.film.rect }
+  // The carried story ends at Technical capabilities. Follow the native skills
+  // window out of view, then render education only in its own native window.
+  // Never interpolate a floating viewport across the About reading column.
+  if (scroll > docks.skills.leave) {
+    const skillsOnScreen = docks.skills.rect.top + docks.skills.rect.height > header
+    const stage = skillsOnScreen && scroll < docks.education.arrive ? 'skills' : 'education'
+    return { from: stage, to: stage, mix: 0, amount: 1, viewport: docks[stage].rect }
+  }
   for (let i = 0; i < stages.length - 1; i++) {
     const from = stages[i], to = stages[i + 1]
     const start = docks[from].leave
@@ -60,7 +69,7 @@ export function contentRoute(scroll: number, docks: ContentDocks, header: number
       const left = width ? clamp(rawLeft, 0, Math.max(0, width - w)) : rawLeft
       return { from, to, mix, amount: i === 0 ? contentTransitionMix(mix) : 1, viewport: { left, top, width: w, height: h } }
     }
-    if (scroll <= docks[to].leave || to === 'education') return { from: to, to, mix: 0, amount: 1, viewport: docks[to].rect }
+    if (scroll <= docks[to].leave) return { from: to, to, mix: 0, amount: 1, viewport: docks[to].rect }
   }
   return { from: 'education', to: 'education', mix: 0, amount: 1, viewport: docks.education.rect }
 }

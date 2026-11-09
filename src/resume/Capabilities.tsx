@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon'
 import { technologyIcon, technologyVisuals } from '../data/technologies'
 
 const toolkit = skillGroups.flatMap(group => group.skills)
+const groupNotes = ['User interfaces & publishing', 'Application logic & structured data', 'Delivery, hosting & collaboration']
 
 export function Capabilities() {
   const [selected, setSelected] = useState('React.js')
@@ -19,8 +20,9 @@ export function Capabilities() {
         <div className="skill-selection" role="status" aria-live="polite"><span>{category}</span><strong>{selected}</strong><p>{visual.description}</p></div>
         <span className="skill-preview-note">Select a skill to change the object.</span>
       </div>
-      <div className="skill-groups" data-reveal>{skillGroups.map(group => <div className="skill-group" key={group.label}>
+      <div className="skill-groups" data-reveal>{skillGroups.map((group, index) => <div className="skill-group" key={group.label}>
         <h3>{group.label}<span className="skill-group-count" aria-hidden="true">{String(group.skills.length).padStart(2, '0')}</span></h3>
+        <p className="skill-group-description">{groupNotes[index]}</p>
         <div className="skill-buttons">{group.skills.map(skill => <button key={skill} aria-pressed={selected === skill} onClick={() => setSelected(skill)}>
           <span className="skill-icon-frame" aria-hidden="true"><img className="skill-icon" src={technologyIcon(skill)} alt="" width="20" height="20" loading="lazy" /></span>
           <span className="skill-name">{skill}</span><span className="skill-selected-mark" aria-hidden="true"><Icon name="check" /></span>

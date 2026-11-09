@@ -50,7 +50,7 @@ export function FeaturedProject({ openDetails }: { openDetails: () => void }) {
           }}
           onPointerCancel={() => tap.cancel()} onPointerLeave={() => tap.cancel()} onContextMenu={() => tap.cancel()} />}
         <button ref={toggle} className="project-model-toggle" onClick={toggleModel} aria-label={expanded ? 'Reassemble project laptop' : 'Separate laptop to explore how the project was built'} aria-expanded={expanded} aria-controls="project-layer-details"><span className="work-open" aria-hidden="true">{expanded ? '↺' : '+'}</span></button>
-        <span className="visual-footnote">{expanded ? 'Select a part or layer' : 'Explore how the LMS was built'}</span>
+        <span className="visual-footnote">{expanded ? 'Select a part or layer' : 'Click the laptop to explore the build'}</span>
       </div>
         <div className="project-annotations" hidden={!expanded}>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{projectLayers.map((part, index) => <g key={part.label} data-selected={selected === index}><path data-project-leader={index} /><circle data-project-dot={index} r="0.8" /></g>)}</svg>

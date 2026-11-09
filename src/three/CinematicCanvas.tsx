@@ -8,7 +8,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { modelIds, modelRegistry, modelUrl, type ModelId } from '../data/assets'
 import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
-import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, dockVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
+import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
@@ -473,8 +473,9 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       score.particleMix = cut
     }
     const readingVisibility = contentVisibility(score.content, docks, header, window.innerHeight)
-    const screenVisibility = mobile && motion && (!openingActive || opening < 0.21) ? viewportVisibility(rect, header, window.innerHeight) : 1
-    score.exitOpacity = screenVisibility * readingVisibility * (score.content.from === 'education' && score.content.to === 'education' ? dockVisibility(rect, header) : 1)
+    const nativeWindow = score.content.from === score.content.to && (score.content.from === 'skills' || score.content.from === 'education')
+    const screenVisibility = (mobile || nativeWindow) && motion && (!openingActive || opening < 0.21) ? viewportVisibility(rect, header, window.innerHeight) : 1
+    score.exitOpacity = screenVisibility * readingVisibility
     score.active = running && score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
     score.viewport = rect
     if (score.active && motion) score.elapsed += delta

@@ -12,10 +12,11 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
   const exploration = useModelExploration(model, resetView)
   return <section className="hero resume-hero container" aria-labelledby="hero-title">
     <div className="hero-copy">
-      <div className="hero-enter hero-kicker"><span className="status-dot" />Vincent’s digital systems studio · Philippines</div>
+      <div className="hero-enter hero-kicker"><span className="status-dot" />Web development & systems thinking<span className="hero-location">Philippines</span></div>
       <h1 id="hero-title" className="hero-enter" aria-label={profile.fullName}>Vincent <br />Layzie C. <br />Del Rosario</h1>
       <p className="hero-enter specialty-line">{profile.specialty}</p>
-      <p className="hero-enter hero-description">Interfaces. Logic. Data.<br />Connected with purpose.</p>
+      <div className="hero-enter hero-systems" aria-label="Interfaces, logic, and data, connected with purpose."><span>Interfaces</span><i aria-hidden="true" /><span>Logic</span><i aria-hidden="true" /><span>Data</span></div>
+      <p className="hero-enter hero-description">Connected with purpose.</p>
       <div className="hero-enter hero-actions"><a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a><a className="text-link" href="#contact">Get in touch <Icon name="down" /></a></div>
       <div className="hero-enter resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
       <a className="hero-enter intro-replay" href="/">Replay opening <Icon name="play" /></a>

@@ -77,7 +77,7 @@ describe('Continuous résumé scene rail', () => {
     }
   })
   it('conserves opacity throughout both content-model handoffs', () => {
-    for (const [start, end] of [[2200, 2800], [4000, 4700], [5200, 5900]]) {
+    for (const [start, end] of [[2200, 2800], [4000, 4700]]) {
       for (let s = start; s <= end; s += 5) {
         const w = weights(route(s))
         expect(w.reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 8)
@@ -86,7 +86,7 @@ describe('Continuous résumé scene rail', () => {
     }
   })
   it('meets each destination without a viewport, camera, or visible-pose jump', () => {
-    for (const s of [1700, 2200, 2800, 4000, 4700, 5200, 5900]) {
+    for (const s of [1700, 2200, 2800, 4000, 4700, 5200]) {
       const a = route(s - 0.001), b = route(s + 0.001)
       for (const key of ['left', 'top', 'width', 'height'] as const) expect(Math.abs(a.viewport[key] - b.viewport[key])).toBeLessThan(0.001)
       if (s === 1700) continue // The film camera blends separately into this first arrival.
@@ -105,6 +105,33 @@ describe('Continuous résumé scene rail', () => {
     expect(middle.viewport.top + middle.viewport.height).toBeLessThanOrEqual(1000)
     const samples = [1200, 1800, 2500, 3500, 4300, 4900]
     expect(samples.map(route)).toEqual([...samples].reverse().map(route).reverse())
+  })
+  it('ends the carried animation at skills and leaves About clear on phones and desktop', () => {
+    for (const width of [320, 375, 1280]) {
+      const height = width < 650 ? 720 : 900, header = width < 650 ? 76 : 100
+      const native = { ...docks, skills: { ...docks.skills, rect: { left: 20, top: header + 20, width: Math.min(420, width - 40), height: 300 } }, education: { ...docks.education, arrive: 8000, rect: { left: 20, top: height + 100, width: Math.min(420, width - 40), height: 300 } } }
+      const leaving = contentRoute(5300, native, header, height, width)
+      expect(leaving.from).toBe('skills'); expect(leaving.to).toBe('skills')
+      expect(leaving.viewport).toBe(native.skills.rect)
+      // Fade inside the actual source, with no artificial hovering rectangle.
+      native.skills.rect.top = header - 30
+      const fading = contentRoute(5400, native, header, height, width)
+      expect(fading.viewport).toBe(native.skills.rect)
+      expect(contentVisibility(fading, native, header, height)).toBeCloseTo(0.5)
+      native.skills.rect.top = header - 301
+      const reading = contentRoute(6000, native, header, height, width)
+      expect(reading.from).toBe('education'); expect(reading.to).toBe('education')
+      expect(reading.viewport).toBe(native.education.rect)
+      expect(contentPose(reading, 3, false).weight).toBe(0)
+      expect(viewportVisibility(reading.viewport, header, height)).toBe(0)
+      // Education arrives in place, retaining its own school-to-school dust.
+      native.education.rect.top = header + 20
+      const arrived = contentRoute(8000, native, header, height, width)
+      expect(arrived.viewport).toBe(native.education.rect)
+      expect(contentVisibility(arrived, native, header, height)).toBe(1)
+      expect(viewportVisibility(arrived.viewport, header, height)).toBe(1)
+      expect(contentCamera(arrived, true).z).toBe(contentCamera(leaving, true).z)
+    }
   })
   it('reduces mobile lateral motion without changing the subject weights', () => {
     const r = route(4350)

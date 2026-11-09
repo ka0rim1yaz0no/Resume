@@ -1,0 +1,170 @@
+/* A dimensional studio frame for the work. About retains its existing design. */
+.resume-hero {
+  column-gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+}
+.resume-hero .hero-copy { padding-block: 32px 48px; }
+.resume-hero .hero-kicker { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 11px; letter-spacing: 0; }
+.hero-kicker .hero-location { margin-left: auto; padding-left: 12px; border-left: 1px solid var(--line); color: var(--quiet); }
+.resume-hero h1 { font-size: clamp(62px, 6.5vw, 104px); line-height: .99; letter-spacing: -.065em; margin-bottom: 24px; }
+.resume-hero .specialty-line { font-size: 11px; line-height: 1.8; max-width: 44ch; padding-bottom: 20px; }
+.hero-systems { display: flex; align-items: center; gap: 12px; margin-top: 24px; max-width: 390px; color: var(--text); font-size: clamp(15px, 1.5vw, 20px); font-weight: 650; letter-spacing: -.03em; }
+.hero-systems i { position: relative; flex: 1; height: 1px; background: var(--line); min-width: 16px; }
+.hero-systems i::after { content: ''; position: absolute; right: 0; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.resume-hero .hero-description { margin-top: 8px; font-size: 15px; }
+.resume-hero .hero-actions { margin-top: 28px; }
+.resume-hero .hero-actions .button-primary { padding: 0 0 0 22px; gap: 22px; box-shadow: none; border-radius: 6px; overflow: hidden; }
+.resume-hero .hero-actions .button-primary .icon { box-sizing: content-box; width: 20px; height: 20px; padding: 17px; background: var(--accent-fill); color: var(--ink); }
+.resume-hero .hero-actions .button-primary:hover .icon { transform: none; background: #eaffab; }
+.resume-hero .resume-download { display: inline-flex; margin-top: 14px; margin-right: 20px; }
+.resume-hero .intro-replay { margin-top: 14px; }
+.resume-hero .hero-art {
+  border-radius: 16px 64px 16px 64px;
+  background: radial-gradient(ellipse at 55% 38%, #9256eb, #6329b9 52%, #42177c);
+  border-color: #8951cd;
+  box-shadow: 0 2px 0 #c9a9f0, 0 24px 54px #4b23721a;
+}
+.resume-hero .hero-art::after { border-radius: 8px 52px 8px 52px; border-color: #edddff3b; }
+.resume-hero .art-coordinate-top { top: 26px; left: 28px; right: 30px; }
+.resume-hero .orbit { border-color: #e9d5ff40; }
+.resume-hero .model-controls { border-radius: 30px; background: #431b78e8; }
+.resume-hero .model-controls .icon-button { border-radius: 50%; }
+.resume-hero .model-selector { gap: 6px; }
+.resume-hero .model-selector button { border-radius: 6px; }
+.resume-hero .art-caption { left: 28px; right: 28px; }
+.capability-strip { border-block: 0; background: #441b76; }
+.capability-strip .container { padding-block: 6px; }
+.capability-strip p { font-size: clamp(20px, 2.5vw, 32px); letter-spacing: -.035em; font-weight: 650; }
+
+:is(#project, #experience, #skills, #credentials) .section-heading { align-items: end; gap: 40px; }
+:is(#project, #experience, #skills, #credentials) .section-heading h2 { font-size: clamp(36px, 4.25vw, 64px); letter-spacing: -.055em; line-height: 1.09; }
+:is(#project, #experience, #skills, #credentials) .section-heading .section-label { text-transform: none; letter-spacing: 0; font-size: 12px; gap: 12px; }
+:is(#project, #experience, #skills, #credentials) .section-heading .section-label::before { width: 28px; height: 28px; border-radius: 50%; background: #e5d8f6; color: var(--accent-strong); }
+:is(#project, #experience, #skills, #credentials) .section-heading .section-label::after { display: none; }
+:is(#project, #experience, #skills, #credentials) .section-heading .section-intro { padding: 0 0 2px 20px; border-left: 2px solid #d2bce9; max-width: 34ch; }
+.personal-resume .architecture-project { border-radius: 14px; background: radial-gradient(ellipse at 55% 35%, #8850d3, #6128ac 55%, #421776); box-shadow: 0 3px 0 #d0b9ee, 0 24px 44px #55237b14; }
+.architecture-project::before { border-radius: 6px; border-color: #e8d2ff4a; }
+.architecture-project .work-label { letter-spacing: 0; }
+.resume-project-copy > .section-label { font-size: 11px; letter-spacing: .025em; color: var(--accent-strong); }
+.resume-project-copy > h3 { font-size: clamp(26px, 2.8vw, 38px); }
+.resume-project-copy .project-metadata { border-color: var(--soft-line); padding-block: 22px; }
+.resume-project-copy .project-metadata dd { font-weight: 600; }
+.resume-project-copy > .tags { gap: 7px; }
+.resume-project-copy > .tags span { background: #eee7f7; border: 0; padding: 8px 12px; border-radius: 4px; }
+.resume-project-copy .contribution-summary { border: 0; padding-top: 0; }
+.resume-project-copy > .text-link { color: var(--accent-strong); font-weight: 650; border-bottom: 1px solid #b993e2; padding-bottom: 6px; }
+.project-layer-details { border-left-width: 2px; padding-left: 22px; }
+.experience-visual { border-radius: 14px; border-top-width: 1px; background: radial-gradient(ellipse at 55% 30%, #8a50d8, #6027ac 55%, #421776); }
+.experience-entry { border-radius: 0 0 12px 12px; }
+.experience-entry[data-active=true] { background: linear-gradient(110deg, #fff, #f0e8fa); box-shadow: inset 3px 0 var(--accent); }
+.experience-entry-heading h3 { font-size: clamp(26px, 2.8vw, 36px); }
+.experience-entry-heading .experience-role { font-size: 15px; font-weight: 600; }
+.experience-meta { color: var(--muted); }
+.experience-chapters button { border-radius: 6px; }
+.internship-stat { border-radius: 12px; border-left-width: 1px; box-shadow: none; }
+.internship-stat .fact-number { color: var(--accent-strong); }
+
+.capabilities-section { background: var(--studio-grain) #eee8f8; }
+#skills .section-heading { background: #eee8f8; }
+.skills-layout { gap: clamp(32px, 5vw, 80px); }
+.skills-layout > .skill-preview.content-stage { border-radius: 14px; border-top-width: 1px; background: radial-gradient(ellipse at 60% 30%, #8f54db, #6025ab 55%, #421776); box-shadow: 0 3px 0 #cbb1ea, 0 20px 40px #51218012; }
+.skill-selection strong { letter-spacing: -.04em; }
+.skill-group + .skill-group { margin-top: 32px; padding-top: 26px; border-top: 1px solid #cfbce5; }
+.skill-group h3 { margin-bottom: 7px; font-size: 17px; letter-spacing: -.02em; }
+.skill-group-description { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.65; }
+.skill-group-count { display: grid; place-items: center; min-width: 26px; height: 26px; border: 1px solid #c8b3e0; border-radius: 50%; }
+.skill-buttons { gap: 10px; }
+.skill-buttons button { min-height: 64px; padding: 12px; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) 14px; border: 1px solid #d3c3e8; border-radius: 8px; background: #fdfbff; box-shadow: 0 2px 0 #d5c5e733; transition: background 180ms ease, border-color 180ms ease, color 180ms ease; }
+.skill-buttons button .skill-name { font-size: 13px; font-weight: 550; }
+.skill-icon-frame { width: 32px; height: 32px; border-radius: 6px; border-color: #ede4f8; }
+.skill-buttons button:hover { border-color: #9163c9; background: #f7f0ff; }
+.skill-buttons button[aria-pressed=true] { color: var(--on-ink); background: #6025b5; border-color: #6025b5; box-shadow: 0 3px 0 #45207c; }
+.competency-grid { background: transparent; gap: 24px; }
+.competency-grid > div { border-radius: 10px; border: 1px solid #d0bde7; border-top: 3px solid #a37bd2; box-shadow: none; }
+.competency-grid h3 { font-size: 20px; letter-spacing: -.03em; }
+.competency-grid h3::before { display: none; }
+
+.credentials-section { background: #eae1f6; }
+#credentials .section-heading { background: transparent; }
+.credential-preview { border-radius: 14px; border: 1px solid #c5abdf; background: #f8f5fc; box-shadow: 0 3px 0 #d4bee9; }
+.recognition-year { color: #6025b5; letter-spacing: -.075em; }
+.recognition-years .is-active { color: #6025b5; }
+.credential-selected { animation: studio-selection 280ms ease both; }
+.credential-selected h3 { color: var(--text); }
+.credential-list button { border-color: #cdb7e3; border-radius: 0; transition: background 180ms ease, color 180ms ease; }
+.credential-list button:hover { background: #f6f0fc; }
+.credential-list button[aria-pressed=true] { color: var(--text); background: #fff; box-shadow: inset 3px 0 var(--accent); }
+.credential-list button[aria-pressed=true] .credential-year { color: var(--accent-strong); }
+.contact-section { position: relative; overflow: clip; background: radial-gradient(ellipse at 86% 30%, #8850de, transparent 55%), #54249a; }
+.contact-inner { position: relative; }
+.contact-section .section-label { text-transform: none; letter-spacing: 0; color: #eee2ff; }
+.personal-resume .contact-section h2 { font-size: clamp(42px, 5.5vw, 78px); line-height: 1.06; letter-spacing: -.055em; }
+.contact-section .contact-detail { border-left-color: #c49ae35c; }
+.contact-section .personal-signet { border-bottom-color: #c49ae35c; }
+.contact-section .button-dark { border-radius: 6px; box-shadow: none; }
+.contact-section .contact-email { font-weight: 550; }
+.site-footer { border-top-color: #dac8eb; }
+@keyframes studio-selection { from { opacity: .5; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+@media (min-width: 981px) and (max-height: 800px) {
+  .resume-hero .hero-copy { padding-block: 10px 24px; }
+  .resume-hero h1 { font-size: clamp(62px, 6vw, 80px); }
+  .hero-systems { margin-top: 18px; }
+  .resume-hero .hero-actions { margin-top: 20px; }
+}
+@media (max-width: 980px) {
+  .resume-hero h1 { font-size: clamp(56px, 7vw, 80px); }
+  .hero-kicker .hero-location { display: none; }
+  .resume-hero .hero-art { border-radius: 12px 42px 12px 42px; }
+  .resume-hero .hero-art::after { border-radius: 6px 32px 6px 32px; }
+  .skill-buttons button { grid-template-columns: 26px minmax(0, 1fr) 12px; gap: 8px; }
+  .skill-icon-frame { width: 26px; height: 30px; }
+}
+@media (max-width: 650px) {
+  .resume-hero .hero-copy { padding-block: 6px 0; }
+  .resume-hero h1 { font-size: clamp(48px, 14vw, 78px); margin-bottom: 18px; }
+  .resume-hero .hero-kicker { margin-bottom: 22px; font-size: 11px; }
+  .resume-hero .specialty-line { font-size: 11px; padding-bottom: 14px; }
+  .hero-systems { font-size: 18px; margin-top: 20px; }
+  .resume-hero .hero-description { font-size: 14px; }
+  .resume-hero .hero-actions { gap: 18px; }
+  .resume-hero .hero-actions .button-primary { padding-left: 16px; gap: 14px; white-space: nowrap; flex-shrink: 0; }
+  .resume-hero .hero-actions .button-primary .icon { width: 16px; height: 16px; padding: 18px 14px; }
+  .resume-hero .hero-art { margin-top: 24px; }
+  .resume-hero .art-coordinate-top { left: 22px; right: 22px; top: 18px; }
+  .resume-hero .model-selector { gap: 4px; }
+  .resume-hero .model-controls { padding-inline: 4px; }
+  .resume-hero .art-caption { left: 22px; right: 22px; }
+  :is(#project, #experience, #skills, #credentials) .section-heading { gap: 22px; }
+  :is(#project, #experience, #skills, #credentials) .section-heading h2 { font-size: clamp(32px, 8.5vw, 46px); }
+  :is(#project, #experience, #skills, #credentials) .section-heading .section-intro { max-width: 36ch; padding-left: 14px; }
+  .resume-project-copy > h3 { font-size: 28px; }
+  .project-layer-details { padding-left: 16px; }
+  .experience-entry-heading h3 { font-size: 27px; }
+  .skill-group + .skill-group { margin-top: 24px; padding-top: 24px; }
+  .skill-buttons button { min-height: 60px; padding-inline: 10px; }
+  .skill-buttons button .skill-name { font-size: 12px; }
+  .competency-grid { gap: 16px; }
+  .competency-grid > div { padding: 24px 22px; }
+  .personal-resume .contact-section h2 { font-size: clamp(38px, 10vw, 52px); }
+}
+@media (max-width: 360px) {
+  .resume-hero .hero-actions { gap: 12px; }
+  .resume-hero .hero-actions .button-primary { padding-left: 14px; gap: 10px; font-size: 11px; }
+  .resume-hero .hero-actions .button-primary .icon { width: 14px; height: 14px; padding: 18px 12px; }
+  .resume-hero .hero-actions .text-link { font-size: 11px; gap: 8px; }
+}
+@media (max-width: 980px) and (max-height: 600px) and (orientation: landscape) {
+  .capabilities-section .skills-layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 24px; }
+  .skills-layout > .skill-preview.content-stage { position: sticky; top: 90px; padding: 12px; }
+  .capabilities-section .skill-preview.content-stage > .section-scene { height: 110px; }
+  .skill-preview .stage-index { padding-bottom: 8px; font-size: 10px; }
+  .skill-preview .skill-selection { min-height: 0; padding-top: 8px; gap: 4px; }
+  .skill-preview .skill-selection strong { font-size: 19px; }
+  .skill-preview .skill-selection > span { font-size: 10px; }
+  .skill-preview .skill-selection p, .skill-preview-note { display: none; }
+  .capabilities-section .skill-buttons { grid-template-columns: 1fr; }
+  .capabilities-section .skill-buttons button { min-height: 52px; }
+}
+@media (prefers-reduced-motion: reduce) { .credential-selected { animation: none; } }
+.motion-paused .credential-selected { animation: none; }
