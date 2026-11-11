@@ -25,7 +25,7 @@ export function createSceneFramer() {
     let required = 0
     scene.updateMatrixWorld()
     const visit = (object: Object3D) => {
-      if (!object.visible) return
+      if (!object.visible || object.userData.screenSpace) return
       const authoredBounds = (object.userData.frameBounds || object.userData.openingFrameBounds) as Box3 | undefined
       if (authoredBounds) {
         // Skills share a complete envelope through fades. Opening fragments

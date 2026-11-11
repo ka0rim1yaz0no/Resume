@@ -10,6 +10,7 @@ import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
 import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
+import { LightRibbons } from './LightRibbons'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
@@ -37,7 +38,7 @@ if (typeof Worker !== 'undefined') {
 }
 
 type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement; education: HTMLElement }
-type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; projectExplosion: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dockDissolve: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
+type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; projectExplosion: number; elapsed: number; wavePhase: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dockDissolve: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
 type OwnedMaterial = { material: Material; opacity: number }
 const framedDocks = ['project', 'experience', 'skills', 'education'] as const
 
@@ -372,6 +373,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     <Suspense fallback={null}><ReactCompanion score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} technology={technology} onLoaded={markLoaded} /></Suspense>
     {warm && <ExperienceIdentities score={score} targets={targets} motion={motion} compact={compact} />}
     {warm && <Suspense fallback={null}><EducationIdentities score={score} targets={targets} motion={motion} compact={compact} /></Suspense>}
+    <LightRibbons score={score} motion={motion} mobile={mobile} />
     <TravelParticles score={score} targets={targets} motion={motion} />
   </>
 }
@@ -514,6 +516,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       if (anchor.style.getPropertyValue('--dock-lock') !== value) anchor.style.setProperty('--dock-lock', value)
     }
     if (score.active && motion) score.elapsed += delta
+    score.wavePhase = openingActive ? (1 - opening) * 4.4 : sceneScroll * 0.004 + score.elapsed * 0.22
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
     score.projectExplosion = damp(score.projectExplosion, requestedExpansion)
@@ -604,7 +607,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dockDissolve: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, wavePhase: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dockDissolve: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {

@@ -15,8 +15,10 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
       <p className="hero-enter specialty-line">{profile.specialty}</p>
       <div className="hero-enter hero-systems" aria-label="Interfaces, logic, and data"><span>Interfaces</span><i aria-hidden="true" /><span>Logic</span><i aria-hidden="true" /><span>Data</span></div>
       <div className="hero-enter hero-actions"><a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a><a className="text-link" href="#contact">Get in touch <Icon name="down" /></a></div>
-      <div className="hero-enter resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
-      <a className="hero-enter intro-replay" href="/">Replay opening <Icon name="play" /></a>
+      <div className="hero-enter hero-utilities">
+        <div className="resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
+        <a className="intro-replay" href="/">Replay opening <Icon name="play" /></a>
+      </div>
     </div>
     <div className="hero-art" data-object={model}>
       <div className="art-coordinate art-coordinate-top">

@@ -3,8 +3,8 @@ import type { ModelId } from '../data/assets'
 
 export const studioFinish = { roughness: 0.86, metalness: 0.3, envMapIntensity: 0.5, normalStrength: 0.2 }
 export const studioEdgeFinish = { roughness: 0.68, metalness: 0.42, envMapIntensity: 0.65 }
-export const studioLighting = { environment: 0.75, ambient: 0.3, key: 3, fill: 0.9, rim: 2.6 }
-export const studioLightColors = { key: '#fff6ff', fill: '#e9c8f9', rim: '#f3dbff' }
+export const studioLighting = { environment: 0.75, ambient: 0.3, key: 3, fill: 0.94, rim: 2.95 }
+export const studioLightColors = { key: '#fff6ff', fill: '#e9c8f9', rim: '#ead1ff' }
 // Screen-door coverage keeps every fading surface in the depth buffer. Complex
 // GLBs cannot be triangle-sorted correctly by ordinary translucent blending.
 export const studioFade = { transparent: false, alphaHash: true, depthWrite: true }

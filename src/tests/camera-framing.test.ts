@@ -63,10 +63,11 @@ describe('Full model framing', () => {
       expectInside(camera, bounds)
     }
   })
-  it('follows arbitrary user rotation and ignores hidden models from other sections', () => {
+  it('fits the model through rotation independently of hidden objects and screen-space effects', () => {
     const root = new Group(), visible = new Mesh(new BoxGeometry(3.7, 2.8, 1.5), new MeshBasicMaterial())
-    const hidden = new Mesh(new BoxGeometry(100, 100, 100), new MeshBasicMaterial()); hidden.visible = false
-    root.add(visible, hidden)
+    const hidden = new Mesh(new BoxGeometry(100, 100, 100), visible.material); hidden.visible = false
+    const ribbons = new Mesh(hidden.geometry, visible.material); ribbons.userData.screenSpace = true
+    root.add(visible, hidden, ribbons)
     const fit = createSceneFramer()
     const camera = new PerspectiveCamera(35, 0.9, 0.1, 40)
     for (const yaw of [0, 0.8, 1.7, 3.2]) {
@@ -76,6 +77,6 @@ describe('Full model framing', () => {
       expect(distance).toBeLessThan(10)
       expectInside(camera, visible.geometry.boundingBox!, visible.matrixWorld)
     }
-    visible.geometry.dispose(); hidden.geometry.dispose(); visible.material.dispose(); hidden.material.dispose()
+    visible.geometry.dispose(); hidden.geometry.dispose(); visible.material.dispose()
   })
 })
