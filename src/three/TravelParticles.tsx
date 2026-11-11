@@ -5,9 +5,10 @@ import { surfacePointCount, type SurfaceTarget, type SurfaceTargets } from './su
 import { studioPalette } from './studioMaterials'
 import type { ContentRoute } from './contentChoreography'
 import { schoolSurfaceIndex } from './educationChoreography'
-import { openingDust, ribbonHeight, transferEnergy } from './waveMotion'
+import { openingDust, silkHeight, transferEnergy } from './waveMotion'
+import type { StageRect } from './choreography'
 
-type DissolveScore = { active: boolean; exitOpacity: number; opening: number; handoff: number; wavePhase: number; weights: number[]; flux: number; elapsed: number; dissolve: number; content: ContentRoute; dockDissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationMix: number }
+type DissolveScore = { active: boolean; exitOpacity: number; opening: number; handoff: number; wavePhase: number; viewport: StageRect; weights: number[]; flux: number; elapsed: number; dissolve: number; content: ContentRoute; dockDissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationMix: number }
 
 function dissolvePair(score: DissolveScore) {
   if (score.opening > 0) return { from: 0, to: 0, flux: openingDust(score.opening), mix: 1 - score.opening, dissolve: 0, docking: 1 }
@@ -34,7 +35,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
       .setAttribute('aTarget', new Float32BufferAttribute(new Float32Array(pointCount * 3), 3))
       .setAttribute('aSeed', new Float32BufferAttribute(seeds, 1))
   }, [pointCount])
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uOpacity: { value: 1 }, uDock: { value: 0 }, uAssembly: { value: 0 }, uWavePhase: { value: 0 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() }, uViolet: { value: new Color(studioPalette.dust) }, uLavender: { value: new Color(studioPalette.amethyst) }, uPearl: { value: new Color(studioPalette.pearl) }, uSignal: { value: new Color(studioPalette.signal) } }), [])
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uFlux: { value: 0 }, uMix: { value: 0 }, uDpr: { value: 1 }, uOpacity: { value: 1 }, uDock: { value: 0 }, uAssembly: { value: 0 }, uWavePhase: { value: 0 }, uAspect: { value: 1 }, uFrom: { value: new Matrix4() }, uTo: { value: new Matrix4() }, uViolet: { value: new Color(studioPalette.dust) }, uLavender: { value: new Color(studioPalette.amethyst) }, uPearl: { value: new Color(studioPalette.pearl) }, uSignal: { value: new Color(studioPalette.signal) } }), [])
   useEffect(() => () => geometry.dispose(), [geometry])
   // Missing surfaces retain the solid transition instead of leaving a gap.
   useFrame(() => {
@@ -69,13 +70,14 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     shader.uOpacity.value = score.exitOpacity; shader.uDock.value = transition.docking
     shader.uAssembly.value = score.opening
     shader.uWavePhase.value = score.wavePhase
+    shader.uAspect.value = score.viewport.width / Math.max(1, score.viewport.height)
   }, 0.5)
   return <points ref={points} geometry={geometry} frustumCulled={false} renderOrder={4}>
     <shaderMaterial ref={material} uniforms={uniforms} transparent depthWrite={false}
       vertexShader={`attribute vec3 aTarget; attribute float aSeed;
-        uniform float uTime, uFlux, uMix, uDpr, uDock, uAssembly, uWavePhase; uniform mat4 uFrom, uTo;
+        uniform float uTime, uFlux, uMix, uDpr, uDock, uAssembly, uWavePhase, uAspect; uniform mat4 uFrom, uTo;
         varying float vLight;
-        ${ribbonHeight}
+        ${silkHeight}
         void main() {
           vec3 a = (uFrom * vec4(position, 1.0)).xyz;
           vec3 b = (uTo * vec4(aTarget, 1.0)).xyz;
@@ -97,11 +99,11 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
             vec2 edge = direction / max(abs(direction.x), abs(direction.y)) * (0.96 + aSeed * 0.31);
             float catchUp = smoothstep(0.025, 0.74, 1.0 - uAssembly - aSeed * 0.12);
             screen = mix(edge, screen, catchUp);
-            float crest = ribbonHeight(screen.x * 0.5 + 0.5, uWavePhase, mod(floor(aSeed * 27.0), 3.0));
+            float crest = silkHeight(screen.x * 0.5 + 0.5, uWavePhase, mod(floor(aSeed * 27.0), 3.0), uAspect);
             screen.y = mix(screen.y, crest * 2.0 - 1.0, 0.38 * sin(catchUp * 3.14159));
             clip.z = mix(clip.w * 0.9985, clip.z, catchUp);
           } else {
-            float crest = ribbonHeight(screen.x * 0.5 + 0.5, uWavePhase, 1.0);
+            float crest = silkHeight(screen.x * 0.5 + 0.5, uWavePhase, 1.0, uAspect);
             float stream = uFlux * (0.06 + aSeed * 0.13);
             screen.y = mix(screen.y, crest * 2.0 - 1.0, stream);
             screen.x += sin(screen.y * 4.3 - uWavePhase) * uFlux * (0.02 + 0.06 * aSeed);

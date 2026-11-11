@@ -48,7 +48,10 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       // Synchronize Lenis after fonts and scroll restoration have settled.
       resetOpeningScroll()
       const shot = { progress: 1 }
-      const duration = openingDuration(window.innerWidth <= 650)
+      const compact = window.innerWidth <= 650
+      const duration = openingDuration(compact)
+      const copyStart = compact ? 0.885 : 0.833
+      const copyStagger = compact ? 0.025 : 0.037
       const finalContact = openingContacts[openingContacts.length - 1]
       reveal = gsap.timeline({ onComplete: settle })
         .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => {
@@ -62,7 +65,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
         .to('.opening-impact', { scale: 1.15, opacity: 0, duration: 0.33, ease: 'power2.out' }, duration * finalContact + 0.12)
         .to('.opening-deck', { y: 8, opacity: 0, duration: duration * 0.14, ease: 'sine.in' }, duration * openingDockStart)
         .to(curtain, { opacity: 0, duration: duration * (1 - openingDockStart), ease: 'sine.inOut' }, duration * openingDockStart)
-        .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.13, stagger: { amount: duration * 0.037 }, ease: 'power2.out' }, duration * 0.833)
+        .to(heroCopy, { y: 0, opacity: 1, duration: duration * (1 - copyStart - copyStagger), stagger: { amount: duration * copyStagger }, ease: 'power2.out' }, duration * copyStart)
       for (const [index, time] of openingContacts.entries()) {
         reveal.to(contacts[index], { opacity: 1, duration: 0.13, ease: 'power2.out' }, duration * time)
       }

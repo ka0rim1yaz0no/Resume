@@ -1,5 +1,5 @@
-import { clamp } from './choreography'
-import { openingContacts } from './sculptureAssembly'
+import { blend, clamp, type StageRect } from './choreography'
+import { openingContacts, openingDockStart } from './sculptureAssembly'
 
 const smooth = (start: number, end: number, value: number) => {
   const t = clamp((value - start) / (end - start))
@@ -7,13 +7,13 @@ const smooth = (start: number, end: number, value: number) => {
 }
 
 const lastContact = openingContacts[openingContacts.length - 1]
+export const silkRest = 0.29
 
 export function openingWave(opening: number) {
-  const time = 1 - opening
-  const rise = smooth(0.015, 0.23, time)
-  const fade = 1 - smooth(lastContact + 0.015, 1, time)
+  const time = 1 - clamp(opening)
+  const rise = smooth(0.015, 0.24, time)
   const contact = smooth(lastContact - 0.1, lastContact, time) * (1 - smooth(lastContact, lastContact + 0.13, time))
-  return rise * fade * (0.84 + contact * 0.16)
+  return blend(0.08 + rise * (0.74 + contact * 0.16), silkRest, smooth(openingDockStart, 1, time))
 }
 
 export function openingDust(opening: number) {
@@ -23,11 +23,34 @@ export function openingDust(opening: number) {
 
 export const transferEnergy = (progress: number) => progress > 0 && progress < 1 ? Math.sin(progress * Math.PI) ** 2 : 0
 
-// The light sheets and the dust follow the same curve in viewport coordinates.
-export const ribbonHeight = /* glsl */ `
-  float ribbonHeight(float x, float phase, float band) {
-    return 0.43 + (x - 0.5) * 0.37 + (band - 1.0) * 0.078
-      + sin(x * 6.2 - phase + band * 1.72) * 0.17
-      + sin(x * 11.8 + phase * 0.57 + band * 1.28) * 0.067;
+// A single clock survives the opening, landing and section cuts. Large scroll
+// jumps add only a small gust, so anchor navigation cannot jerk the folds.
+export function advanceSilkPhase(phase: number, delta: number, scrollTravel: number) {
+  const step = clamp(delta, 0, 0.05)
+  return phase + step * 0.92 + clamp(scrollTravel * 0.0027, -step * 1.35, step * 1.55)
+}
+
+export function silkCrossfade(mix: number) {
+  const arrive = smooth(0.17, 0.83, mix)
+  const level = silkRest + transferEnergy(mix) * 0.46
+  return [level * (1 - arrive), level * arrive] as const
+}
+
+export function silkVisibility(rect: StageRect, header: number, height: number) {
+  const available = Math.min(rect.height, height - header)
+  if (rect.width <= 0 || available <= 0) return 0
+  const visible = Math.min(height, rect.top + rect.height) - Math.max(header, rect.top)
+  return smooth(0.12, 0.84, visible / available)
+}
+
+// The silk and the dust use the same moving crest in viewer coordinates.
+export const silkHeight = /* glsl */ `
+  float silkHeight(float x, float phase, float band, float aspect) {
+    float span = mix(0.59, 1.0, smoothstep(0.38, 1.36, aspect));
+    float flow = sin(x * 6.1 - phase + band * 1.22);
+    float swell = sin(x * 3.75 + phase * 0.45 - band * 1.54);
+    float ripple = sin(x * 11.0 - phase * 1.21 + band * 0.92);
+    return 0.45 + (band - 1.0) * 0.104
+      + span * ((x - 0.5) * 0.34 + flow * 0.18 + swell * 0.091 + ripple * 0.035);
   }
 `

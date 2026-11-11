@@ -10,7 +10,8 @@ import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
 import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
-import { LightRibbons } from './LightRibbons'
+import { createSilkLayer } from './silkLayer'
+import { advanceSilkPhase, openingWave, silkCrossfade, silkRest, silkVisibility, transferEnergy } from './waveMotion'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
@@ -373,7 +374,6 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     <Suspense fallback={null}><ReactCompanion score={score} targets={targets} motion={motion} compact={compact} mobile={mobile} technology={technology} onLoaded={markLoaded} /></Suspense>
     {warm && <ExperienceIdentities score={score} targets={targets} motion={motion} compact={compact} />}
     {warm && <Suspense fallback={null}><EducationIdentities score={score} targets={targets} motion={motion} compact={compact} /></Suspense>}
-    <LightRibbons score={score} motion={motion} mobile={mobile} />
     <TravelParticles score={score} targets={targets} motion={motion} />
   </>
 }
@@ -385,6 +385,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect; education: DOMRect } | null>(null)
   const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock; education: Dock } | null>(null)
   const fitScene = useMemo(createSceneFramer, [])
+  const silk = useMemo(() => createSilkLayer(mobile), [mobile])
+  const silkWindows = useRef({ first: { rect: score.viewport, energy: 0 }, next: { rect: score.viewport, energy: 0 }, accent: 0 })
   const framedWindow = useRef<ContentRoute['to']>('film')
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
@@ -428,6 +430,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       target.dispose(); generator.dispose(); room.dispose()
     }
   }, [gl, invalidate, onError, anchors, mobile])
+  useEffect(() => {
+    if (!reduced) void gl.compileAsync(silk.scene, silk.camera).catch(() => undefined)
+  }, [gl, silk, reduced])
+  useEffect(() => () => silk.dispose(), [silk])
   useEffect(() => { score.elapsed = 0; invalidate() }, [score, reset, invalidate])
   useEffect(() => {
     lastInput.current = performance.now()
@@ -440,7 +446,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const header = window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100
     const height = window.innerHeight
     const scroll = window.scrollY
-    rail.current = followScroll(rail.current, scroll, rawDelta, window.innerHeight, motion && running)
+    const lastScroll = rail.current
+    rail.current = followScroll(lastScroll, scroll, rawDelta, height, motion && running)
     const sceneScroll = rail.current
     // Sticky thresholds only change with layout. Idle rotation does not need
     // repeated style/offset walks; scroll only refreshes the screen rectangles.
@@ -508,6 +515,28 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const onScreen = score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight
     score.active = running && rect.width > 0 && rect.height > 0 && (openingActive || finishingOpening || onScreen)
     score.viewport = rect
+    const light = silkWindows.current
+    light.first.rect = rect
+    light.first.energy = 0
+    light.next.energy = 0
+    light.accent = 0
+    if (motion && running && !reduced) {
+      if (crossing) {
+        // Release and arrival can share the screen. Keep both folds inside
+        // their actual viewers while the model scene changes its scissor.
+        const [depart, arrive] = silkCrossfade(score.content.mix)
+        light.first.rect = docks[score.content.from].rect
+        light.next.rect = docks[score.content.to].rect
+        light.first.energy = depart * silkVisibility(light.first.rect, header, height)
+        light.next.energy = arrive * silkVisibility(light.next.rect, header, height)
+      } else {
+        const visible = silkVisibility(rect, header, height)
+        const docked = openingActive ? blend(visible, 1, openingDock(opening)) : visible * readingVisibility
+        light.first.energy = docked * (openingActive ? openingWave(opening) : silkRest)
+        light.accent = openingActive ? 0 : docked
+      }
+    }
+    const silkOnScreen = Math.max(light.first.energy, light.next.energy) > 0.003
     for (const stage of framedDocks) {
       const anchor = anchors[stage]
       const progress = stage === 'education' && settledEducation ? education.lock : contentLock(score.content, stage)
@@ -516,7 +545,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       if (anchor.style.getPropertyValue('--dock-lock') !== value) anchor.style.setProperty('--dock-lock', value)
     }
     if (score.active && motion) score.elapsed += delta
-    score.wavePhase = openingActive ? (1 - opening) * 4.4 : sceneScroll * 0.004 + score.elapsed * 0.22
+    if (silkOnScreen) score.wavePhase = advanceSilkPhase(score.wavePhase, delta, openingActive ? 0 : sceneScroll - (lastScroll ?? sceneScroll))
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
     score.projectExplosion = damp(score.projectExplosion, requestedExpansion)
@@ -553,7 +582,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     gl.domElement.dataset.exploration = [score.exploreYaw, score.explorePitch, score.exploreZoom].map(n => n.toFixed(3)).join(',')
     gl.domElement.dataset.viewport = [rect.left, rect.top, rect.width, rect.height].map(n => n.toFixed(1)).join(',')
     diagnostics.current.frames++
-    if (ready && motion && running && (score.active || Math.abs(sceneScroll - scroll) > 0.1)) {
+    if (ready && motion && running && (score.active || silkOnScreen || Math.abs(sceneScroll - scroll) > 0.1)) {
       const changing = openingActive || Math.abs(sceneScroll - scroll) > 0.1 || score.flux > 0.001 || score.skillFlux > 0.001 || score.skillMix < 0.999 || score.organizationFlux > 0.001 || score.educationFlux > 0.001 || Math.abs(score.projectExplosion - requestedExpansion) > 0.0001
       // Phone idle breathing needs fewer GPU frames. Input and every actual
       // transition resume the native frame rate immediately.
@@ -566,32 +595,49 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     gl.setScissorTest(false)
     gl.setViewport(0, 0, size.width, size.height)
     gl.setClearColor(0x000000, 0); gl.clear(true, true, true)
-    if (!ready || !score.active) return
-    const rect = score.viewport
-    const lens = camera as import('three').PerspectiveCamera
-    const aspect = rect.width / rect.height
-    if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
-    const sceneWindow = score.content.mix < 0.5 ? score.content.from : score.content.to
-    // The new viewer starts at its own framing while the old one is faded.
-    const retreat = fitScene(scene, lens, aspect, delta, framedWindow.current !== sceneWindow)
-    framedWindow.current = sceneWindow
-    gl.domElement.dataset.cameraFinal = lens.position.toArray().map(value => value.toFixed(3)).join(',')
-    const zoomOut = Math.min(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
-    if (zoomOut < 0) { lens.position.z -= zoomOut; lens.updateMatrixWorld() }
-    const left = rect.left - size.left
-    const bottom = size.height - (rect.top - size.top + rect.height)
-    gl.setViewport(left, bottom, rect.width, rect.height)
-    gl.setScissor(left, bottom, rect.width, rect.height)
-    gl.setScissorTest(true)
-    gl.render(scene, camera)
-    gl.setScissorTest(false)
-    onRendered()
-    if (clock.elapsedTime > diagnostics.current.next) {
-      diagnostics.current.next = clock.elapsedTime + 0.25
-      gl.domElement.dataset.frame = String(diagnostics.current.frames)
-      gl.domElement.dataset.cameraFit = retreat.toFixed(3)
-      gl.domElement.dataset.triangles = String(gl.info.render.triangles)
-      gl.domElement.dataset.textures = String(gl.info.memory.textures)
+    if (!ready) return
+    const { first, next, accent } = silkWindows.current
+    const wake = Math.max(score.flux, score.skillFlux, score.organizationFlux, score.educationFlux, 0.64 * transferEnergy(score.handoff))
+    first.energy += 0.52 * wake * accent
+    const intensity = Math.max(first.energy, next.energy)
+    const canvas = gl.domElement
+    canvas.dataset.waveStrength = intensity.toFixed(3)
+    canvas.dataset.waveNext = next.energy.toFixed(3)
+    canvas.dataset.wavePhase = score.wavePhase.toFixed(2)
+    if (!score.active && intensity <= 0.003) return
+    const autoClear = gl.autoClear
+    gl.autoClear = false
+    try {
+      silk.draw(gl, size, score.wavePhase, first, next)
+      if (!score.active) return
+      const rect = score.viewport
+      const lens = camera as import('three').PerspectiveCamera
+      const aspect = rect.width / rect.height
+      if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
+      const sceneWindow = score.content.mix < 0.5 ? score.content.from : score.content.to
+      // The new viewer starts at its own framing while the old one is faded.
+      const retreat = fitScene(scene, lens, aspect, delta, framedWindow.current !== sceneWindow)
+      framedWindow.current = sceneWindow
+      canvas.dataset.cameraFinal = lens.position.toArray().map(value => value.toFixed(3)).join(',')
+      const zoomOut = Math.min(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
+      if (zoomOut < 0) { lens.position.z -= zoomOut; lens.updateMatrixWorld() }
+      const left = rect.left - size.left
+      const bottom = size.height - (rect.top - size.top + rect.height)
+      gl.setViewport(left, bottom, rect.width, rect.height)
+      gl.setScissor(left, bottom, rect.width, rect.height)
+      gl.setScissorTest(true)
+      gl.render(scene, camera)
+      onRendered()
+      if (clock.elapsedTime > diagnostics.current.next) {
+        diagnostics.current.next = clock.elapsedTime + 0.25
+        canvas.dataset.frame = String(diagnostics.current.frames)
+        canvas.dataset.cameraFit = retreat.toFixed(3)
+        canvas.dataset.triangles = String(gl.info.render.triangles)
+        canvas.dataset.textures = String(gl.info.memory.textures)
+      }
+    } finally {
+      gl.setScissorTest(false)
+      gl.autoClear = autoClear
     }
   }, 1)
   return environment ? children(environment) : null
