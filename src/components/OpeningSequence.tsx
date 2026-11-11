@@ -20,6 +20,8 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     const began = performance.now()
     let settled = false, fontsReady = false
     let reveal: gsap.core.Timeline | undefined
+    let startTimer: number | undefined
+    let play: (() => void) | undefined
     resetOpeningScroll()
     root.classList.add('intro-opening')
     scene.dataset.sceneOpening = '1'
@@ -31,8 +33,9 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       settled = true
       played.current = true
       observer.disconnect()
-      readyCall.kill()
-      timeout.kill()
+      window.clearTimeout(startTimer)
+      window.clearTimeout(timeout)
+      if (play) gsap.ticker.remove(play)
       button.removeEventListener('click', skip)
       window.removeEventListener('wheel', skip)
       window.removeEventListener('touchmove', skip)
@@ -53,7 +56,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       const copyStart = compact ? 0.885 : 0.833
       const copyStagger = compact ? 0.025 : 0.037
       const finalContact = openingContacts[openingContacts.length - 1]
-      reveal = gsap.timeline({ onComplete: settle })
+      reveal = gsap.timeline({ paused: true })
         .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => {
           scene.dataset.sceneOpening = String(shot.progress)
           const phase = openingPhase(shot.progress)
@@ -69,14 +72,24 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
       for (const [index, time] of openingContacts.entries()) {
         reveal.to(contacts[index], { opacity: 1, duration: 0.13, ease: 'power2.out' }, duration * time)
       }
+      // A slow renderer may miss poses, but it cannot prolong the opening.
+      // Keep GSAP's regular ticker timing for the scroll animations.
+      const started = performance.now()
+      play = () => {
+        const elapsed = (performance.now() - started) / 1000
+        reveal?.time(Math.min(duration, elapsed))
+        if (elapsed >= duration) settle()
+      }
+      gsap.ticker.add(play)
     }
     const skip = () => { reveal?.kill(); settle() }
-    const readyCall = gsap.delayedCall(0.05, contextSafe ? contextSafe(start) : start).pause()
+    const ready = contextSafe ? contextSafe(start) : start
     const schedule = () => {
       if (renderer?.dataset.sceneStatus === 'error') { skip(); return }
       curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
       if (!settled && !reveal && fontsReady && scene.dataset.sceneReady === 'true') {
-        readyCall.delay(Math.max(0.05, 0.24 - (performance.now() - began) / 1000)).restart(true)
+        window.clearTimeout(startTimer)
+        startTimer = window.setTimeout(ready, Math.max(50, 240 - (performance.now() - began)))
       }
     }
     const observer = new MutationObserver(schedule)
@@ -84,7 +97,7 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
     if (renderer) observer.observe(renderer, { attributes: true, attributeFilter: ['data-scene-status'] })
     void document.fonts.ready.then(() => { if (!settled) { fontsReady = true; schedule() } })
     // A slow or unavailable WebGL device can continue to the hero.
-    const timeout = gsap.delayedCall(6, () => { if (!reveal) skip() })
+    const timeout = window.setTimeout(() => { if (!reveal) skip() }, 6000)
     const key = (event: KeyboardEvent) => { if (['Escape', 'Tab', 'PageDown', 'ArrowDown'].includes(event.key)) skip() }
     button.addEventListener('click', skip)
     window.addEventListener('wheel', skip, { passive: true, once: true })
