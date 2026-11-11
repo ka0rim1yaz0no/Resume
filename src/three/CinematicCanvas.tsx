@@ -11,12 +11,12 @@ import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactC
 import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { createSilkLayer } from './silkLayer'
-import { advanceSilkPhase, openingWave, silkArrival, silkCrossfade, silkRest, silkVisibility, transferEnergy } from './waveMotion'
+import { advanceSilkPhase, openingSilkHandoff, openingWave, silkArrival, silkCrossfade, silkRest, silkVisibility, transferEnergy } from './waveMotion'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
 import { sampleSurface, surfacePointCount, type SurfaceTargets } from './surfaceCloud'
-import { openingViewport } from './openingLayout'
+import { frameOpeningCamera, openingViewport } from './openingLayout'
 import { advanceSkillTransition, createSkillTransition, skillDissolve } from './skillTransition'
 import { technologyIcon } from '../data/technologies'
 import { ExperienceIdentities, type IdentityScore } from './ExperienceIdentities'
@@ -387,6 +387,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const fitScene = useMemo(createSceneFramer, [])
   const silk = useMemo(() => createSilkLayer(mobile), [mobile])
   const silkWindows = useRef({ first: { rect: score.viewport, energy: 0 }, next: { rect: score.viewport, energy: 0 }, accent: 0 })
+  const openingGlow = useRef(silkRest)
   const framedWindow = useRef<ContentRoute['to']>('film')
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
@@ -521,8 +522,19 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     light.first.energy = 0
     light.next.energy = 0
     light.accent = 0
+    openingGlow.current = openingActive
+      ? openingWave(opening)
+      : Math.max(silkRest, MathUtils.damp(openingGlow.current, silkRest, 3.8, delta))
     if (motion && running && !reduced) {
-      if (crossing) {
+      if (openingActive) {
+        // Cross into the native hero viewer while the copy fades in. Both
+        // windows share the same wave phase, and the model renders on top.
+        const handoff = openingSilkHandoff(opening)
+        const visibility = blend(silkVisibility(rect, header, height), 1, openingDock(opening))
+        light.first.energy = openingGlow.current * (1 - handoff) * visibility
+        light.next.rect = hero
+        light.next.energy = openingGlow.current * handoff * silkVisibility(hero, header, height)
+      } else if (crossing) {
         // Release and arrival can share the screen. Keep both folds inside
         // their actual viewers while the model scene changes its scissor.
         const [depart, arrive] = silkCrossfade(score.content.mix)
@@ -531,10 +543,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
         light.first.energy = depart * silkVisibility(light.first.rect, header, height)
         light.next.energy = arrive * silkVisibility(light.next.rect, header, height)
       } else {
-        const visible = silkVisibility(rect, header, height)
-        const docked = openingActive ? blend(visible, 1, openingDock(opening)) : visible * readingVisibility
-        light.first.energy = docked * (openingActive ? openingWave(opening) : silkRest)
-        light.accent = openingActive ? 0 : docked
+        const docked = silkVisibility(rect, header, height) * readingVisibility
+        const glow = inContent ? silkRest : blend(openingGlow.current, silkRest, score.handoff)
+        light.first.energy = docked * glow
+        light.accent = docked
       }
     }
     const silkOnScreen = Math.max(light.first.energy, light.next.energy) > 0.003
@@ -616,11 +628,17 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       if (!score.active) return
       const rect = score.viewport
       const lens = camera as import('three').PerspectiveCamera
-      const aspect = rect.width / rect.height
-      if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
+      const hero = score.opening > 0 ? measurements.current?.hero : null
+      if (hero && hero.width > 0 && hero.height > 0) {
+        frameOpeningCamera(lens, rect, hero)
+      } else {
+        if (lens.view?.enabled) lens.clearViewOffset()
+        const aspect = rect.width / rect.height
+        if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
+      }
       const sceneWindow = score.content.mix < 0.5 ? score.content.from : score.content.to
       // The new viewer starts at its own framing while the old one is faded.
-      const retreat = fitScene(scene, lens, aspect, delta, framedWindow.current !== sceneWindow)
+      const retreat = fitScene(scene, lens, lens.aspect, delta, framedWindow.current !== sceneWindow)
       framedWindow.current = sceneWindow
       canvas.dataset.cameraFinal = lens.position.toArray().map(value => value.toFixed(3)).join(',')
       const zoomOut = Math.min(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { openingViewport } from '../three/openingLayout'
+import { PerspectiveCamera, Vector3 } from 'three'
+import { frameOpeningCamera, openingViewport } from '../three/openingLayout'
 import { openingCamera } from '../three/choreography'
 
 describe('opening framing', () => {
@@ -25,6 +26,19 @@ describe('opening framing', () => {
     expect(openingViewport(hero, stage, 0.1).left).toBeGreaterThan(stage.left)
     expect(openingCamera(0.28, false).x).toBeGreaterThan(0.5)
     expect(openingCamera(0.28, false).z).toBe(6.7)
+  })
+
+  it.each([desktop, phone])('projects the same model size through the opening and hero viewers', ({ frame, hero }) => {
+    const camera = new PerspectiveCamera(35, hero.width / hero.height, 0.1, 40)
+    const modelCorner = new Vector3(1, 1, -7)
+    const heroProjection = modelCorner.clone().project(camera)
+    for (const progress of [1, 0.21, 0.105, 0]) {
+      const viewport = openingViewport(hero, frame, progress)
+      frameOpeningCamera(camera, viewport, hero)
+      const projection = modelCorner.clone().project(camera)
+      expect(projection.x * viewport.width).toBeCloseTo(heroProjection.x * hero.width)
+      expect(projection.y * viewport.height).toBeCloseTo(heroProjection.y * hero.height)
+    }
   })
 
   it('moves from an elevated establishing shot to the exact hero camera without a velocity jump', () => {

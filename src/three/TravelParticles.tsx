@@ -51,7 +51,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     const inContent = score.content.amount > 0
     const opacity = score.exitOpacity * (inContent ? 0.48 : 1)
     const active = motion && score.active && transition.flux * opacity > 0.008 && !!from && !!to
-    const density = score.opening > 0 ? 0.64 : inContent ? 0.38 : 1
+    const density = score.opening > 0 || inContent ? 0.38 : 1
     const drawCount = Math.floor(pointCount * density)
     points.current.visible = active
     gl.domElement.dataset.dissolvePoints = active ? String(drawCount) : '0'

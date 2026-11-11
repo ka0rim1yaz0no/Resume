@@ -95,7 +95,7 @@ export function createSilkLayer(mobile: boolean) {
           * vEnergy * mix(1.0, 0.83, uCompact);
         vec3 color = mix(uPlum, uOrchid, 0.53 + fold * 0.24);
         color = mix(color, uLavender, sheen * 0.47 + glint * 0.24 + threads * 0.045);
-        gl_FragColor = vec4(color, alpha);
+        gl_FragColor = vec4(color, min(alpha, 1.0));
         #include <colorspace_fragment>
       }
     `,
