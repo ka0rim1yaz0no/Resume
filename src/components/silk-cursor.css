@@ -14,12 +14,12 @@
   content: '';
   position: absolute;
   inset: 5px;
-  border: 1px solid #d59bf690;
-  border-top-color: var(--accent-strong);
-  border-bottom-color: #a461cd70;
+  border: 1px solid #e0aaffc4;
+  border-top-color: #f9e4ff;
+  border-bottom-color: #b878e4a8;
   border-radius: 50%;
-  background: radial-gradient(circle, #d59bf618, transparent 72%);
-  box-shadow: 0 0 9px #c481ff50, inset 0 0 7px #d59bf62b;
+  background: radial-gradient(circle, #d59bf620, transparent 72%);
+  box-shadow: 0 0 10px #ce89ff68, inset 0 0 7px #d59bf632;
   transform: rotate(-28deg) scale(var(--cursor-scale, 1));
   transition: transform 180ms var(--ease), border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -32,7 +32,31 @@
 .silk-cursor[data-mode=model]::before {
   border-top-color: var(--on-ink);
   border-right-color: var(--accent-fill);
-  box-shadow: 0 0 10px #d896ff6b, inset 0 0 7px #d59bf62b;
+  box-shadow: 0 0 11px #d896ff80, inset 0 0 7px #d59bf638;
+}
+.silk-cursor[data-moving=true]::before {
+  border-top-color: #fff2ff;
+  border-right-color: var(--accent-strong);
+  box-shadow: 0 0 13px #d896ff82, inset 0 0 7px #df9bff3c;
+}
+.silk-cursor-trail {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: 50%;
+  margin-top: -13px;
+  opacity: 0;
+  transform-origin: right center;
+  filter: drop-shadow(0 0 3px #cd90fc99);
+  will-change: transform, opacity;
+}
+.silk-cursor-pulse {
+  position: absolute;
+  inset: 1px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 50%;
+  box-shadow: 0 0 12px #ca8afa6b, inset 0 0 6px #ca8afa33;
+  opacity: 0;
 }
 .silk-cursor::after {
   content: '';
@@ -46,6 +70,8 @@
 .silk-cursor[data-mode=model]::after { opacity: .8; }
 .silk-cursor[data-pressed=true] { --cursor-scale: .83; }
 .silk-cursor[data-pressed=true]::after { opacity: 0; }
+.silk-cursor[data-dragging=true] { --cursor-scale: 1.12; }
+.silk-cursor[data-dragging=true]::after { opacity: .52; }
 @media (max-width: 650px), (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce), (forced-colors: active) {
   .silk-cursor { display: none; }
 }
