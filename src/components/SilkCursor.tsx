@@ -1,33 +1,35 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useMediaQuery } from '../hooks/usePreferences'
+import { ribbonPaths, traceTrail, trailRadius, type TrailSample } from './silkTrail'
 import './silk-cursor.css'
 
 const mouseQuery = '(min-width: 651px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none)'
 const dragControls = '.model-explorer, .company-explorer, .school-explorer'
 const modelControls = `${dragControls}, .project-part-picker`
 const actions = ':is(a[href], button, [role="button"], [role="link"]):not(:disabled):not([aria-disabled="true"])'
-const trailLength = 92
-const trailCurve = 'M0 18C15 20 26 7 43 12C57 17 64 20 76 13'
+const trailSize = 2 * trailRadius
 
 export function SilkCursor({ disabled }: { disabled: boolean }) {
   const enabled = useMediaQuery(mouseQuery) && !disabled
   const ref = useRef<HTMLDivElement>(null)
   const trailRef = useRef<SVGSVGElement>(null)
+  const ribbonRef = useRef<SVGPathElement>(null)
+  const glintRef = useRef<SVGPathElement>(null)
   const pulseRef = useRef<HTMLSpanElement>(null)
   const rippleRef = useRef<HTMLSpanElement>(null)
-  const trailColor = useId()
-  const trailOutline = `${trailColor}-outline`
 
   useEffect(() => {
     const halo = ref.current
     const trail = trailRef.current
+    const ribbon = ribbonRef.current
+    const glint = glintRef.current
     const pulse = pulseRef.current
     const ripple = rippleRef.current
     const root = halo?.parentElement
-    if (!enabled || !halo || !trail || !pulse || !ripple || !root) return
+    if (!enabled || !halo || !trail || !ribbon || !glint || !pulse || !ripple || !root) return
 
     let x = 0, y = 0, targetX = 0, targetY = 0
-    let tailX = 0, tailY = 0
+    const samples: TrailSample[] = []
     let trailOpacity = 0
     let frame: number | null = null
     let lastFrame = 0
@@ -64,27 +66,20 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       const delta = lastFrame ? Math.min(time - lastFrame, 50) : 16
       const remainingX = targetX - x, remainingY = targetY - y
       const gap = Math.hypot(remainingX, remainingY)
+      if (samples.length === 0) samples.push({ x, y, time: time - delta })
       // Keep the rim near the pointer. Let the softer trail carry the lag.
       const ease = Math.max(1 - Math.exp(-delta / 29), 1 - 22 / Math.max(1, gap))
       x += remainingX * ease
       y += remainingY * ease
       const dragging = halo.dataset.dragging === 'true'
-      const tailEase = 1 - Math.exp(-delta / (dragging ? 76 : 64))
-      tailX += (x - tailX) * tailEase
-      tailY += (y - tailY) * tailEase
-      const dx = x - tailX, dy = y - tailY
-      const distance = Math.hypot(dx, dy)
-      if (distance > trailLength) {
-        tailX = x - dx * trailLength / distance
-        tailY = y - dy * trailLength / distance
-      }
-
-      const strength = Math.min(1, Math.max(0, (distance - 2) / (dragging ? 22 : 26)))
+      const { points, length } = traceTrail(samples, { x, y, time })
+      const strength = Math.min(1, Math.max(0, (length - 2) / (dragging ? 36 : 42)))
       if (strength > 0) {
-        const length = Math.min(16 + distance * 1.72, trailLength) / trailLength
-        trail.style.transform = `rotate(${Math.atan2(dy, dx)}rad) scaleX(${length})`
+        const paths = ribbonPaths(points, length)
+        ribbon.setAttribute('d', paths.ribbon)
+        glint.setAttribute('d', paths.glint)
       }
-      // Let the ribbon fade after the tail catches up to the halo.
+      // Let the ribbon fade as the most recent movement ages out.
       const targetOpacity = strength * (dragging ? .9 : .78)
       const opacityEase = 1 - Math.exp(-delta / (targetOpacity > trailOpacity ? 18 : 72))
       trailOpacity += (targetOpacity - trailOpacity) * opacityEase
@@ -99,8 +94,9 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       }
 
       if (gap < 0.4 && !trailVisible) {
-        x = tailX = targetX
-        y = tailY = targetY
+        x = targetX
+        y = targetY
+        samples.length = 0
         frame = null
         lastFrame = 0
       } else {
@@ -114,6 +110,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       delete halo.dataset.pressed
       delete halo.dataset.moving
       delete halo.dataset.dragging
+      samples.length = 0
       trailOpacity = 0
       trail.style.opacity = '0'
       pulseAnimation?.cancel()
@@ -154,8 +151,8 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
         }
       }
       if (!halo.dataset.visible) {
-        x = tailX = targetX
-        y = tailY = targetY
+        x = targetX
+        y = targetY
         paint()
         halo.dataset.visible = 'true'
       } else if (frame === null && (x !== targetX || y !== targetY)) {
@@ -188,24 +185,9 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
 
   return enabled ? <>
     <div ref={ref} className="silk-cursor" aria-hidden="true">
-      <svg ref={trailRef} className="silk-cursor-trail" width={trailLength} height="26" viewBox="0 0 76 26" preserveAspectRatio="none" focusable="false">
-        <defs>
-          <linearGradient id={trailColor} gradientUnits="userSpaceOnUse" x1="0" x2="76">
-            <stop stopColor="#b877ef" stopOpacity="0" />
-            <stop offset=".32" stopColor="#c78bf7" stopOpacity=".65" />
-            <stop offset=".74" stopColor="#ebc4ff" />
-            <stop offset="1" stopColor="#f6d8ff" stopOpacity=".28" />
-          </linearGradient>
-          <linearGradient id={trailOutline} gradientUnits="userSpaceOnUse" x1="0" x2="76">
-            <stop stopColor="#241033" stopOpacity="0" />
-            <stop offset=".35" stopColor="#241033" stopOpacity=".6" />
-            <stop offset=".77" stopColor="#241033" stopOpacity=".95" />
-            <stop offset="1" stopColor="#241033" stopOpacity=".32" />
-          </linearGradient>
-        </defs>
-        <path d={trailCurve} stroke={`url(#${trailOutline})`} strokeWidth="3.8" strokeLinecap="round" fill="none" />
-        <path d="M0 18C15 18 26 5 43 10C57 14 64 18 76 13C64 22 56 19 42 15C26 10 15 21 0 18Z" fill={`url(#${trailColor})`} opacity=".65" />
-        <path d={trailCurve} stroke={`url(#${trailColor})`} strokeWidth="1.55" fill="none" />
+      <svg ref={trailRef} className="silk-cursor-trail" width={trailSize} height={trailSize} viewBox={`${-trailRadius} ${-trailRadius} ${trailSize} ${trailSize}`} focusable="false">
+        <path ref={ribbonRef} fill="#ce9bf8" stroke="#241033" strokeOpacity=".85" strokeWidth="1.45" strokeLinejoin="round" />
+        <path ref={glintRef} fill="none" stroke="#f6daff" strokeWidth="1.05" strokeLinecap="round" pathLength="1" strokeDasharray=".78 1" />
       </svg>
       <span ref={pulseRef} className="silk-cursor-pulse" />
     </div>

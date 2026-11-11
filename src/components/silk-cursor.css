@@ -44,12 +44,11 @@
   position: absolute;
   z-index: -1;
   top: 50%;
-  right: 50%;
-  margin-top: -13px;
+  left: 50%;
+  transform: translate(-50%, -50%);
   opacity: 0;
-  transform-origin: right center;
   filter: drop-shadow(0 0 3px #d99aff8c);
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 .silk-cursor-pulse {
   position: absolute;
