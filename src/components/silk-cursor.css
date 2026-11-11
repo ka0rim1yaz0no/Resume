@@ -1,4 +1,6 @@
 .silk-cursor {
+  --cursor-outline: #231034dd;
+  --cursor-glow: #ce89ff85;
   position: fixed;
   inset: 0 auto auto 0;
   z-index: 44;
@@ -19,25 +21,24 @@
   border-bottom-color: #ca91efd4;
   border-radius: 50%;
   background: radial-gradient(circle, #d59bf626, transparent 72%);
-  box-shadow: 0 0 0 1px #3011448c, 0 0 11px #ce89ff85, inset 0 0 7px #d59bf63d;
+  box-shadow: 0 0 0 1.65px var(--cursor-outline), 0 0 12px var(--cursor-glow),
+    inset 0 0 0 1px var(--cursor-outline), inset 0 0 7px #d59bf63d;
   transform: rotate(-28deg) scale(var(--cursor-scale, 1));
   transition: transform 230ms var(--ease), border-color 190ms ease, box-shadow 190ms ease;
 }
-.silk-cursor[data-mode=action] { --cursor-scale: 1.32; }
+.silk-cursor[data-mode=action] { --cursor-scale: 1.32; --cursor-glow: #d896ffa3; }
 .silk-cursor[data-mode=action]::before {
   border-color: var(--accent-strong);
-  box-shadow: 0 0 0 1px #301144b0, 0 0 13px #d896ffa3, inset 0 0 8px #d896ff44;
 }
-.silk-cursor[data-mode=model] { --cursor-scale: 1.28; }
+.silk-cursor[data-mode=model] { --cursor-scale: 1.28; --cursor-outline: #21102eed; }
 .silk-cursor[data-mode=model]::before {
   border-top-color: var(--on-ink);
   border-right-color: var(--accent-fill);
-  box-shadow: 0 0 0 1px #3011448c, 0 0 12px #d896ff94, inset 0 0 7px #d59bf641;
 }
+.silk-cursor[data-moving=true] { --cursor-glow: #d896ffa3; }
 .silk-cursor[data-moving=true]::before {
   border-top-color: #fff2ff;
   border-right-color: var(--accent-strong);
-  box-shadow: 0 0 0 1px #3011448c, 0 0 13px #d896ffa3, inset 0 0 7px #df9bff46;
 }
 .silk-cursor-trail {
   position: absolute;
@@ -47,7 +48,7 @@
   margin-top: -13px;
   opacity: 0;
   transform-origin: right center;
-  filter: drop-shadow(0 0 3px #d99affba);
+  filter: drop-shadow(0 0 3px #d99aff8c);
   will-change: transform, opacity;
 }
 .silk-cursor-pulse {
@@ -78,6 +79,7 @@
   inset: calc(50% - .5px) 0 auto;
   height: 1px;
   background: linear-gradient(90deg, var(--accent-fill) 3px, transparent 3px calc(100% - 3px), var(--accent-fill) calc(100% - 3px));
+  filter: drop-shadow(0 0 1px var(--cursor-outline));
   opacity: 0;
   transition: opacity 140ms ease;
 }

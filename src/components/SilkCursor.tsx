@@ -7,6 +7,7 @@ const dragControls = '.model-explorer, .company-explorer, .school-explorer'
 const modelControls = `${dragControls}, .project-part-picker`
 const actions = ':is(a[href], button, [role="button"], [role="link"]):not(:disabled):not([aria-disabled="true"])'
 const trailLength = 76
+const trailCurve = 'M0 18C15 20 26 7 43 12C57 17 64 20 76 13'
 
 export function SilkCursor({ disabled }: { disabled: boolean }) {
   const enabled = useMediaQuery(mouseQuery) && !disabled
@@ -15,6 +16,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
   const pulseRef = useRef<HTMLSpanElement>(null)
   const rippleRef = useRef<HTMLSpanElement>(null)
   const trailColor = useId()
+  const trailOutline = `${trailColor}-outline`
 
   useEffect(() => {
     const halo = ref.current
@@ -183,9 +185,16 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
             <stop offset=".74" stopColor="#ebc4ff" />
             <stop offset="1" stopColor="#f6d8ff" stopOpacity=".28" />
           </linearGradient>
+          <linearGradient id={trailOutline} gradientUnits="userSpaceOnUse" x1="0" x2="76">
+            <stop stopColor="#241033" stopOpacity="0" />
+            <stop offset=".35" stopColor="#241033" stopOpacity=".6" />
+            <stop offset=".77" stopColor="#241033" stopOpacity=".95" />
+            <stop offset="1" stopColor="#241033" stopOpacity=".32" />
+          </linearGradient>
         </defs>
+        <path d={trailCurve} stroke={`url(#${trailOutline})`} strokeWidth="3.8" strokeLinecap="round" fill="none" />
         <path d="M0 18C15 18 26 5 43 10C57 14 64 18 76 13C64 22 56 19 42 15C26 10 15 21 0 18Z" fill={`url(#${trailColor})`} opacity=".65" />
-        <path d="M0 18C15 20 26 7 43 12C57 17 64 20 76 13" stroke={`url(#${trailColor})`} strokeWidth="1.35" fill="none" />
+        <path d={trailCurve} stroke={`url(#${trailColor})`} strokeWidth="1.55" fill="none" />
       </svg>
       <span ref={pulseRef} className="silk-cursor-pulse" />
     </div>
