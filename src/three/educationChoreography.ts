@@ -1,4 +1,4 @@
-import { clamp } from './choreography'
+import { clamp, type StageRect } from './choreography'
 import { contentDust, dockProgress, dockSlide, dockWeight } from './contentChoreography'
 import { experienceFocus, experienceReader, experienceScrollTarget } from './experienceChoreography'
 
@@ -9,10 +9,17 @@ export function educationChapter(focus: number) {
   return { ...contentDust(mix), lock: dockProgress(mix, mix < 0.5) }
 }
 
-export function educationPose(focus: number, index: number, compact: boolean) {
+export function educationPose(focus: number, index: number, compact: boolean, entryProgress = 1) {
   const mix = clamp(focus), leaving = index === 0
   const offset = dockSlide(mix, leaving)
-  return { weight: dockWeight(mix, leaving), x: offset * (compact ? 0.29 : 0.52), y: -offset * 0.085, ry: -offset * 0.21 }
+  const entryGlide = (1 - entryProgress) ** 2 * (compact ? 0.42 : 0.62)
+  return { weight: dockWeight(mix, leaving), x: offset * (compact ? 0.29 : 0.52) + entryGlide, y: -offset * 0.085, ry: -offset * 0.21 }
+}
+
+/** Finish the entrance once the viewer is fully on screen with room below it. */
+export function educationEntryProgress(rect: StageRect, header: number, height: number) {
+  const room = Math.min(rect.height, height - header)
+  return room > 0 ? clamp(((height - rect.top) / room - 0.32) / 1.22) : 1
 }
 
 /** Reserve lateral travel for narrow viewers using their size, independent of scroll. */

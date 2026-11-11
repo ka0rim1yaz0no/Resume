@@ -9,7 +9,7 @@ import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { studioEdgeFinish, studioFade, studioFinish, studioPalette } from './studioMaterials'
 import { educationFrameScale, educationPose, schoolSurfaceIndex } from './educationChoreography'
 
-export type EducationScore = { active: boolean; elapsed: number; content: ContentRoute; dissolve: number; exitOpacity: number; educationReady: boolean; educationFocus: number; educationFlux: number; educationDissolve: number; educationMix: number; educationDisplayed: number; educationExploration: { yaw: number; pitch: number; zoom: number }[] }
+export type EducationScore = { active: boolean; elapsed: number; content: ContentRoute; dissolve: number; exitOpacity: number; educationReady: boolean; educationFocus: number; educationFlux: number; educationDissolve: number; educationMix: number; educationEntryProgress: number; educationDisplayed: number; educationExploration: { yaw: number; pitch: number; zoom: number }[] }
 const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
 
 function SchoolEmblem({ index, score, targets, motion, compact }: { index: number; score: EducationScore; targets: SurfaceTargets; motion: boolean; compact: boolean }) {
@@ -25,7 +25,7 @@ function SchoolEmblem({ index, score, targets, motion, compact }: { index: numbe
     if (!root.current || !score.active) return
     const stage = contentPose(score.content, 5, compact)
     const inEducation = score.content.from === 'education' || score.content.to === 'education'
-    const pose = educationPose(motion ? score.educationFocus : Math.round(score.educationFocus), index, compact)
+    const pose = educationPose(motion ? score.educationFocus : Math.round(score.educationFocus), index, compact, motion ? score.educationEntryProgress : 1)
     const weight = inEducation ? stage.weight * score.content.amount * pose.weight : 0
     const exploration = score.educationExploration[index]
     // Both poses remain current so the dust always meets the incoming surface.

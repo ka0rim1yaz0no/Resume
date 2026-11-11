@@ -33,7 +33,11 @@ export function advanceSilkPhase(phase: number, delta: number, scrollTravel: num
 export function silkCrossfade(mix: number) {
   const arrive = smooth(0.17, 0.83, mix)
   const level = silkRest + transferEnergy(mix) * 0.46
-  return [level * (1 - arrive), level * arrive] as const
+  return [level * (1 - arrive), silkRest * arrive + 0.65 * silkArrival(mix)] as const
+}
+
+export function silkArrival(progress: number) {
+  return smooth(0.48, 0.7, progress) * (1 - smooth(0.86, 1, progress))
 }
 
 export function silkVisibility(rect: StageRect, header: number, height: number) {

@@ -41,15 +41,18 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
   useFrame(() => {
     const pair = dissolvePair(score)
     const ready = targets.has(pair.from) && targets.has(pair.to)
-    score.organizationDissolve = motion && ready && !pair.docking ? score.organizationFlux * 0.9 : 0
+    score.organizationDissolve = motion && ready && !pair.docking ? score.organizationFlux * 0.38 : 0
     score.dissolve = motion && ready ? pair.dissolve : 0
   }, -2)
   useFrame(({ gl }) => {
     if (!points.current || !material.current) return
     const transition = dissolvePair(score)
     const from = targets.get(transition.from), to = targets.get(transition.to)
-    const active = motion && score.active && transition.flux > 0.008 && !!from && !!to
-    const drawCount = score.opening > 0 ? Math.floor(pointCount * 0.64) : pointCount
+    const inContent = score.content.amount > 0
+    const opacity = score.exitOpacity * (inContent ? 0.48 : 1)
+    const active = motion && score.active && transition.flux * opacity > 0.008 && !!from && !!to
+    const density = score.opening > 0 ? 0.64 : inContent ? 0.38 : 1
+    const drawCount = Math.floor(pointCount * density)
     points.current.visible = active
     gl.domElement.dataset.dissolvePoints = active ? String(drawCount) : '0'
     gl.domElement.dataset.dustPalette = 'orchid-lavender-pearl'
@@ -67,7 +70,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     shader.uFrom.value.copy(from.root.matrixWorld); shader.uTo.value.copy(to.root.matrixWorld)
     shader.uTime.value = score.elapsed; shader.uFlux.value = transition.flux
     shader.uMix.value = transition.mix; shader.uDpr.value = gl.getPixelRatio()
-    shader.uOpacity.value = score.exitOpacity; shader.uDock.value = transition.docking
+    shader.uOpacity.value = opacity; shader.uDock.value = transition.docking
     shader.uAssembly.value = score.opening
     shader.uWavePhase.value = score.wavePhase
     shader.uAspect.value = score.viewport.width / Math.max(1, score.viewport.height)

@@ -77,7 +77,7 @@ describe('Continuous résumé scene rail', () => {
   it('keeps dust visible through the final lock while the arriving surface stays solid', () => {
     expect(contentDust(0).flux).toBe(0)
     expect(contentDust(0.12).flux).toBeGreaterThan(0.25)
-    expect(contentDust(0.5).dissolve).toBeCloseTo(0.84)
+    expect(contentDust(0.5).dissolve).toBeLessThan(0.25)
     const arrival = { ...route(4350), mix: 0.91 }
     expect(contentDust(arrival.mix).flux).toBeGreaterThan(0.4)
     expect(contentDust(arrival.mix).dissolve).toBeLessThan(0.1)

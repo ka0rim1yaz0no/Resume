@@ -11,7 +11,7 @@ import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactC
 import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { createSilkLayer } from './silkLayer'
-import { advanceSilkPhase, openingWave, silkCrossfade, silkRest, silkVisibility, transferEnergy } from './waveMotion'
+import { advanceSilkPhase, openingWave, silkArrival, silkCrossfade, silkRest, silkVisibility, transferEnergy } from './waveMotion'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
@@ -24,7 +24,7 @@ import { organizationChapter } from './experienceChoreography'
 import { createSceneFramer } from './cameraFraming'
 import { skillFrameBounds } from './skillFraming'
 import { EducationIdentities, type EducationScore } from './EducationIdentities'
-import { educationChapter, schoolSurfaceIndex } from './educationChoreography'
+import { educationChapter, educationEntryProgress, schoolSurfaceIndex } from './educationChoreography'
 import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingDock, openingPhase } from './sculptureAssembly'
 import { followScroll } from './motionRail'
 import { bindProjectAssembly, projectPresence } from './projectAssembly'
@@ -490,6 +490,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const introRect = openingActive ? openingViewport(hero, establishing, opening) : hiddenFilm ? hero : transition.progress >= 1 ? journey : transition.rect
     const inContent = score.content.from !== 'film' || score.content.to !== 'film'
     const rect = inContent ? score.content.viewport : introRect
+    score.educationEntryProgress = settledEducation ? educationEntryProgress(rect, header, height) : 1
     score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
     score.opening = opening
     score.heroScroll = openingActive ? 0 : MathUtils.clamp((sceneScroll - scroll - heroSection.top) / Math.max(1, heroSection.height), 0, 1)
@@ -598,7 +599,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     if (!ready) return
     const { first, next, accent } = silkWindows.current
     const wake = Math.max(score.flux, score.skillFlux, score.organizationFlux, score.educationFlux, 0.64 * transferEnergy(score.handoff))
-    first.energy += 0.52 * wake * accent
+    const schoolArrival = score.content.to === 'education'
+      ? Math.max(silkArrival(score.educationEntryProgress), silkArrival(score.educationFocus))
+      : 0
+    first.energy += Math.max(0.52 * wake, 0.65 * schoolArrival) * accent
     const intensity = Math.max(first.energy, next.energy)
     const canvas = gl.domElement
     canvas.dataset.waveStrength = intensity.toFixed(3)
@@ -653,7 +657,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, wavePhase: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dockDissolve: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, wavePhase: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dockDissolve: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationMix: 1, educationEntryProgress: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {
