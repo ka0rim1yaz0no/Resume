@@ -8,6 +8,42 @@
   clip-path: polygon(0 0, 76% 0, 100% 24%, 100% 100%, 0 100%);
 }
 .personal-resume .nav-contact { border-radius: 4px; }
+.stage-brackets {
+  --bracket: clamp(13px, 3vw, 34px);
+  position: absolute;
+  pointer-events: none;
+  background:
+    linear-gradient(currentColor, currentColor) top left / var(--bracket) 1px,
+    linear-gradient(currentColor, currentColor) top left / 1px var(--bracket),
+    linear-gradient(currentColor, currentColor) top right / var(--bracket) 1px,
+    linear-gradient(currentColor, currentColor) top right / 1px var(--bracket),
+    linear-gradient(currentColor, currentColor) bottom left / var(--bracket) 1px,
+    linear-gradient(currentColor, currentColor) bottom left / 1px var(--bracket),
+    linear-gradient(currentColor, currentColor) bottom right / var(--bracket) 1px,
+    linear-gradient(currentColor, currentColor) bottom right / 1px var(--bracket);
+  background-repeat: no-repeat;
+}
+.scene-dock {
+  background-image: linear-gradient(#ecdcff12 1px, transparent 1px), linear-gradient(90deg, #ecdcff12 1px, transparent 1px);
+  background-position: center;
+  background-size: 42px 42px;
+}
+.scene-dock-brackets {
+  --bracket: clamp(12px, 2vw, 24px);
+  inset: 10px;
+  color: color-mix(in srgb, #e7d4ff75, var(--accent-fill) calc(var(--dock-lock, 0) * 42%));
+}
+.scene-dock-lights { position: absolute; right: 18px; top: 18px; display: flex; gap: 4px; pointer-events: none; }
+.scene-dock-lights i {
+  --segment: 0;
+  width: 8px;
+  height: 3px;
+  transform: skewX(-17deg);
+  background: var(--accent-fill);
+  opacity: clamp(0.2, calc(var(--dock-lock, 0) * 3 - var(--segment)), 1);
+}
+.scene-dock-lights i:nth-child(2) { --segment: 1; }
+.scene-dock-lights i:nth-child(3) { --segment: 2; }
 .model-journey {
   background: linear-gradient(115deg, #37166a, #6634b1);
   border-color: var(--industrial-edge);

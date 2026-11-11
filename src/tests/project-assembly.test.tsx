@@ -70,6 +70,8 @@ describe('Explorable project layers', () => {
 
   it('preserves normal laptop poses outside the featured project and restores every pivot exactly', () => {
     expect(projectPresence('project', 'project', 0, 1)).toBe(1)
+    expect(projectPresence('project', 'experience', 0.06, 1)).toBe(1)
+    expect(projectPresence('project', 'experience', 0.5, 1)).toBe(0)
     expect(projectPresence('project', 'experience', 1, 1)).toBe(0)
     expect(projectPresence('film', 'film', 0, 0)).toBe(0)
     const root = new Group()

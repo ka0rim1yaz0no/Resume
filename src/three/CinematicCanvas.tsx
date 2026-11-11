@@ -8,7 +8,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { modelIds, modelRegistry, modelUrl, type ModelId } from '../data/assets'
 import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
-import { contentCamera, contentPose, contentRoute, contentTransitionMix, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
+import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
@@ -37,8 +37,9 @@ if (typeof Worker !== 'undefined') {
 }
 
 type Anchors = { hero: HTMLElement; openingStage: HTMLElement; journey: HTMLElement; frame: HTMLElement; section: HTMLElement; project: HTMLElement; experience: HTMLElement; skills: HTMLElement; education: HTMLElement }
-type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; projectExplosion: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
+type Score = EducationScore & { progress: number; handoff: number; heroScroll: number; opening: number; projectExplosion: number; elapsed: number; active: boolean; turn: number; pointerX: number; pointerY: number; weights: number[]; viewport: StageRect; content: ContentRoute; flux: number; dockDissolve: number; dissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFocus: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; organizationExploration: IdentityScore['organizationExploration']; exitOpacity: number; exploreYaw: number; explorePitch: number; exploreZoom: number }
 type OwnedMaterial = { material: Material; opacity: number }
+const workDocks = ['project', 'experience', 'skills'] as const
 
 function documentTop(element: HTMLElement) {
   let top = 0
@@ -46,11 +47,16 @@ function documentTop(element: HTMLElement) {
   return top
 }
 
-function measureDock(element: HTMLElement, header: number): Dock {
+function measureDock(element: HTMLElement, header: number, height?: number): Dock {
   const rect = element.getBoundingClientRect()
   const top = documentTop(element)
   const section = element.closest('section')
   const sectionArrival = section ? documentTop(section) - header - 10 : Infinity
+  // Leave room for an in-view arrival after the complete model window enters.
+  const visibleTop = height === undefined ? null : Math.max(header, height - rect.height - Math.min(120, height * 0.16))
+  // The laptop's open action aligns its card near the header. Keep that
+  // position in the native project window so raycasting remains available.
+  const releaseRoom = height === undefined ? 0 : Math.min(element.dataset.scene === 'project' ? 36 : 96, height * 0.14)
   let pin: HTMLElement | null = element
   while (pin && pin.tagName !== 'SECTION' && getComputedStyle(pin).position !== 'sticky') pin = pin.parentElement
   if (pin && getComputedStyle(pin).position === 'sticky') {
@@ -62,9 +68,19 @@ function measureDock(element: HTMLElement, header: number): Dock {
     const containerStyle = container ? getComputedStyle(container) : null
     const pinStyle = getComputedStyle(pin)
     const naturalTop = container ? documentTop(container) + container.clientTop + (parseFloat(containerStyle?.paddingTop || '0') || 0) + (parseFloat(pinStyle.marginTop) || 0) : top
-    const arrive = naturalTop - (parseFloat(pinStyle.top) || header)
+    const pinnedTop = parseFloat(pinStyle.top) || header
+    const pinnedAt = naturalTop - pinnedTop
+    const inset = top - documentTop(pin)
+    const sceneTop = naturalTop + inset
     const distance = Math.max(0, (container?.offsetHeight || 0) - pin.offsetHeight)
-    return { rect, arrive: Math.min(arrive, sectionArrival), leave: arrive + Math.max(100, distance - 100) }
+    if (visibleTop === null) return { rect, arrive: Math.min(pinnedAt, sectionArrival), leave: pinnedAt + Math.max(100, distance - 100) }
+    const arrive = sceneTop - Math.max(pinnedTop + inset, visibleTop)
+    const leave = distance > 0 ? pinnedAt + Math.max(0, distance - releaseRoom) : sceneTop - header - releaseRoom
+    return { rect, arrive, leave: Math.max(arrive + 1, leave) }
+  }
+  if (visibleTop !== null) {
+    const arrive = top - visibleTop
+    return { rect, arrive, leave: Math.max(arrive + 1, top - header - releaseRoom) }
   }
   const arrive = top - header - 40
   return { rect, arrive: Math.min(arrive, sectionArrival), leave: arrive + Math.max(100, rect.height * 0.4) }
@@ -114,7 +130,9 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     if (!projectPicker) return
     const pick = (event: Event) => {
       const point = (event as CustomEvent<ProjectPickPoint>).detail
-      if (!point || !score.active || score.exitOpacity < 0.95 || score.projectExplosion < 0.98 || score.content.from !== 'project' || score.content.to !== 'project' || projectAnchor.dataset.sceneReady !== 'true') return
+      const route = score.content
+      const presence = projectPresence(route.from, route.to, route.mix, route.amount)
+      if (!point || !score.active || score.exitOpacity < 0.95 || score.projectExplosion < 0.98 || presence < 0.999 || projectAnchor.dataset.sceneReady !== 'true') return
       const index = projectPicker(point, score.viewport, camera)
       gl.domElement.dataset.projectPickResult = index === null ? 'miss' : String(index)
       if (index !== null) projectAnchor.dispatchEvent(new CustomEvent(projectPickSelected, { detail: index, bubbles: true }))
@@ -159,10 +177,11 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     group.current.scale.setScalar(blend(motion ? hero.scale : 1, film.scale * (compact ? 0.8 : 1), t))
     const amount = score.content.amount
     if (amount > 0) {
-      const target = contentPose(score.content, index, compact)
+      const target = contentPose(score.content, index, compact, score.progress)
+      const filmWeight = score.content.from === 'film' && id === 'workflow-board' ? target.weight : 0
       const object = group.current
-      object.position.set(blend(object.position.x, target.x, amount), blend(object.position.y, target.y, amount), blend(object.position.z, target.z, amount))
-      object.rotation.set(blend(object.rotation.x, entry.rotation[0] + target.rx, amount), blend(object.rotation.y, entry.rotation[1] + target.ry, amount), blend(object.rotation.z, target.rz, amount))
+      object.position.set(blend(object.position.x, target.x, amount), blend(object.position.y, target.y + idle * filmWeight, amount), blend(object.position.z, target.z, amount))
+      object.rotation.set(blend(object.rotation.x, entry.rotation[0] + target.rx - score.pointerY * 0.025 * filmWeight, amount), blend(object.rotation.y, entry.rotation[1] + target.ry + score.pointerX * 0.045 * filmWeight, amount), blend(object.rotation.z, target.rz, amount))
       object.scale.setScalar(blend(object.scale.x, target.scale, amount))
       weight = blend(weight, target.weight, amount)
     }
@@ -330,7 +349,7 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     let fov = blend(shot.fov, film.fov, t)
     const cameraMix = score.content.amount
     if (cameraMix > 0) {
-      const target = contentCamera(score.content, compact), q = cameraMix
+      const target = contentCamera(score.content, compact, score.progress), q = cameraMix
       const p = state.camera.position
       p.set(blend(p.x, target.x, q), blend(p.y, target.y, q), blend(p.z, target.z, q))
       lookX = blend(lookX, target.lookX, q); lookY = blend(lookY, target.lookY, q)
@@ -339,7 +358,6 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
     state.camera.position.z -= Math.max(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
     state.camera.position.x += score.projectExplosion * (compact ? 0.18 : 0.48)
     state.camera.position.y += score.projectExplosion * 0.55
-    state.camera.position.z += score.projectExplosion * 0.22
     lookY += score.projectExplosion * 0.06
     const impact = magneticShake(opening, compact)
     state.camera.position.x += impact.x; state.camera.position.y += impact.y
@@ -359,12 +377,13 @@ function Ensemble({ score, model, motion, compact, mobile, warm, technology, env
 }
 
 function Director({ anchors, score, model, turn, reset, motion, reduced, running, ready, mobile, pointer, onError, onRendered, children }: { anchors: Anchors; score: Score; model: ModelId; turn: number; reset: number; motion: boolean; reduced: boolean; running: boolean; ready: boolean; mobile: boolean; pointer: RefObject<{ x: number; y: number }>; onError: () => void; onRendered: () => void; children: (environment: Texture) => React.ReactNode }) {
-  const { gl, invalidate, size } = useThree()
+  const { gl, invalidate } = useThree()
   const [environment, setEnvironment] = useState<Texture | null>(null)
   const dirty = useRef(true)
   const measurements = useRef<{ scroll: number; hero: DOMRect; establishing: DOMRect; journey: DOMRect; frame: DOMRect; section: DOMRect; heroSection: DOMRect; project: DOMRect; experience: DOMRect; skills: DOMRect; education: DOMRect } | null>(null)
   const thresholds = useRef<{ film: number; project: Dock; experience: Dock; skills: Dock; education: Dock } | null>(null)
   const fitScene = useMemo(createSceneFramer, [])
+  const framedWindow = useRef<ContentRoute['to']>('film')
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   const rail = useRef<number | null>(null)
@@ -417,14 +436,15 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05)
     const header = window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100
+    const height = window.innerHeight
     const scroll = window.scrollY
     rail.current = followScroll(rail.current, scroll, rawDelta, window.innerHeight, motion && running)
     const sceneScroll = rail.current
     // Sticky thresholds only change with layout. Idle rotation does not need
     // repeated style/offset walks; scroll only refreshes the screen rectangles.
     if (dirty.current || !thresholds.current) thresholds.current = {
-      film: documentTop(anchors.section) + anchors.section.offsetHeight - window.innerHeight - 60,
-      project: measureDock(anchors.project, header), experience: measureDock(anchors.experience, header), skills: measureDock(anchors.skills, header), education: measureDock(anchors.education, header),
+      film: documentTop(anchors.section) + anchors.section.offsetHeight - height - Math.min(180, height * 0.21),
+      project: measureDock(anchors.project, header, height), experience: measureDock(anchors.experience, header, height), skills: measureDock(anchors.skills, header, height), education: measureDock(anchors.education, header),
     }
     if (dirty.current || !measurements.current || measurements.current.scroll !== scroll) measurements.current = {
       scroll, hero: anchors.hero.getBoundingClientRect(), establishing: anchors.openingStage.getBoundingClientRect(), journey: anchors.journey.getBoundingClientRect(), frame: anchors.frame.getBoundingClientRect(), section: anchors.section.getBoundingClientRect(), heroSection: anchors.hero.closest('section')!.getBoundingClientRect(), project: anchors.project.getBoundingClientRect(), experience: anchors.experience.getBoundingClientRect(), skills: anchors.skills.getBoundingClientRect(), education: anchors.education.getBoundingClientRect(),
@@ -445,7 +465,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       film: { rect: journey, arrive: 0, leave: thresholds.current.film },
       project: { ...thresholds.current.project, rect: measurements.current.project }, experience: { ...thresholds.current.experience, rect: measurements.current.experience }, skills: { ...thresholds.current.skills, rect: measurements.current.skills }, education: { ...thresholds.current.education, rect: measurements.current.education },
     }
-    score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(sceneScroll, docks, header, window.innerHeight, motion ? size.width : undefined)
+    score.content = reduced || openingActive ? { from: 'film', to: 'film', mix: 0, amount: 0, viewport: journey } : contentRoute(sceneScroll, docks, header, height)
     score.organizationFocus = MathUtils.clamp(Number(anchors.experience.dataset.experienceFocus || 0), 0, 2)
     const organization = organizationChapter(score.organizationFocus)
     const settledExperience = score.content.to === 'experience' && (score.content.from === 'experience' || score.content.mix > 0.995)
@@ -467,24 +487,30 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.progress = MathUtils.clamp(Number(anchors.journey.dataset.sceneScore || 0) + (sceneScroll - scroll) / filmDistance, 0, 1)
     const filmWeights = modelIds.map((_, index) => journeyPose(score.progress, index, false).weight)
     const filmFlux = 2 * (1 - filmWeights.reduce((sum, weight) => sum + weight * weight, 0))
-    const cut = contentTransitionMix(score.content.mix)
-    const contentFlux = score.content.from === score.content.to ? 0 : Math.sin(cut * Math.PI) ** 2
-    score.flux = inContent ? contentFlux : filmFlux
+    const crossing = score.content.from !== score.content.to
+    const dust = crossing ? contentDust(score.content.mix) : null
+    score.flux = inContent ? dust?.flux ?? 0 : filmFlux
+    score.dockDissolve = dust?.dissolve ?? 0
     score.particleFrom = score.progress < 0.5 ? 0 : 1
     score.particleTo = score.progress < 0.5 ? 1 : 2
     score.particleMix = score.progress < 0.5 ? filmWeights[1] : filmWeights[2]
     if (inContent) {
       const subject = { film: 2, project: 1, experience: 7 + Math.round(score.organizationFocus), skills: anchors.skills.dataset.technology === 'React.js' ? 3 : 4, education: 10 + score.educationDisplayed }
       score.particleFrom = subject[score.content.from]; score.particleTo = subject[score.content.to]
-      score.particleMix = cut
+      score.particleMix = dust?.cut ?? 0
     }
-    const readingVisibility = contentVisibility(score.content, docks, header, window.innerHeight)
-    const nativeWindow = score.content.from === score.content.to && (score.content.from === 'skills' || score.content.from === 'education')
-    const screenVisibility = (mobile || nativeWindow) && motion ? blend(viewportVisibility(rect, header, window.innerHeight), 1, openingActive ? openingDock(opening) : 0) : 1
+    const readingVisibility = contentVisibility(score.content, header)
+    const screenVisibility = (mobile || inContent) && motion ? blend(viewportVisibility(rect, header, height), 1, openingActive ? openingDock(opening) : 0) : 1
     score.exitOpacity = screenVisibility * readingVisibility
     const onScreen = score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight
     score.active = running && rect.width > 0 && rect.height > 0 && (openingActive || finishingOpening || onScreen)
     score.viewport = rect
+    for (const stage of workDocks) {
+      const anchor = anchors[stage]
+      const lock = motion && ready && anchor.dataset.sceneReady === 'true' ? contentLock(score.content, stage) : 0
+      const value = lock.toFixed(3)
+      if (anchor.style.getPropertyValue('--dock-lock') !== value) anchor.style.setProperty('--dock-lock', value)
+    }
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b
     const requestedExpansion = Number(nodes.project?.dataset.projectExploded || 0) * projectPresence(score.content.from, score.content.to, score.content.mix, score.content.amount)
@@ -540,7 +566,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const lens = camera as import('three').PerspectiveCamera
     const aspect = rect.width / rect.height
     if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
-    const retreat = fitScene(scene, lens, aspect, delta)
+    const sceneWindow = score.content.mix < 0.5 ? score.content.from : score.content.to
+    // The new viewer starts at its own framing while the old one is faded.
+    const retreat = fitScene(scene, lens, aspect, delta, framedWindow.current !== sceneWindow)
+    framedWindow.current = sceneWindow
     gl.domElement.dataset.cameraFinal = lens.position.toArray().map(value => value.toFixed(3)).join(',')
     const zoomOut = Math.min(0, score.exploreZoom) * (1 - score.handoff) * (1 - score.content.amount)
     if (zoomOut < 0) { lens.position.z -= zoomOut; lens.updateMatrixWorld() }
@@ -573,7 +602,7 @@ export default function CinematicCanvas({ root, model, turn, reset, motion, runn
   const pointer = useRef({ x: 0, y: 0 })
   const compact = useMediaQuery('(max-width: 650px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationFrom: 10, educationTo: 10, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
+  const [score] = useState<Score>(() => ({ progress: 0, handoff: 0, heroScroll: 0, opening: 0, projectExplosion: 0, elapsed: 0, active: false, turn: 0, pointerX: 0, pointerY: 0, weights: modelIds.map(id => id === model ? 1 : 0), viewport: { left: 0, top: 0, width: 1, height: 1 }, content: { from: 'film', to: 'film', amount: 0, mix: 0, viewport: { left: 0, top: 0, width: 1, height: 1 } }, flux: 0, dockDissolve: 0, dissolve: 0, particleFrom: 0, particleTo: 1, particleMix: 0, skillFlux: 0, skillMix: 1, skillFrom: 3, skillTo: 3, organizationFocus: 0, organizationFlux: 0, organizationDissolve: 0, organizationFrom: 7, organizationTo: 8, organizationMix: 0, organizationExploration: Array.from({ length: 3 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), educationReady: false, educationFocus: 0, educationFlux: 0, educationDissolve: 0, educationFrom: 10, educationTo: 10, educationMix: 1, educationDisplayed: 0, educationExploration: Array.from({ length: 2 }, () => ({ yaw: 0, pitch: 0, zoom: 0 })), exitOpacity: 1, exploreYaw: 0, explorePitch: 0, exploreZoom: 0 }))
   useEffect(() => {
     if (!root.current) return
     const collect = () => {

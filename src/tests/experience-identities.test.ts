@@ -16,6 +16,7 @@ describe('experience identity choreography', () => {
       const poses = [0, 1, 2].map(i => organizationPose(p, i))
       expect(poses.reduce((sum, pose) => sum + pose.weight, 0)).toBeCloseTo(1)
       expect(poses.filter(pose => pose.weight > 0.001).length).toBeLessThanOrEqual(2)
+      expect(poses.every(pose => pose.z === 0 && pose.scale === 1.32)).toBe(true)
     }
     expect(organizationChapter(0.5).flux).toBe(1)
     expect(organizationChapter(1).flux).toBe(0)

@@ -1,5 +1,6 @@
 import type { Euler, Mesh, Object3D, Vector3 } from 'three'
 import { clamp } from './choreography'
+import { contentWeight, type ContentStage } from './contentChoreography'
 
 const ease = (value: number) => { const t = clamp(value); return t ** 3 * (t * (t * 6 - 15) + 10) }
 const paths = [
@@ -15,11 +16,8 @@ export function projectPartPose(index: number, expansion: number, compact: boole
     rx: path.rotation[0] * progress, ry: path.rotation[1] * progress, rz: path.rotation[2] * progress }
 }
 
-export function projectPresence(from: string, to: string, mix: number, amount: number) {
-  if (amount <= 0) return 0
-  if (from === 'project' && to === 'project') return 1
-  if (to === 'project') return clamp(mix) * amount
-  return from === 'project' ? 1 - clamp(mix) : 0
+export function projectPresence(from: ContentStage, to: ContentStage, mix: number, amount: number) {
+  return contentWeight(from, to, mix, 'project') * amount
 }
 
 export function bindProjectAssembly(root: Object3D) {

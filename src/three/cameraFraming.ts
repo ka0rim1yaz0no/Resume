@@ -21,7 +21,7 @@ export function cameraRetreat(camera: PerspectiveCamera, bounds: Box3, aspect: n
 export function createSceneFramer() {
   const direction = new Vector3()
   let distance = 0
-  return (scene: Object3D, camera: PerspectiveCamera, aspect: number, delta: number) => {
+  return (scene: Object3D, camera: PerspectiveCamera, aspect: number, delta: number, newWindow = false) => {
     let required = 0
     scene.updateMatrixWorld()
     const visit = (object: Object3D) => {
@@ -44,7 +44,7 @@ export function createSceneFramer() {
     visit(scene)
     // Grow the safe distance immediately; ease back in as the composition
     // becomes smaller. A fast drag can never outrun the frame's safe bounds.
-    distance = Math.max(required, MathUtils.damp(distance, required, 9, Math.min(delta, 0.05)))
+    distance = newWindow ? required : Math.max(required, MathUtils.damp(distance, required, 9, Math.min(delta, 0.05)))
     camera.getWorldDirection(direction)
     camera.position.addScaledVector(direction, -distance)
     camera.updateMatrixWorld()

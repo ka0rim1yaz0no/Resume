@@ -92,8 +92,8 @@ export function OpeningSequence({ disabled }: { disabled: boolean }) {
   return <section ref={overlay} className="opening-sequence" aria-label="Opening animation">
     <div className="opening-stage" data-opening-stage aria-hidden="true">
       <div className="opening-guides"><i /><i /><i /><i /></div>
-      <div className="opening-target" />
-      <div className="opening-impact" />
+      <div className="stage-brackets opening-target" />
+      <div className="stage-brackets opening-impact" />
     </div>
     <div className="opening-deck">
       <div className="opening-caption">

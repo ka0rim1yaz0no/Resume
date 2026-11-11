@@ -1,15 +1,41 @@
-import { blend, clamp, type StageRect } from './choreography'
+import { blend, cinematicCamera, clamp, journeyPose, type StageRect } from './choreography'
 
 export type ContentStage = 'film' | 'project' | 'experience' | 'skills' | 'education'
 export type Dock = { rect: StageRect; arrive: number; leave: number }
 export type ContentDocks = Record<ContentStage, Dock>
 export type ContentRoute = { from: ContentStage; to: ContentStage; mix: number; amount: number; viewport: StageRect }
 const ease = (t: number) => t ** 3 * (t * (t * 6 - 15) + 10)
+const between = (start: number, end: number, value: number) => ease(clamp((value - start) / (end - start)))
+const stages: ContentStage[] = ['film', 'project', 'experience', 'skills']
 
 /** Exchange subjects through a gentle dust dissolve during the lateral handoff. */
 export function contentTransitionMix(mix: number) {
-  const t = clamp((mix - 0.28) / 0.44)
+  const t = clamp((mix - 0.16) / 0.68)
   return t * t * (3 - 2 * t)
+}
+
+export function contentDust(mix: number) {
+  const cut = contentTransitionMix(mix)
+  const exchange = cut > 0 && cut < 1 ? Math.sin(cut * Math.PI) ** 2 : 0
+  const release = between(0, 0.13, mix) * (1 - between(0.17, 0.43, mix))
+  const settle = between(0.52, 0.88, mix) * (1 - between(0.95, 1, mix))
+  return {
+    cut,
+    flux: exchange + (1 - exchange) * (release * 0.34 + settle * 0.48),
+    dissolve: exchange * 0.84 + (1 - exchange) * settle * 0.03,
+  }
+}
+
+export function contentLock(route: ContentRoute, stage: ContentStage) {
+  if (route.from === route.to) return route.to === stage ? 1 : 0
+  if (route.to === stage) return between(0.66, 0.985, route.mix)
+  return route.from === stage ? 1 - between(0.02, 0.35, route.mix) : 0
+}
+
+export function contentWeight(from: ContentStage, to: ContentStage, mix: number, stage: ContentStage) {
+  if (from === to) return to === stage ? 1 : 0
+  if (from === stage) return 1 - between(0.1, 0.48, mix)
+  return to === stage ? between(0.52, 0.88, mix) : 0
 }
 
 export function dockVisibility(rect: StageRect, header: number) {
@@ -25,22 +51,16 @@ export function viewportVisibility(rect: StageRect, header: number, height: numb
   return ease(clamp((visible / available - 0.55) / 0.4))
 }
 
-/** Long reading passages belong to the text. Fade as the real source leaves,
- * and return only when the next viewer enters the screen. */
-export function contentVisibility(route: ContentRoute, docks: ContentDocks, header: number, height: number) {
+/** Fade out at the cut between native viewports, so the dust never covers
+ * the reading area between sections. */
+export function contentVisibility(route: ContentRoute, header: number) {
   if (route.from === route.to) return route.from === 'skills' || route.from === 'education' ? dockVisibility(route.viewport, header) : 1
-  if (docks[route.to].arrive - docks[route.from].leave <= height * 1.15) return 1
-  const from = docks[route.from].rect, to = docks[route.to].rect
-  const edge = Math.min(180, height * 0.24)
-  const leaving = clamp((from.top + from.height - header) / edge)
-  const entering = clamp((height - to.top) / edge)
-  return ease(Math.max(leaving, entering))
+  return between(0, 0.12, Math.abs(route.mix - 0.5))
 }
 
 /** A reversible rail connects the work sections and ends at skills.
  * Education uses its own native window, keeping About free of carried models. */
-export function contentRoute(scroll: number, docks: ContentDocks, header: number, height: number, width?: number): ContentRoute {
-  const stages: ContentStage[] = ['film', 'project', 'experience', 'skills']
+export function contentRoute(scroll: number, docks: ContentDocks, header: number, height: number): ContentRoute {
   if (scroll <= docks.film.leave) return { from: 'film', to: 'film', mix: 0, amount: 0, viewport: docks.film.rect }
   // The carried story ends at Technical capabilities. Follow the native skills
   // window out of view, then render education only in its own native window.
@@ -53,21 +73,16 @@ export function contentRoute(scroll: number, docks: ContentDocks, header: number
   for (let i = 0; i < stages.length - 1; i++) {
     const from = stages[i], to = stages[i + 1]
     const start = docks[from].leave
-    const end = Math.max(start + 1, docks[to].arrive)
+    const minimum = Math.max(1, Math.min(height * 0.24, 220, docks[to].leave - start))
+    const end = Math.max(start + minimum, docks[to].arrive)
     if (scroll < end) {
-      const t = clamp((scroll - start) / (end - start))
-      const mix = ease(t)
-      const a = docks[from].rect, b = docks[to].rect
-      // Follow the real section windows without inflating the middle of the shot.
-      const w = blend(a.width, b.width, mix), h = blend(a.height, b.height, mix)
-      const rawTop = blend(a.top, b.top, mix)
-      // Keep the middle of a long handoff in frame, without altering the
-      // position or velocity where it meets either real DOM destination.
-      const safeTop = clamp(rawTop, header + 16, Math.max(header + 16, height - h - 16))
-      const top = blend(rawTop, safeTop, Math.sin(t * Math.PI) ** 2)
-      const rawLeft = blend(a.left, b.left, mix)
-      const left = width ? clamp(rawLeft, 0, Math.max(0, width - w)) : rawLeft
-      return { from, to, mix, amount: i === 0 ? contentTransitionMix(mix) : 1, viewport: { left, top, width: w, height: h } }
+      // Long sections add a quiet interval between release and arrival. Both
+      // moves use the same reversible score and the real viewer dimensions.
+      const span = Math.min((end - start) / 2, height * 0.27, 236)
+      const release = between(start, start + span, scroll)
+      const arrive = between(end - span, end, scroll)
+      const mix = (release + arrive) / 2
+      return { from, to, mix, amount: 1, viewport: docks[mix < 0.5 ? from : to].rect }
     }
     if (scroll <= docks[to].leave) return { from: to, to, mix: 0, amount: 1, viewport: docks[to].rect }
   }
@@ -75,21 +90,37 @@ export function contentRoute(scroll: number, docks: ContentDocks, header: number
 }
 
 const subjects = { film: 2, project: 1, experience: 4, skills: 3, education: 5 }
-export function contentPose(route: ContentRoute, index: number, compact: boolean) {
-  const stage = route.to
-  const base = (key: ContentStage) => ({ x: 0, y: 0, z: 0, rx: key === 'skills' ? 0.04 : 0.015, ry: key === 'project' ? 0.14 : key === 'skills' ? 0.1 : 0.12, rz: key === 'skills' ? -0.04 : 0, scale: key === 'skills' ? 1.02 : key === 'experience' ? 1.22 : key === 'education' ? 1.7 : compact ? 1.2 : 1.05 })
-  const pose = base(stage)
-  if (route.from === route.to || route.from === 'film') return { ...pose, weight: index === subjects[stage] ? 1 : 0 }
-  const q = route.mix, cut = contentTransitionMix(q), travel = compact ? 0.45 : 1
-  if (index === subjects[route.from]) {
-    const outgoing = base(route.from)
-    return { ...outgoing, weight: 1 - cut, x: outgoing.x - q * 0.16 * travel, y: q * 0.04, ry: outgoing.ry + q * 0.12 }
+export function contentPose(route: ContentRoute, index: number, compact: boolean, filmProgress = 1) {
+  const leaving = route.from !== route.to && index === subjects[route.from]
+  const stage = leaving ? route.from : route.to
+  const film = stage === 'film' ? journeyPose(filmProgress, subjects.film, compact) : null
+  const pose = film ? { ...film, scale: film.scale * (compact ? 0.8 : 1) } : {
+    x: 0, y: 0, z: 0, rx: stage === 'skills' ? 0.04 : 0.015,
+    ry: stage === 'project' ? 0.14 : stage === 'skills' ? 0.1 : 0.12,
+    rz: stage === 'skills' ? -0.04 : 0,
+    scale: stage === 'skills' ? 0.90 : stage === 'experience' ? 1.22 : stage === 'education' ? 1.7 : compact ? 1.10 : 0.99,
   }
-  return { ...pose, weight: index === subjects[stage] ? cut : 0, x: pose.x + (1 - q) * 0.16 * travel, y: -(1 - q) * 0.04, ry: pose.ry - (1 - q) * 0.12 }
+  if (route.from === route.to) return { ...pose, weight: index === subjects[stage] ? 1 : 0 }
+  const travel = compact ? 0.52 : 1
+  const direction = route.to === 'experience' ? -1 : 1
+  const wideSubject = stage === 'project' || stage === 'skills'
+  const offset = leaving ? -between(0.025, 0.5, route.mix) : 1 - between(0.5, 0.99, route.mix)
+  return {
+    ...pose,
+    weight: index === subjects[stage] ? contentWeight(route.from, route.to, route.mix, stage) : 0,
+    x: pose.x + direction * offset * (wideSubject ? 0.4 : 0.58) * travel,
+    y: pose.y - offset * (wideSubject ? 0.06 : 0.12) * travel,
+    ry: pose.ry - direction * offset * (wideSubject ? 0.13 : 0.28),
+    rz: pose.rz + direction * offset * (wideSubject ? 0.025 : 0.05) * travel,
+  }
 }
 
-export function contentCamera(route: ContentRoute, compact: boolean) {
-  const side = (stage: ContentStage) => stage === 'skills' ? -0.18 : 0.24
-  // A fixed lens and distance keep the scroll calm; only the lateral aim changes.
-  return { x: blend(side(route.from), side(route.to), route.mix) * (compact ? 0.4 : 1), y: 0.18, z: 6.9, lookX: 0, lookY: 0, fov: 35 }
+export function contentCamera(route: ContentRoute, compact: boolean, filmProgress = 1) {
+  const dock = (stage: ContentStage) => stage === 'film' ? cinematicCamera(filmProgress, compact) : {
+    x: (stage === 'skills' ? -0.18 : stage === 'experience' ? 0.05 : 0.24) * (compact ? 0.4 : 1), y: 0.18, lookX: 0, lookY: 0,
+  }
+  const a = dock(route.from), b = dock(route.to)
+  const angle = between(0.36, 0.64, route.mix)
+  return { x: blend(a.x, b.x, angle), y: blend(a.y, b.y, angle), z: 6.9,
+    lookX: blend(a.lookX, b.lookX, angle), lookY: blend(a.lookY, b.lookY, angle), fov: 35 }
 }

@@ -9,7 +9,7 @@ import { assistlyRibbon, knowlesGlobe, syntaxGear } from './organizationGeometry
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { studioEdgeFinish, studioFade, studioFinish, studioPalette } from './studioMaterials'
 
-export type IdentityScore = { active: boolean; elapsed: number; content: ContentRoute; organizationFocus: number; organizationDissolve: number; dissolve: number; organizationExploration: { yaw: number; pitch: number; zoom: number }[] }
+export type IdentityScore = { active: boolean; elapsed: number; content: ContentRoute; organizationFocus: number; organizationDissolve: number; dissolve: number; exitOpacity: number; organizationExploration: { yaw: number; pitch: number; zoom: number }[] }
 const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
 
 function SyntaxFace({ geometry }: { geometry: ReturnType<typeof syntaxGear>['face'] }) {
@@ -44,7 +44,7 @@ function Identity({ index, score, targets, motion, compact }: { index: number; s
     const inExperience = route.from === 'experience' || route.to === 'experience'
     const pose = organizationPose(score.organizationFocus, index)
     const weight = inExperience ? chapter * pose.weight : 0
-    const solid = weight * (1 - score.dissolve) * (1 - score.organizationDissolve)
+    const solid = weight * (1 - score.dissolve) * (1 - score.organizationDissolve) * score.exitOpacity
     const exploration = score.organizationExploration[index]
     root.current.visible = weight > 0.001
     root.current.position.set(stage.x + pose.x, stage.y + pose.y + (motion ? Math.sin(score.elapsed * 0.45 + index) * 0.018 : 0), stage.z + pose.z)

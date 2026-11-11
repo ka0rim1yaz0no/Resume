@@ -23,7 +23,7 @@ export function organizationPose(focus: number, index: number) {
   const { from, to, mix } = organizationChapter(focus)
   const weight = index === from ? 1 - mix : index === to ? mix : 0
   const offset = index === from ? -mix : 1 - mix
-  return { weight, x: offset * 0.38, y: offset * 0.14, z: -Math.abs(offset) * 0.45, rx: -0.04, ry: -0.18 + offset * 0.2, rz: -0.035 + offset * 0.06, scale: 1.32 - Math.abs(offset) * 0.08 }
+  return { weight, x: offset * 0.38, y: offset * 0.14, z: 0, rx: -0.04, ry: -0.18 + offset * 0.2, rz: -0.035 + offset * 0.06, scale: 1.32 }
 }
 
 export function experienceReader(height: number, header: number, sceneHeight: number, compact: boolean) {
