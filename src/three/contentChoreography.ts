@@ -55,9 +55,13 @@ export function viewportVisibility(rect: StageRect, header: number, height: numb
 
 /** Fade out at the cut between native viewports, so the dust never covers
  * the reading area between sections. */
+export function handoffVisibility(mix: number) {
+  return between(0, 0.12, Math.abs(mix - 0.5))
+}
+
 export function contentVisibility(route: ContentRoute, header: number) {
   if (route.from === route.to) return route.from === 'skills' || route.from === 'education' ? dockVisibility(route.viewport, header) : 1
-  return between(0, 0.12, Math.abs(route.mix - 0.5))
+  return handoffVisibility(route.mix)
 }
 
 /** A reversible rail connects the work sections and ends at skills.

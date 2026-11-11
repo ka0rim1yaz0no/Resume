@@ -8,10 +8,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { modelIds, modelRegistry, modelUrl, type ModelId } from '../data/assets'
 import { useMediaQuery } from '../hooks/usePreferences'
 import { blend, chapterPose, cinematicCamera, journeyPose, openingCamera, reactCompanionPose, stageHandoff, type StageRect } from './choreography'
-import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
+import { contentCamera, contentDust, contentLock, contentPose, contentRoute, contentVisibility, handoffVisibility, viewportVisibility, type ContentDocks, type ContentRoute, type Dock } from './contentChoreography'
 import { TravelParticles } from './TravelParticles'
 import { createSilkLayer } from './silkLayer'
-import { advanceSilkPhase, openingSilkHandoff, openingWave, silkArrival, silkCrossfade, silkRest, silkVisibility, transferEnergy } from './waveMotion'
+import { advanceSilkPhase, heroScrollWave, landingWave, openingSilkHandoff, openingWave, silkArrival, silkCrossfade, silkRest, silkVisibility } from './waveMotion'
 import { SkillToken } from './SkillToken'
 import { cloneStudioMaterial, studioPalette, studioLighting } from './studioMaterials'
 import { StudioLights } from './StudioLights'
@@ -387,8 +387,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
   const fitScene = useMemo(createSceneFramer, [])
   const silk = useMemo(() => createSilkLayer(mobile), [mobile])
   const silkWindows = useRef({ first: { rect: score.viewport, energy: 0 }, next: { rect: score.viewport, energy: 0 }, accent: 0 })
-  const openingGlow = useRef(silkRest)
-  const framedWindow = useRef<ContentRoute['to']>('film')
+  const openingGlow = useRef({ energy: silkRest, time: 0 })
+  const framedWindow = useRef<ContentRoute['to'] | 'hero' | 'journey'>('film')
   const nodes = useMemo(() => ({ hero: anchors.hero.parentElement?.querySelector<HTMLElement>('.model-explorer'), project: anchors.project.parentElement, companies: [...(anchors.experience.parentElement?.querySelectorAll<HTMLElement>('[data-organization-explorer]') || [])], schools: [...(anchors.education.parentElement?.querySelectorAll<HTMLElement>('[data-school-explorer]') || [])] }), [anchors])
   const diagnostics = useRef({ frames: 0, next: 0 })
   const rail = useRef<number | null>(null)
@@ -442,7 +442,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     invalidate(3)
     return () => { if (idleFrame.current !== null) { clearTimeout(idleFrame.current); idleFrame.current = null } }
   }, [model, turn, motion, running, ready, invalidate])
-  useFrame((_, rawDelta) => {
+  useFrame(({ clock }, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05)
     const header = window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100
     const height = window.innerHeight
@@ -488,11 +488,15 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     score.educationFlux = settledEducation && motion ? education.flux : 0
     score.educationDissolve = settledEducation && motion ? education.dissolve : 0
     score.educationMix = education.cut
-    const introRect = openingActive ? openingViewport(hero, establishing, opening) : hiddenFilm ? hero : transition.progress >= 1 ? journey : transition.rect
     const inContent = score.content.from !== 'film' || score.content.to !== 'film'
+    score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
+    const nativeHandoff = mobile && !inContent && score.handoff > 0 && score.handoff < 1
+    // On stacked layouts the model changes viewers while faded, keeping it
+    // inside the artwork areas above and below the intervening text.
+    const carriedRect = nativeHandoff ? (score.handoff < 0.5 ? hero : journey) : transition.rect
+    const introRect = openingActive ? openingViewport(hero, establishing, opening) : hiddenFilm ? hero : score.handoff >= 1 ? journey : carriedRect
     const rect = inContent ? score.content.viewport : introRect
     score.educationEntryProgress = settledEducation ? educationEntryProgress(rect, header, height) : 1
-    score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
     score.opening = opening
     score.heroScroll = openingActive ? 0 : MathUtils.clamp((sceneScroll - scroll - heroSection.top) / Math.max(1, heroSection.height), 0, 1)
     const filmDistance = Math.max(1, anchors.section.offsetHeight - window.innerHeight + header)
@@ -512,8 +516,9 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
       score.particleMix = dust?.cut ?? 0
     }
     const readingVisibility = contentVisibility(score.content, header)
-    const screenVisibility = (mobile || inContent) && motion ? blend(viewportVisibility(rect, header, height), 1, openingActive ? openingDock(opening) : 0) : 1
-    score.exitOpacity = screenVisibility * readingVisibility
+    const limitToScreen = nativeHandoff || ((mobile || inContent) && motion)
+    const screenVisibility = limitToScreen ? blend(viewportVisibility(rect, header, height), 1, openingActive ? openingDock(opening) : 0) : 1
+    score.exitOpacity = screenVisibility * readingVisibility * (nativeHandoff ? handoffVisibility(score.handoff) : 1)
     const onScreen = score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight
     score.active = running && rect.width > 0 && rect.height > 0 && (openingActive || finishingOpening || onScreen)
     score.viewport = rect
@@ -522,18 +527,20 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     light.first.energy = 0
     light.next.energy = 0
     light.accent = 0
-    openingGlow.current = openingActive
-      ? openingWave(opening)
-      : Math.max(silkRest, MathUtils.damp(openingGlow.current, silkRest, 3.8, delta))
+    const glow = openingGlow.current
+    if (openingActive) {
+      glow.energy = openingWave(opening)
+      glow.time = clock.elapsedTime
+    }
     if (motion && running && !reduced) {
       if (openingActive) {
         // Cross into the native hero viewer while the copy fades in. Both
         // windows share the same wave phase, and the model renders on top.
         const handoff = openingSilkHandoff(opening)
         const visibility = blend(silkVisibility(rect, header, height), 1, openingDock(opening))
-        light.first.energy = openingGlow.current * (1 - handoff) * visibility
+        light.first.energy = glow.energy * (1 - handoff) * visibility
         light.next.rect = hero
-        light.next.energy = openingGlow.current * handoff * silkVisibility(hero, header, height)
+        light.next.energy = glow.energy * handoff * silkVisibility(hero, header, height)
       } else if (crossing) {
         // Release and arrival can share the screen. Keep both folds inside
         // their actual viewers while the model scene changes its scissor.
@@ -543,10 +550,19 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
         light.first.energy = depart * silkVisibility(light.first.rect, header, height)
         light.next.energy = arrive * silkVisibility(light.next.rect, header, height)
       } else {
-        const docked = silkVisibility(rect, header, height) * readingVisibility
-        const glow = inContent ? silkRest : blend(openingGlow.current, silkRest, score.handoff)
-        light.first.energy = docked * glow
-        light.accent = docked
+        const departure = hiddenFilm ? 0 : MathUtils.smoothstep(sceneScroll, Math.max(0, start - height * 0.24), start)
+        const energy = inContent ? silkRest : heroScrollWave(landingWave(glow.energy, clock.elapsedTime - glow.time), departure, score.handoff)
+        if (nativeHandoff) {
+          const arrive = MathUtils.smoothstep(score.handoff, 0.22, 0.78)
+          light.first.rect = hero
+          light.next.rect = journey
+          light.first.energy = energy * (1 - arrive) * silkVisibility(hero, header, height)
+          light.next.energy = energy * arrive * silkVisibility(journey, header, height)
+        } else {
+          const docked = silkVisibility(rect, header, height) * readingVisibility
+          light.first.energy = docked * energy
+          light.accent = docked
+        }
       }
     }
     const silkOnScreen = Math.max(light.first.energy, light.next.energy) > 0.003
@@ -610,7 +626,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     gl.setClearColor(0x000000, 0); gl.clear(true, true, true)
     if (!ready) return
     const { first, next, accent } = silkWindows.current
-    const wake = Math.max(score.flux, score.skillFlux, score.organizationFlux, score.educationFlux, 0.64 * transferEnergy(score.handoff))
+    const wake = Math.max(score.flux, score.skillFlux, score.organizationFlux, score.educationFlux)
     const schoolArrival = score.content.to === 'education'
       ? Math.max(silkArrival(score.educationEntryProgress), silkArrival(score.educationFocus))
       : 0
@@ -636,7 +652,8 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
         const aspect = rect.width / rect.height
         if (Math.abs(lens.aspect - aspect) > 0.0001) { lens.aspect = aspect; lens.updateProjectionMatrix() }
       }
-      const sceneWindow = score.content.mix < 0.5 ? score.content.from : score.content.to
+      const contentWindow = score.content.mix < 0.5 ? score.content.from : score.content.to
+      const sceneWindow = mobile && contentWindow === 'film' ? (score.handoff < 0.5 ? 'hero' : 'journey') : contentWindow
       // The new viewer starts at its own framing while the old one is faded.
       const retreat = fitScene(scene, lens, lens.aspect, delta, framedWindow.current !== sceneWindow)
       framedWindow.current = sceneWindow

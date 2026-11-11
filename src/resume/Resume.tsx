@@ -16,6 +16,7 @@ import type { ModelId } from '../data/assets'
 import { ModelJourney } from './ModelJourney'
 import { useActiveSection } from '../hooks/useActiveSection'
 import { OpeningSequence } from '../components/OpeningSequence'
+import { SilkCursor } from '../components/SilkCursor'
 
 export default function Resume() {
   const active = useActiveSection()
@@ -51,6 +52,7 @@ export default function Resume() {
     </main>
     <ScrollExperience root={root} model={model} turn={turn} reset={reset} motion={!reduced && !paused} running={visible && !projectOpen && !menu} />
     <OpeningSequence disabled={reduced || paused} />
+    <SilkCursor disabled={reduced || paused || projectOpen} />
     <footer className="site-footer container"><a className="footer-personal-name" href="#">{profile.name}<span>Information Technology · Web Development · Project Management</span></a><div><a href={profile.github} target="_blank" rel="noreferrer">GitHub <Icon name="arrow" /></a><button onClick={() => setPaused(value => !value)} disabled={reduced} aria-pressed={paused || reduced}>{reduced ? 'System reduced motion' : `Motion ${paused ? 'off' : 'on'}`}</button><a className="back-to-top" href="#">Back to top <Icon name="arrow" /></a><span>© {new Date().getFullYear()} {profile.fullName}</span></div></footer>
     {projectOpen && <ProjectDialog close={() => setProjectOpen(false)} />}
   </div>

@@ -7,17 +7,28 @@ const smooth = (start: number, end: number, value: number) => {
 }
 
 const lastContact = openingContacts[openingContacts.length - 1]
+const openingLandingGlow = 0.56
 export const silkRest = 0.29
 
 export function openingWave(opening: number) {
   const time = 1 - clamp(opening)
   const rise = smooth(0.008, 0.205, time)
   const contact = smooth(lastContact - 0.1, lastContact, time) * (1 - smooth(lastContact, lastContact + 0.13, time))
-  return blend(0.11 + rise * (0.98 + contact * 0.16), 0.56, smooth(openingDockStart, 1, time))
+  return blend(0.11 + rise * (0.98 + contact * 0.16), openingLandingGlow, smooth(openingDockStart, 1, time))
 }
 
 export function openingSilkHandoff(opening: number) {
   return smooth(openingDockStart, 0.935, 1 - opening)
+}
+
+export function landingWave(energy: number, seconds: number) {
+  return blend(clamp(energy, silkRest, openingLandingGlow), silkRest, smooth(0.48, 2.2, seconds))
+}
+
+export function heroScrollWave(glow: number, departure: number, progress: number) {
+  const leaving = blend(glow, openingLandingGlow, departure)
+  const traveling = blend(leaving, 0.64, smooth(0, 0.42, progress))
+  return blend(traveling, silkRest, smooth(0.6, 1, progress))
 }
 
 export function openingDust(opening: number) {
