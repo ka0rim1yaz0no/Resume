@@ -8,7 +8,6 @@
   clip-path: polygon(0 0, 76% 0, 100% 24%, 100% 100%, 0 100%);
 }
 .personal-resume .nav-contact { border-radius: 4px; }
-.opening-sequence { background: var(--industrial-stage); }
 .model-journey {
   background: linear-gradient(115deg, #37166a, #6634b1);
   border-color: var(--industrial-edge);
@@ -183,16 +182,19 @@
 @media (max-width: 650px) {
   .capabilities-section { --skill-caption-height: clamp(104px, calc(85.25px + 5vw), 120px); --skill-scene-height: clamp(148px, 23svh, 205px); }
   .skills-layout > .skill-preview.content-stage { position: sticky; top: 76px; }
-  .resume-hero .hero-copy { padding-block: 6px 0; }
-  .resume-hero h1 { font-size: clamp(48px, 14vw, 78px); margin-bottom: 18px; }
-  .resume-hero .hero-kicker { margin-bottom: 22px; font-size: 11px; }
-  .resume-hero .specialty-line { font-size: 11px; padding-bottom: 14px; }
-  .hero-systems { font-size: 18px; margin-top: 20px; }
-  .resume-hero .hero-actions { gap: 18px; }
+  .resume-hero { padding-top: 28px; }
+  .resume-hero .hero-copy { padding-block: 0; }
+  .resume-hero h1 { font-size: clamp(38px, 10.4vw, 64px); margin-bottom: 12px; }
+  .resume-hero h1 br { display: none; }
+  .resume-hero .hero-kicker { margin-bottom: 12px; font-size: 11px; }
+  .resume-hero .specialty-line { font-size: 11px; margin-top: 6px; padding-bottom: 10px; }
+  .hero-systems { font-size: 16px; margin-top: 12px; }
+  .resume-hero .hero-actions { gap: 18px; margin-top: 16px; }
   .resume-hero .hero-actions .button-primary { padding-left: 16px; gap: 14px; white-space: nowrap; flex-shrink: 0; }
   .resume-hero .hero-actions .button-primary .icon { width: 16px; height: 16px; padding: 18px 14px; }
-  .resume-hero .hero-art { margin-top: 24px; }
-  .hero-model-window { height: clamp(310px, 102vw, 460px); }
+  .resume-hero .resume-download, .resume-hero .intro-replay { margin-top: 4px; }
+  .resume-hero .hero-art { margin-top: 14px; }
+  .hero-model-window { height: clamp(280px, 84vw, 398px); }
   .hero-control-deck { justify-content: center; padding: 8px 10px; }
   .resume-hero .art-coordinate-top { padding-inline: 16px 25px; }
   :is(#project, #experience, #skills) .section-heading { gap: 22px; }

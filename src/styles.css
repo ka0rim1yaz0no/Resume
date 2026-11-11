@@ -361,29 +361,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 }
 @media (prefers-reduced-motion: reduce) { .scene-window > .scene-poster { transition: none; } }
 
-/* Opening shot: the real sculpture moves from the centre into the hero. */
-.opening-sequence { position: fixed; inset: 0; z-index: 19; background: #101412; visibility: hidden; opacity: 0; padding: 12vh 6vw 6vh; pointer-events: none; }
-.opening-stage { position: absolute; left: 45%; top: 18%; width: 49%; aspect-ratio: 960 / 760; }
 .poster-preview, .poster-preview.poster-systems-sculpture, .poster-preview.poster-workflow-board { background: #101412; }
-.intro-opening { overflow-x: clip; }
-.opening-orbit { position: absolute; inset: 2% 0; width: 100%; height: 96%; color: #b9cbb27a; }
-.opening-field { position: absolute; inset: 0; opacity: 0; transform-origin: 50% 50%; }
-.opening-field i { position: absolute; display: block; }
-.opening-field i:nth-child(1), .opening-field i:nth-child(2) { top: 50%; width: 24%; height: 1px; background: linear-gradient(90deg, transparent, #ae79ce4d); }
-.opening-field i:nth-child(1) { left: 1%; }
-.opening-field i:nth-child(2) { right: 1%; transform: rotate(180deg); }
-.opening-field i:nth-child(3), .opening-field i:nth-child(4) { left: 50%; width: 1px; height: 20%; background: linear-gradient(transparent, #b69bc94d); }
-.opening-field i:nth-child(3) { top: 0; }
-.opening-field i:nth-child(4) { bottom: 0; transform: rotate(180deg); }
-.opening-impact { position: absolute; left: 50%; top: 50%; width: min(66%, 430px); aspect-ratio: 1; translate: -50% -50%; border: 1px solid #b38ac985; border-radius: 50%; opacity: 0; box-shadow: 0 0 40px #c894ee14, inset 0 0 40px #c894ee14; }
-.opening-type { position: absolute; left: 6vw; bottom: 96px; display: flex; gap: .3em; font-size: clamp(22px, 3vw, 38px); letter-spacing: -.055em; line-height: 1.2; font-weight: 400; }
-.opening-type > span { display: block; overflow: hidden; }
-.opening-word { display: block; }
-.opening-bottom { position: absolute; bottom: 6vh; left: 6vw; right: 6vw; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; }
-.opening-bottom button { pointer-events: auto; min-height: 44px; padding: 8px 0 8px 20px; }
-.opening-line { position: absolute; left: 6vw; right: 6vw; bottom: 5vh; height: 1px; background: var(--line); }
-.opening-line span { display: block; width: 100%; height: 1px; background: var(--accent); transform-origin: left; }
-.intro-opening .navigation, .intro-opening .menu-toggle { visibility: hidden; }
 
 /* A full-viewport, three-shot scroll film. Ordinary sticky positioning keeps
    anchors, keyboard scrolling, browser history, and touch behaviour native. */
@@ -416,7 +394,6 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 .journey-reduced { display: none; }
 @media (max-width: 980px) { .journey-frame { top: 84px; height: calc(100svh - 84px); }.journey-copy { width: 25vw; }.journey-detail { max-width: 200px; } }
 @media (max-width: 650px) {
-  .opening-type { bottom: 96px; font-size: clamp(18px, 5.5vw, 24px); }.opening-bottom { font-size: 10px; }
   .model-journey { height: 290svh; }.journey-frame { top: 76px; height: calc(100svh - 76px); min-height: 590px; }
   .journey-heading { inset: 12px 20px auto; font-size: 9px; }.journey-heading a { gap: 8px; }
   .journey-titles { left: 18px; right: 18px; top: 10%; font-size: clamp(61px, 17vw, 105px); }
@@ -426,7 +403,7 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
   .journey-detail { display: none; }
   .journey-footer { left: 20px; right: 20px; bottom: 12px; padding-top: 8px; gap: 14px; }.journey-scroll-note { display: none; }.journey-footer button { font-size: 10px; }.journey-chapters { gap: 18px; }.journey-chapters b { width: 18px; }
 }
-@media (prefers-reduced-motion: reduce) { .opening-sequence, .model-journey { display: none; } }
+@media (prefers-reduced-motion: reduce) { .model-journey { display: none; } }
 
 /* Curated section visuals: each explains its content instead of repeating a model. */
 .personal-resume .architecture-project { background: #16221b; border-color: #4d6553; }

@@ -1,115 +1,112 @@
 import { useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
-import { openingFrame } from '../three/openingLayout'
-import { openingDuration, openingPhase } from '../three/sculptureAssembly'
+import { openingContacts, openingDockStart, openingDuration, openingPhase } from '../three/sculptureAssembly'
 import { resetOpeningScroll } from '../hooks/useMotion'
+import { Icon } from './Icon'
 
 export function OpeningSequence({ disabled }: { disabled: boolean }) {
-  const overlay = useRef<HTMLDivElement>(null)
+  const overlay = useRef<HTMLElement>(null)
   const played = useRef(false)
   useGSAP((_, contextSafe) => {
-    const root = overlay.current?.closest('.personal-resume') as HTMLElement | null
-    const scene = root?.querySelector<HTMLElement>('[data-scene="intro"]')
     const curtain = overlay.current
-    const stage = curtain?.querySelector<HTMLElement>('[data-opening-stage]')
-    if (!root || !scene || !curtain || !stage || disabled || played.current || window.location.hash || root.querySelector('[data-scene-status="static"]')) return
-    const compact = window.innerWidth <= 650
-    const header = compact ? 76 : window.innerWidth <= 980 ? 84 : 100
-    const frame = openingFrame(window.innerWidth, window.innerHeight, header)
+    const root = curtain?.closest<HTMLElement>('.personal-resume')
+    const scene = root?.querySelector<HTMLElement>('[data-scene="intro"]')
+    const renderer = root?.querySelector<HTMLElement>('[data-scene-status]')
+    if (!root || !scene || !curtain || disabled || played.current || window.location.hash || renderer?.dataset.sceneStatus === 'static') return
     const heroCopy = root.querySelectorAll('.hero-enter')
+    const contacts = curtain.querySelectorAll('.opening-meter span')
+    const button = curtain.querySelector('button')!
     const began = performance.now()
-    let disposed = false, finished = false, settled = false, fontsReady = false
+    let settled = false, fontsReady = false
     let reveal: gsap.core.Timeline | undefined
     resetOpeningScroll()
     root.classList.add('intro-opening')
     scene.dataset.sceneOpening = '1'
     curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
-    gsap.set(stage, { left: frame.left, top: frame.top, width: frame.width, height: frame.height })
     gsap.set(curtain, { autoAlpha: 1 })
-    gsap.set(heroCopy, { opacity: 0, y: 18 })
-    gsap.set('.opening-impact', { scale: 0.68, opacity: 0 })
-    gsap.set('.opening-field', { scale: 1.12, opacity: 0 })
-    gsap.from('.opening-word', { yPercent: 110, duration: 0.7, stagger: 0.08, ease: 'power3.out' })
-    gsap.set('.opening-line span', { scaleX: 0 })
-    gsap.fromTo('.opening-orbit circle', { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut' })
+    gsap.set(heroCopy, { opacity: 0, y: 14 })
     const settle = () => {
+      if (settled) return
       settled = true
+      played.current = true
+      observer.disconnect()
+      readyCall.kill()
+      timeout.kill()
+      button.removeEventListener('click', skip)
+      window.removeEventListener('wheel', skip)
+      window.removeEventListener('touchmove', skip)
+      window.removeEventListener('keydown', key)
       root.classList.remove('intro-opening')
       delete scene.dataset.sceneOpening
       delete curtain.dataset.phase
       gsap.set(heroCopy, { clearProps: 'opacity,transform' })
       gsap.set(curtain, { autoAlpha: 0 })
     }
-    const finish = (instant = false) => {
-      if (finished || disposed) return
-      finished = true; played.current = true; observer.disconnect(); readyCall.pause()
-      if (instant) { settle(); return }
-      // Font/layout restoration can land after the initial mount. Synchronize
-      // Lenis before the take, while wheel/touch skips remain free to scroll.
+    const start = () => {
+      if (settled || reveal) return
+      // Synchronize Lenis after fonts and scroll restoration have settled.
       resetOpeningScroll()
       const shot = { progress: 1 }
-      const duration = openingDuration(compact)
-      const copyStart = duration * 0.81
+      const duration = openingDuration(window.innerWidth <= 650)
+      const finalContact = openingContacts[openingContacts.length - 1]
       reveal = gsap.timeline({ onComplete: settle })
         .to(shot, { progress: 0, duration, ease: 'none', onUpdate: () => {
           scene.dataset.sceneOpening = String(shot.progress)
           const phase = openingPhase(shot.progress)
           if (curtain.dataset.phase !== phase) curtain.dataset.phase = phase
         } }, 0)
-        .to('.opening-line span', { scaleX: 1, duration: duration * 0.8, ease: 'none' }, 0)
-        .to('.opening-field', { opacity: 0.6, duration: 0.45, ease: 'sine.out' }, 0)
-        .to('.opening-field', { scale: 0.12, duration: duration * 0.68, ease: 'power2.inOut' }, 0)
-        .to('.opening-field', { opacity: 0, duration: duration * 0.14 }, duration * 0.58)
-        .to('.opening-impact', { scale: 0.85, opacity: 0.65, duration: 0.16, ease: 'power2.out' }, duration * 0.64)
-        .to('.opening-impact', { scale: 1.35, opacity: 0, duration: 0.65, ease: 'power2.out' }, duration * 0.64 + 0.16)
-        .to('.opening-type', { opacity: 0, y: -6, duration: 0.4, ease: 'sine.inOut' }, duration * 0.74)
-        .to('.opening-orbit, .opening-bottom, .opening-line', { opacity: 0, duration: 0.5 }, duration * 0.77)
-        .to(curtain, { opacity: 0, duration: duration * 0.19, ease: 'sine.inOut' }, copyStart)
-        .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.15, stagger: 0.035, ease: 'power2.out' }, copyStart)
+        .fromTo('.opening-guides', { opacity: 0.15, scale: 1 }, { opacity: 0.82, scale: 0.87, duration: duration * 0.47, ease: 'sine.inOut' }, 0)
+        .to('.opening-guides', { opacity: 0.24, scale: 0.78, duration: duration * 0.25, ease: 'sine.inOut' }, duration * 0.47)
+        .fromTo('.opening-impact', { scale: 0.94, opacity: 0 }, { scale: 1, opacity: 0.92, duration: 0.12, ease: 'power2.out' }, duration * finalContact)
+        .to('.opening-impact', { scale: 1.15, opacity: 0, duration: 0.33, ease: 'power2.out' }, duration * finalContact + 0.12)
+        .to('.opening-deck', { y: 8, opacity: 0, duration: duration * 0.14, ease: 'sine.in' }, duration * openingDockStart)
+        .to(curtain, { opacity: 0, duration: duration * (1 - openingDockStart), ease: 'sine.inOut' }, duration * openingDockStart)
+        .to(heroCopy, { y: 0, opacity: 1, duration: duration * 0.13, stagger: { amount: duration * 0.037 }, ease: 'power2.out' }, duration * 0.833)
+      for (const [index, time] of openingContacts.entries()) {
+        reveal.to(contacts[index], { opacity: 1, duration: 0.13, ease: 'power2.out' }, duration * time)
+      }
     }
-    const readyCall = gsap.delayedCall(1, () => finish()).pause()
+    const skip = () => { reveal?.kill(); settle() }
+    const readyCall = gsap.delayedCall(0.05, contextSafe ? contextSafe(start) : start).pause()
     const schedule = () => {
+      if (renderer?.dataset.sceneStatus === 'error') { skip(); return }
       curtain.dataset.sceneReady = scene.dataset.sceneReady || 'false'
-      if (!finished && fontsReady && scene.dataset.sceneReady === 'true') {
-        readyCall.delay(Math.max(0.12, 0.35 - (performance.now() - began) / 1000)).restart(true)
+      if (!settled && !reveal && fontsReady && scene.dataset.sceneReady === 'true') {
+        readyCall.delay(Math.max(0.05, 0.24 - (performance.now() - began) / 1000)).restart(true)
       }
     }
     const observer = new MutationObserver(schedule)
     observer.observe(scene, { attributes: true, attributeFilter: ['data-scene-ready'] })
-    const afterFonts = () => { if (!disposed) { fontsReady = true; schedule() } }
-    void document.fonts.ready.then(contextSafe ? contextSafe(afterFonts) : afterFonts)
-    const skip = () => {
-      if (disposed || settled) return
-      // Visitors can interrupt the take even after the assembly has started.
-      reveal?.kill(); readyCall.pause(); observer.disconnect()
-      finished = true; played.current = true; settle()
-    }
-    // A slow or unavailable WebGL device gets the regular readable hero.
-    const timeout = gsap.delayedCall(6, () => { if (!finished) skip() })
+    if (renderer) observer.observe(renderer, { attributes: true, attributeFilter: ['data-scene-status'] })
+    void document.fonts.ready.then(() => { if (!settled) { fontsReady = true; schedule() } })
+    // A slow or unavailable WebGL device can continue to the hero.
+    const timeout = gsap.delayedCall(6, () => { if (!reveal) skip() })
     const key = (event: KeyboardEvent) => { if (['Escape', 'Tab', 'PageDown', 'ArrowDown'].includes(event.key)) skip() }
-    const button = curtain.querySelector('button')!
     button.addEventListener('click', skip)
     window.addEventListener('wheel', skip, { passive: true, once: true })
-    window.addEventListener('touchstart', skip, { passive: true, once: true })
+    window.addEventListener('touchmove', skip, { passive: true, once: true })
     window.addEventListener('keydown', key)
-    window.addEventListener('resize', skip, { once: true })
-    return () => {
-      disposed = true; played.current = true
-      observer.disconnect(); readyCall.kill(); timeout.kill(); reveal?.kill(); settle()
-      button.removeEventListener('click', skip)
-      window.removeEventListener('wheel', skip); window.removeEventListener('touchstart', skip)
-      window.removeEventListener('keydown', key); window.removeEventListener('resize', skip)
-    }
+    return skip
   }, { scope: overlay, dependencies: [disabled], revertOnUpdate: true })
-  return <div ref={overlay} className="opening-sequence" aria-hidden="true">
-    <div className="opening-stage" data-opening-stage>
-      <div className="opening-field">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</div>
-      <svg className="opening-orbit" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" pathLength="1" stroke="currentColor" strokeWidth="0.18" strokeDasharray="1" /></svg>
+  return <section ref={overlay} className="opening-sequence" aria-label="Opening animation">
+    <div className="opening-stage" data-opening-stage aria-hidden="true">
+      <div className="opening-guides"><i /><i /><i /><i /></div>
+      <div className="opening-target" />
       <div className="opening-impact" />
     </div>
-    <div className="opening-type"><span><span className="opening-word">Interfaces.</span></span><span><span className="opening-word">Logic.</span></span><span><span className="opening-word">Data.</span></span></div>
-    <div className="opening-bottom"><div className="opening-status"><span className="opening-status-preparing">Preparing the scene.</span><span className="opening-status-gathering">Gathering the pieces.</span><span className="opening-status-magnetizing">Making the connections.</span><span className="opening-status-assembled">Connected with purpose.</span></div><button tabIndex={-1}>Skip intro ↗</button></div>
-    <div className="opening-line"><span /></div>
-  </div>
+    <div className="opening-deck">
+      <div className="opening-caption">
+        <strong>Systems sculpture</strong>
+        <div className="opening-status" aria-hidden="true">
+          <span data-status="preparing">Preparing model</span>
+          <span data-status="gathering">Gathering pieces</span>
+          <span data-status="magnetizing">Locking pieces</span>
+          <span data-status="assembled">Assembled</span>
+        </div>
+      </div>
+      <div className="opening-meter" aria-hidden="true">{openingContacts.map(time => <span key={time} />)}</div>
+      <button type="button">Skip intro <Icon name="arrow" /></button>
+    </div>
+  </section>
 }

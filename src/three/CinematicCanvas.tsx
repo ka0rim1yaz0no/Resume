@@ -23,7 +23,7 @@ import { createSceneFramer } from './cameraFraming'
 import { skillFrameBounds } from './skillFraming'
 import { EducationIdentities, type EducationScore } from './EducationIdentities'
 import { educationChapter } from './educationChoreography'
-import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from './sculptureAssembly'
+import { assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingDock, openingPhase } from './sculptureAssembly'
 import { followScroll } from './motionRail'
 import { bindProjectAssembly, projectPresence } from './projectAssembly'
 import { bindProjectHighlight } from './projectHighlight'
@@ -137,23 +137,24 @@ function ObjectRig({ id, index, score, targets, motion, compact, mobile, project
     const t = score.handoff
     let weight = blend(score.weights[index], film.weight, t)
     const opening = motion ? score.opening : 0
+    const heroPose = motion ? 1 - openingDock(opening) : 0
     const turn = assemblyTurn(id === 'systems-sculpture' ? opening : 0)
     group.current.userData.openingFrameBounds = id === 'systems-sculpture' && opening > 0.28 ? normalized.bounds : undefined
-    assembly.update(opening, compact)
+    assembly.update(opening, compact, score.viewport.width / score.viewport.height)
     projectAssembly.update(score.projectExplosion, compact)
     if (id === 'systems-sculpture') {
       gl.domElement.dataset.assemblyPieces = String(assembly.count)
       gl.domElement.dataset.assemblyProgress = (1 - opening).toFixed(3)
       gl.domElement.dataset.openingPhase = opening > 0 ? openingPhase(opening) : 'complete'
     }
-    const idle = motion ? Math.sin(score.elapsed * 0.32) * 0.018 * (1 - opening) : 0
+    const idle = Math.sin(score.elapsed * 0.32) * 0.018 * heroPose
     // Update hidden poses too: the incoming object is already in place when
     // its weight rises. The scroll score alone controls both pose and opacity.
-    group.current.position.set(blend(motion ? hero.x : 0, film.x, t), blend(motion ? hero.y : 0, film.y, t) + idle, blend(motion ? hero.z : 0, film.z, t))
+    group.current.position.set(blend(hero.x * heroPose, film.x, t), blend(hero.y * heroPose, film.y, t) + idle, blend(hero.z * heroPose, film.z, t))
     group.current.rotation.set(
-      entry.rotation[0] + blend((motion ? hero.rx : 0) + turn.rx, film.rx, t) - score.pointerY * 0.025 * (1 - opening) + score.explorePitch * (1 - t),
-      entry.rotation[1] + blend((motion ? hero.ry : 0) + turn.ry + score.turn, film.ry, t) + score.pointerX * 0.045 * (1 - opening) + score.exploreYaw * (1 - t),
-      blend((motion ? hero.rz : 0) + turn.rz, film.rz, t),
+      entry.rotation[0] + blend(hero.rx * heroPose + turn.rx, film.rx, t) - score.pointerY * 0.025 * (1 - opening) + score.explorePitch * (1 - t),
+      entry.rotation[1] + blend(hero.ry * heroPose + turn.ry + score.turn, film.ry, t) + score.pointerX * 0.045 * (1 - opening) + score.exploreYaw * (1 - t),
+      blend(hero.rz * heroPose + turn.rz, film.rz, t),
     )
     group.current.scale.setScalar(blend(motion ? hero.scale : 1, film.scale * (compact ? 0.8 : 1), t))
     const amount = score.content.amount
@@ -251,10 +252,11 @@ function ReactCompanion({ score, targets, motion, compact, mobile, technology, o
     const hero = chapterPose(score.heroScroll, true, compact)
     let weight = blend(score.weights[0], film.weight, score.handoff)
     const opening = motion ? score.opening : 0
+    const heroPose = motion ? 1 - openingDock(opening) : 0
     weight *= openingCompanion(opening)
     const pose = reactCompanionPose(score.progress, compact, opening)
-    const idle = motion ? Math.sin(score.elapsed * 0.32) * 0.018 : 0
-    root.current.position.set(blend(motion ? hero.x : 0, film.x, score.handoff), blend(motion ? hero.y : 0, film.y, score.handoff) + idle, blend(motion ? hero.z : 0, film.z, score.handoff))
+    const idle = Math.sin(score.elapsed * 0.32) * 0.018 * heroPose
+    root.current.position.set(blend(hero.x * heroPose, film.x, score.handoff), blend(hero.y * heroPose, film.y, score.handoff) + idle, blend(hero.z * heroPose, film.z, score.handoff))
     root.current.rotation.set(score.explorePitch * (1 - score.handoff), score.exploreYaw * (1 - score.handoff), 0)
     tile.current.position.set(pose.x, pose.y, pose.z)
     tile.current.rotation.set(pose.rx - score.pointerY * 0.025, pose.ry + score.pointerX * 0.045, pose.rz)
@@ -387,7 +389,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     }
     const remeasure = () => { dirty.current = true; wake() }
     const observer = new ResizeObserver(remeasure)
-    for (const anchor of [anchors.hero, anchors.journey, anchors.project, anchors.experience, anchors.skills, anchors.education, anchors.hero.closest('.personal-resume')!]) observer.observe(anchor)
+    for (const anchor of [anchors.hero, anchors.openingStage, anchors.journey, anchors.project, anchors.experience, anchors.skills, anchors.education, anchors.hero.closest('.personal-resume')!]) observer.observe(anchor)
     window.addEventListener('scroll', wake, { passive: true })
     window.addEventListener('resize', remeasure, { passive: true })
     window.addEventListener('model-explore', wake)
@@ -431,6 +433,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const { hero, establishing, journey, frame, section, heroSection } = measurements.current
     const opening = Number(anchors.hero.dataset.sceneOpening || 0)
     const openingActive = anchors.hero.dataset.sceneOpening !== undefined
+    const finishingOpening = !openingActive && score.opening > 0
     const destination: StageRect = { left: journey.left, top: header + journey.top - frame.top, width: journey.width, height: journey.height }
     const end = section.top + scroll - header
     // On a stacked phone hero, let visitors reach and explore the model
@@ -459,7 +462,7 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     const rect = inContent ? score.content.viewport : introRect
     score.handoff = openingActive || hiddenFilm ? 0 : transition.progress
     score.opening = opening
-    score.heroScroll = MathUtils.clamp((sceneScroll - scroll - heroSection.top) / Math.max(1, heroSection.height), 0, 1)
+    score.heroScroll = openingActive ? 0 : MathUtils.clamp((sceneScroll - scroll - heroSection.top) / Math.max(1, heroSection.height), 0, 1)
     const filmDistance = Math.max(1, anchors.section.offsetHeight - window.innerHeight + header)
     score.progress = MathUtils.clamp(Number(anchors.journey.dataset.sceneScore || 0) + (sceneScroll - scroll) / filmDistance, 0, 1)
     const filmWeights = modelIds.map((_, index) => journeyPose(score.progress, index, false).weight)
@@ -477,9 +480,10 @@ function Director({ anchors, score, model, turn, reset, motion, reduced, running
     }
     const readingVisibility = contentVisibility(score.content, docks, header, window.innerHeight)
     const nativeWindow = score.content.from === score.content.to && (score.content.from === 'skills' || score.content.from === 'education')
-    const screenVisibility = (mobile || nativeWindow) && motion && (!openingActive || opening < 0.21) ? viewportVisibility(rect, header, window.innerHeight) : 1
+    const screenVisibility = (mobile || nativeWindow) && motion ? blend(viewportVisibility(rect, header, window.innerHeight), 1, openingActive ? openingDock(opening) : 0) : 1
     score.exitOpacity = screenVisibility * readingVisibility
-    score.active = running && score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight && rect.width > 0
+    const onScreen = score.exitOpacity > 0.001 && rect.top + rect.height > header && rect.top < window.innerHeight
+    score.active = running && rect.width > 0 && rect.height > 0 && (openingActive || finishingOpening || onScreen)
     score.viewport = rect
     if (score.active && motion) score.elapsed += delta
     const damp = (a: number, b: number) => motion ? MathUtils.damp(a, b, 7, Math.max(delta, 0.001)) : b

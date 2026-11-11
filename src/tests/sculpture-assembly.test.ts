@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Vector3 } from 'three'
-import { assemblyPieceCount, assemblyPose, assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingPhase } from '../three/sculptureAssembly'
+import { assemblyPieceCount, assemblyPose, assemblyTurn, bindSculptureAssembly, magneticShake, openingCompanion, openingContacts, openingPhase } from '../three/sculptureAssembly'
 import { openingCamera } from '../three/choreography'
 import { createSceneFramer } from '../three/cameraFraming'
 import mobileModels from '../data/mobileModels.json'
@@ -61,12 +61,15 @@ describe('Sculpture assembly', () => {
     expect(original.children[6].position.y).toBeCloseTo(1.2)
   })
 
-  it('catches an incoming piece near its joint before the final magnetic connection', () => {
-    const caught = assemblyPose(6, 0.5, false)
-    expect(caught.assembled).toBeCloseTo(0.82)
-    expect(assemblyPose(6, 0.46, false)).toEqual(caught)
-    expect(assemblyPose(6, 0.4, false).assembled).toBeGreaterThan(caught.assembled)
-    expect(assemblyPose(6, 0.27, false)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
+  it('keeps the display moving through the catch and settles it after the final contact', () => {
+    const approach = assemblyPose(6, 0.5, false)
+    const caught = assemblyPose(6, 0.42, false)
+    expect(approach.assembled).toBeGreaterThan(0.74)
+    expect(caught.assembled).toBeGreaterThan(approach.assembled)
+    expect(caught.assembled).toBeLessThan(0.91)
+    expect(assemblyPose(6, 0.39, false).assembled).toBeGreaterThan(caught.assembled)
+    expect(assemblyPose(6, 1 - openingContacts.at(-1)!, false).assembled).toBe(1)
+    expect(assemblyPose(6, 0.25, false)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
   })
 
   it('receives fragments from every screen edge and settles the magnetic impact before docking', () => {
@@ -74,8 +77,10 @@ describe('Sculpture assembly', () => {
     expect(assemblyPose(1, 1, false).x).toBeLessThan(-6)
     expect(assemblyPose(2, 1, false).y).toBeGreaterThan(4)
     expect(assemblyPose(3, 1, false).x).toBeGreaterThan(6)
-    for (const p of [0, 0.1, 0.25, 0.4, 0.8, 1]) expect(magneticShake(p, false)).toEqual({ x: 0, y: 0 })
-    expect(Math.abs(magneticShake(0.345, false).x)).toBeGreaterThan(0.01)
+    expect(assemblyPose(1, 1, false, 3).x).toBeLessThan(assemblyPose(1, 1, false, 1.75).x)
+    expect(assemblyPose(2, 1, true, 0.46).y).toBeGreaterThan(assemblyPose(2, 1, true, 0.72).y)
+    for (const p of [0, 0.1, 0.22, 0.4, 0.8, 1]) expect(magneticShake(p, false)).toEqual({ x: 0, y: 0 })
+    expect(Math.abs(magneticShake(0.308, false).x)).toBeGreaterThan(0.01)
     for (let step = 0; step <= 100; step++) {
       const shake = magneticShake(step / 100, false)
       expect(Math.hypot(shake.x, shake.y)).toBeLessThan(0.028)
@@ -87,7 +92,7 @@ describe('Sculpture assembly', () => {
       for (let index = 0; index < assemblyPieceCount; index++) {
         expect(assemblyPose(index, 0.25, compact)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0, assembled: 1 })
       }
-      expect(magneticShake(0.25, compact)).toEqual({ x: 0, y: 0 })
+      expect(magneticShake(0.23, compact)).toEqual({ x: 0, y: 0 })
     }
     expect(openingPhase(0.8)).toBe('gathering')
     expect(openingPhase(0.35)).toBe('magnetizing')

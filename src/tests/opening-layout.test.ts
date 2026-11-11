@@ -1,29 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { openingFrame, openingViewport } from '../three/openingLayout'
+import { openingViewport } from '../three/openingLayout'
 import { openingCamera } from '../three/choreography'
 
 describe('opening framing', () => {
-  it.each([[1916, 916, 100], [1440, 1000, 100], [768, 1024, 84], [558, 672, 76], [390, 844, 76], [360, 568, 76]])('centres the assembly within %i × %i without covering navigation', (width, height, header) => {
-    const frame = openingFrame(width, height, header)
-    expect(frame.left + frame.width / 2).toBe(width / 2)
-    expect(frame.left).toBeGreaterThanOrEqual(0)
-    expect(frame.left + frame.width).toBeLessThanOrEqual(width)
-    expect(frame.top).toBeGreaterThanOrEqual(header)
-    expect(frame.top + frame.height).toBeLessThanOrEqual(height - 100)
-  })
+  const desktop = { frame: { left: 24, top: 24, width: 1232, height: 681 }, hero: { left: 560, top: 205, width: 648, height: 440 } }
+  const phone = { frame: { left: 12, top: 12, width: 366, height: 742 }, hero: { left: 24, top: 477, width: 342, height: 398 } }
 
-  it('joins the poster and hero at exact viewport endpoints', () => {
-    const poster = openingFrame(1440, 1000, 100)
-    const hero = { left: 750, top: 190, width: 600, height: 620 }
-    expect(openingViewport(hero, poster, 1)).toEqual(poster)
-    expect(openingViewport(hero, poster, 0)).toEqual(hero)
-    expect(openingViewport(hero, poster, 0.5)).toEqual(poster)
-    const docking = openingViewport(hero, poster, 0.105)
-    expect(docking.width).toBeCloseTo((hero.width + poster.width) / 2)
+  it.each([desktop, phone])('matches the assembly and hero viewport edges at both ends of the glide', ({ frame, hero }) => {
+    expect(openingViewport(hero, frame, 1)).toEqual(frame)
+    expect(openingViewport(hero, frame, 0)).toEqual(hero)
+    expect(openingViewport(hero, frame, 0.5)).toEqual(frame)
+    const docking = openingViewport(hero, frame, 0.105)
+    expect(docking.width).toBeCloseTo((hero.width + frame.width) / 2)
+    expect(docking.top).toBeLessThan((hero.top + frame.top) / 2)
+    for (const [progress, end] of [[0.0001, hero], [0.2099, frame]] as const) {
+      const near = openingViewport(hero, frame, progress)
+      for (const axis of ['top', 'left', 'width', 'height'] as const) expect(near[axis]).toBeCloseTo(end[axis], 4)
+    }
   })
 
   it('holds the completed sculpture in the central stage before the hero handoff', () => {
-    const stage = openingFrame(1280, 800, 100), hero = { left: 660, top: 180, width: 550, height: 530 }
+    const { frame: stage, hero } = desktop
     for (const p of [0.35, 0.28, 0.23, 0.21]) expect(openingViewport(hero, stage, p)).toEqual(stage)
     expect(openingViewport(hero, stage, 0.1).left).toBeGreaterThan(stage.left)
     expect(openingCamera(0.28, false).x).toBeGreaterThan(0.5)
