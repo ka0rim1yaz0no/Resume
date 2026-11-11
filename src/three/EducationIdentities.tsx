@@ -7,9 +7,9 @@ import { contentPose, type ContentRoute } from './contentChoreography'
 import { educationEmblem } from './educationGeometry'
 import { sampleSurface, type SurfaceTargets } from './surfaceCloud'
 import { studioEdgeFinish, studioFade, studioFinish, studioPalette } from './studioMaterials'
-import { educationPose } from './educationChoreography'
+import { educationFrameScale, educationPose, schoolSurfaceIndex } from './educationChoreography'
 
-export type EducationScore = { active: boolean; elapsed: number; content: ContentRoute; dissolve: number; exitOpacity: number; educationReady: boolean; educationFocus: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number; educationDisplayed: number; educationExploration: { yaw: number; pitch: number; zoom: number }[] }
+export type EducationScore = { active: boolean; elapsed: number; content: ContentRoute; dissolve: number; exitOpacity: number; educationReady: boolean; educationFocus: number; educationFlux: number; educationDissolve: number; educationMix: number; educationDisplayed: number; educationExploration: { yaw: number; pitch: number; zoom: number }[] }
 const finish = { ...studioFade, roughness: studioFinish.roughness, metalness: studioFinish.metalness, envMapIntensity: studioFinish.envMapIntensity }
 
 function SchoolEmblem({ index, score, targets, motion, compact }: { index: number; score: EducationScore; targets: SurfaceTargets; motion: boolean; compact: boolean }) {
@@ -18,22 +18,23 @@ function SchoolEmblem({ index, score, targets, motion, compact }: { index: numbe
   const texture = useMemo(() => { const t = source.clone(); t.colorSpace = SRGBColorSpace; t.needsUpdate = true; return t }, [source])
   const geometry = useMemo(() => educationEmblem(index), [index])
   useEffect(() => {
-    if (root.current) targets.set(10 + index, sampleSurface(root.current, root.current, targets.pointCount))
-    return () => { targets.delete(10 + index); texture.dispose(); Object.values(geometry).forEach(value => value.dispose()) }
+    if (root.current) targets.set(schoolSurfaceIndex + index, sampleSurface(root.current, root.current, targets.pointCount))
+    return () => { targets.delete(schoolSurfaceIndex + index); texture.dispose(); Object.values(geometry).forEach(value => value.dispose()) }
   }, [index, targets, geometry, texture])
   useFrame(() => {
     if (!root.current || !score.active) return
     const stage = contentPose(score.content, 5, compact)
     const inEducation = score.content.from === 'education' || score.content.to === 'education'
-    const pose = educationPose(motion ? score.educationFocus : Math.round(score.educationFocus), index)
+    const pose = educationPose(motion ? score.educationFocus : Math.round(score.educationFocus), index, compact)
     const weight = inEducation ? stage.weight * score.content.amount * pose.weight : 0
     const exploration = score.educationExploration[index]
     // Both poses remain current so the dust always meets the incoming surface.
-    root.current.position.set(stage.x + pose.x, stage.y + pose.y + (motion ? Math.sin(score.elapsed * 0.4) * 0.014 : 0), stage.z + pose.z)
+    root.current.position.set(stage.x + pose.x, stage.y + pose.y + (motion ? Math.sin(score.elapsed * 0.4) * 0.014 : 0), stage.z)
     root.current.rotation.set(stage.rx + exploration.pitch, stage.ry + pose.ry + exploration.yaw, stage.rz)
-    root.current.scale.setScalar(stage.scale * pose.scale * (1 + exploration.zoom * 0.16))
+    const { width, height } = score.content.viewport
+    root.current.scale.setScalar(stage.scale * educationFrameScale(width / Math.max(1, height)) * (1 + exploration.zoom * 0.16))
     root.current.visible = weight > 0.001
-    const solid = weight * (1 - score.dissolve) * (1 - score.educationDissolve) * score.exitOpacity
+    const solid = weight * (1 - score.dissolve) * score.exitOpacity
     root.current.traverse(object => {
       if (!(object instanceof Mesh)) return
       const apply = (material: Material) => { material.opacity = solid }
@@ -51,7 +52,7 @@ function SchoolEmblem({ index, score, targets, motion, compact }: { index: numbe
 export function EducationIdentities({ score, targets, motion, compact }: { score: EducationScore; targets: SurfaceTargets; motion: boolean; compact: boolean }) {
   const { gl } = useThree()
   useFrame(() => {
-    score.educationReady = targets.has(10) && targets.has(11)
+    score.educationReady = schools.every((_, index) => targets.has(schoolSurfaceIndex + index))
     gl.domElement.dataset.school = schools[score.educationDisplayed].id
     gl.domElement.dataset.schoolFocus = score.educationFocus.toFixed(3)
     gl.domElement.dataset.schoolPhase = score.educationFlux > 0.001 ? 'scroll' : 'idle'

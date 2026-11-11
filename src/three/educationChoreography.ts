@@ -1,16 +1,22 @@
 import { clamp } from './choreography'
+import { contentDust, dockProgress, dockSlide, dockWeight } from './contentChoreography'
 import { experienceFocus, experienceReader, experienceScrollTarget } from './experienceChoreography'
+
+export const schoolSurfaceIndex = 10
 
 export function educationChapter(focus: number) {
   const mix = clamp(focus)
-  return { from: 0, to: 1, mix, flux: Math.sin(mix * Math.PI) ** 2 }
+  return { ...contentDust(mix), lock: dockProgress(mix, mix < 0.5) }
 }
 
-export function educationPose(focus: number, index: number) {
-  const { mix } = educationChapter(focus)
-  const offset = index === 0 ? -mix : 1 - mix
-  return { weight: index === 0 ? 1 - mix : mix, x: offset * 0.26, y: offset * 0.1, z: -Math.abs(offset) * 0.35, ry: offset * 0.24, scale: 1 - Math.abs(offset) * 0.05 }
+export function educationPose(focus: number, index: number, compact: boolean) {
+  const mix = clamp(focus), leaving = index === 0
+  const offset = dockSlide(mix, leaving)
+  return { weight: dockWeight(mix, leaving), x: offset * (compact ? 0.29 : 0.52), y: -offset * 0.085, ry: -offset * 0.21 }
 }
+
+/** Reserve lateral travel for narrow viewers using their size, independent of scroll. */
+export const educationFrameScale = (aspect: number) => Math.min(1, aspect / 1.08)
 
 // The education records sit below their viewer at every breakpoint.
 export function educationReader(height: number, header: number, sceneHeight: number, pinned = true) {

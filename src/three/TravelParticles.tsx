@@ -4,12 +4,13 @@ import { BufferGeometry, Color, Float32BufferAttribute, Matrix4, Points, ShaderM
 import { surfacePointCount, type SurfaceTarget, type SurfaceTargets } from './surfaceCloud'
 import { studioPalette } from './studioMaterials'
 import type { ContentRoute } from './contentChoreography'
+import { schoolSurfaceIndex } from './educationChoreography'
 
-type DissolveScore = { active: boolean; exitOpacity: number; flux: number; elapsed: number; dissolve: number; content: ContentRoute; dockDissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationFrom: number; educationTo: number; educationMix: number }
+type DissolveScore = { active: boolean; exitOpacity: number; flux: number; elapsed: number; dissolve: number; content: ContentRoute; dockDissolve: number; particleFrom: number; particleTo: number; particleMix: number; skillFlux: number; skillMix: number; skillFrom: number; skillTo: number; organizationFlux: number; organizationDissolve: number; organizationFrom: number; organizationTo: number; organizationMix: number; educationFlux: number; educationDissolve: number; educationMix: number }
 
 function dissolvePair(score: DissolveScore) {
   if (score.content.from !== score.content.to) return { from: score.particleFrom, to: score.particleTo, flux: score.flux, mix: score.particleMix, dissolve: score.dockDissolve, docking: 1 }
-  if (score.educationFlux > 0.001) return { from: score.educationFrom, to: score.educationTo, flux: score.educationFlux, mix: score.educationMix, dissolve: 0, docking: 0 }
+  if (score.educationFlux > 0.001) return { from: schoolSurfaceIndex, to: schoolSurfaceIndex + 1, flux: score.educationFlux, mix: score.educationMix, dissolve: score.educationDissolve, docking: 1 }
   if (score.organizationFlux > 0.001) return { from: score.organizationFrom, to: score.organizationTo, flux: score.organizationFlux, mix: score.organizationMix, dissolve: 0, docking: 0 }
   if (score.skillFlux > 0) return { from: score.skillFrom, to: score.skillTo, flux: score.skillFlux, mix: score.skillMix, dissolve: score.skillFlux, docking: 0 }
   return { from: score.particleFrom, to: score.particleTo, flux: score.flux, mix: score.particleMix, dissolve: score.flux * 0.78, docking: 0 }
@@ -34,7 +35,6 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     const pair = dissolvePair(score)
     const ready = targets.has(pair.from) && targets.has(pair.to)
     score.organizationDissolve = motion && ready && !pair.docking ? score.organizationFlux * 0.9 : 0
-    score.educationDissolve = motion && ready && !pair.docking ? score.educationFlux * 0.9 : 0
     score.dissolve = motion && ready ? pair.dissolve : 0
   }, -2)
   useFrame(({ gl }) => {
@@ -44,7 +44,7 @@ export function TravelParticles({ score, targets, motion }: { score: DissolveSco
     const active = motion && score.active && transition.flux > 0.008 && !!from && !!to
     points.current.visible = active
     gl.domElement.dataset.dissolvePoints = active ? String(pointCount) : '0'
-    gl.domElement.dataset.dustPalette = 'violet-pearl-citron'
+    gl.domElement.dataset.dustPalette = 'orchid-lavender-pearl'
     if (!active || !from || !to) return
     if (pair.current?.from !== from || pair.current?.to !== to) {
       const origin = geometry.attributes.position as Float32BufferAttribute

@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { schools } from '../data/schools'
 import { EducationExplorer } from '../components/EducationExplorer'
+import { DockGuides } from '../components/SceneWindow'
 import { experienceFocus } from '../three/experienceChoreography'
 import { educationReader, educationScrollTarget, educationStoryFocus, educationStoryTarget } from '../three/educationChoreography'
 import { scrollToChapter } from '../hooks/useMotion'
@@ -20,7 +21,7 @@ function flowTop(element: HTMLElement) {
 export function Education({ paused = false }: { paused?: boolean }) {
   const section = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState(0)
-  const compactStory = useMediaQuery('(max-width: 650px) and (min-height: 600px) and (prefers-reduced-motion: no-preference)')
+  const compactStory = useMediaQuery('(max-width: 650px) and (min-height: 540px) and (prefers-reduced-motion: no-preference)')
   useGSAP(() => {
     const root = section.current!
     const scene = root.querySelector<HTMLElement>('[data-scene="education"]')!
@@ -69,9 +70,10 @@ export function Education({ paused = false }: { paused?: boolean }) {
     <figure className="education-visual content-stage">
       <div className="education-selector" role="group" aria-label="Explore education emblems">{schools.map((school, index) => <button key={school.id} aria-pressed={selected === index} onClick={() => focusSchool(index)}><span className="company-indicator" style={{ background: school.accent }} />{school.shortName}</button>)}</div>
       <div className="education-model" style={{ '--identity-accent': active.accent } as CSSProperties}>
-        <div className="scene-window section-scene" data-scene="education" data-scene-model="school" data-school={active.id} aria-hidden="true">
+        <div className="scene-window section-scene scene-dock" data-scene="education" data-scene-model="school" data-school={active.id} aria-hidden="true">
           <div className={`scene-poster school-static school-static-${active.id}`}><img src={active.logo} alt="" width="447" height="447" loading="lazy" /></div>
           <span className="scene-window-glow" />
+          <DockGuides />
         </div>
         {schools.map((school, index) => <EducationExplorer key={school.id} index={index} active={selected === index} />)}
       </div>

@@ -4,11 +4,11 @@ import type { ModelId } from '../data/assets'
 export const studioFinish = { roughness: 0.86, metalness: 0.3, envMapIntensity: 0.5, normalStrength: 0.2 }
 export const studioEdgeFinish = { roughness: 0.68, metalness: 0.42, envMapIntensity: 0.65 }
 export const studioLighting = { environment: 0.75, ambient: 0.3, key: 3, fill: 0.9, rim: 2.6 }
-export const studioLightColors = { key: '#fffcff', fill: '#ece7f4', rim: '#f6ffe8' }
+export const studioLightColors = { key: '#fff6ff', fill: '#e9c8f9', rim: '#f3dbff' }
 // Screen-door coverage keeps every fading surface in the depth buffer. Complex
 // GLBs cannot be triangle-sorted correctly by ordinary translucent blending.
 export const studioFade = { transparent: false, alphaHash: true, depthWrite: true }
-export const studioPalette = { amethyst: '#b890ff', edge: '#f0ecfa', body: '#31134f', pearl: '#fcfaff', dust: '#b87aff', signal: '#dbf86b' }
+export const studioPalette = { amethyst: '#cc91ed', edge: '#f3e4fa', body: '#301740', pearl: '#fff2ff', dust: '#c381ee', signal: '#f4d4f2' }
 const enamelTintStrength = 0.46
 const luminance = (color: Color) => color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
 const normalizedTint = (hex: string) => { const color = new Color(hex); return color.multiplyScalar(1 / luminance(color)) }

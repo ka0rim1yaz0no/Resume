@@ -1,6 +1,6 @@
 .credentials-section {
   padding-block: clamp(54px, 7.2vw, 96px);
-  background: var(--studio-grain) #efe8f9;
+  background: var(--studio-grain) var(--surface);
   border-top: 1px solid var(--line);
 }
 .credential-heading {
@@ -29,15 +29,15 @@
   overflow: hidden;
   color: var(--text);
   background: var(--panel);
-  border: 1px solid #c7afe3;
+  border: 1px solid var(--stage-border);
   border-radius: 4px 20px 4px 4px;
-  box-shadow: 0 5px 0 #d9c8ec;
+  box-shadow: var(--panel-shadow);
 }
 .credential-plate {
   padding: clamp(18px, 2.8vw, 30px);
   color: var(--stage-ink);
-  background: linear-gradient(135deg, #3e146f, #6330aa);
-  border-top: 2px solid #b89bea;
+  background: var(--stage-gradient);
+  border-top: 2px solid var(--stage-border);
 }
 .credential-meta {
   display: flex;
@@ -119,9 +119,9 @@
 }
 .credential-list {
   min-width: 0;
-  border: 1px solid #cdb8e3;
+  border: 1px solid var(--panel-border);
   border-radius: 4px;
-  background: #ffffff56;
+  background: var(--bg);
 }
 .credential-list button {
   display: grid;
@@ -137,10 +137,10 @@
   transition: background-color 170ms ease, box-shadow 170ms ease;
 }
 .credential-list button + button {
-  border-top: 1px solid #d9c9eb;
+  border-top: 1px solid var(--soft-line);
 }
 .credential-list button:hover {
-  background: #faf7fe;
+  background: var(--surface-raised);
 }
 .credential-list button[aria-pressed=true] {
   background: var(--panel);

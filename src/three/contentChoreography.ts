@@ -28,14 +28,16 @@ export function contentDust(mix: number) {
 
 export function contentLock(route: ContentRoute, stage: ContentStage) {
   if (route.from === route.to) return route.to === stage ? 1 : 0
-  if (route.to === stage) return between(0.66, 0.985, route.mix)
-  return route.from === stage ? 1 - between(0.02, 0.35, route.mix) : 0
+  return route.from === stage || route.to === stage ? dockProgress(route.mix, route.from === stage) : 0
 }
+
+export const dockProgress = (mix: number, leaving: boolean) => leaving ? 1 - between(0.02, 0.35, mix) : between(0.66, 0.985, mix)
+export const dockWeight = (mix: number, leaving: boolean) => leaving ? 1 - between(0.1, 0.48, mix) : between(0.52, 0.88, mix)
+export const dockSlide = (mix: number, leaving: boolean) => leaving ? -between(0.025, 0.5, mix) : 1 - between(0.5, 0.99, mix)
 
 export function contentWeight(from: ContentStage, to: ContentStage, mix: number, stage: ContentStage) {
   if (from === to) return to === stage ? 1 : 0
-  if (from === stage) return 1 - between(0.1, 0.48, mix)
-  return to === stage ? between(0.52, 0.88, mix) : 0
+  return from === stage || to === stage ? dockWeight(mix, from === stage) : 0
 }
 
 export function dockVisibility(rect: StageRect, header: number) {
@@ -104,7 +106,7 @@ export function contentPose(route: ContentRoute, index: number, compact: boolean
   const travel = compact ? 0.52 : 1
   const direction = route.to === 'experience' ? -1 : 1
   const wideSubject = stage === 'project' || stage === 'skills'
-  const offset = leaving ? -between(0.025, 0.5, route.mix) : 1 - between(0.5, 0.99, route.mix)
+  const offset = dockSlide(route.mix, leaving)
   return {
     ...pose,
     weight: index === subjects[stage] ? contentWeight(route.from, route.to, route.mix, stage) : 0,

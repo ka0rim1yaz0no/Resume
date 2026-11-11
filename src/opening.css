@@ -7,7 +7,7 @@
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 8px;
   padding: clamp(12px, 2vw, 28px);
-  background: linear-gradient(150deg, #2b1546, #42206d 70%, #31164e);
+  background: var(--journey-gradient);
   color: var(--stage-ink);
   visibility: hidden;
   opacity: 0;
@@ -62,7 +62,7 @@
   column-gap: clamp(10px, 3vw, 40px);
   padding: 6px clamp(10px, 1.6vw, 22px);
   border: 1px solid var(--industrial-line);
-  background: #3c1d62;
+  background: var(--surface);
 }
 .opening-caption strong { display: block; font-size: clamp(13px, 1.4vw, 17px); line-height: 1.35; }
 .opening-status { display: grid; color: var(--stage-muted); font-size: 11px; line-height: 1.45; }
@@ -83,7 +83,7 @@
   padding-inline: 12px;
   border: 1px solid var(--industrial-edge);
   border-radius: 3px;
-  background: #4a2577;
+  background: var(--surface-raised);
   color: var(--stage-ink);
   font-size: 12px;
   font-weight: 700;

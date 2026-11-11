@@ -56,8 +56,11 @@ describe('Education identities', () => {
     }
   })
   it('pins the mobile viewer and active school in separate rows and synchronizes the details with scroll', () => {
-    vi.stubGlobal('innerWidth', 390); vi.stubGlobal('innerHeight', 844)
-    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query: string) => ({ matches: query.includes('max-width: 650px'), media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
+    vi.stubGlobal('innerWidth', 320); vi.stubGlobal('innerHeight', 568)
+    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes('max-width: 650px') && Number(query.match(/min-height: (\d+)px/)?.[1] || 0) <= innerHeight,
+      media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    })))
     vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) { return this.classList.contains('education-layout') ? 1000 : 0 })
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
       return this.classList.contains('education-layout') ? 1400 : this.classList.contains('education-stage') ? 600 : this.classList.contains('education-visual') ? 400 : 200
@@ -99,7 +102,13 @@ describe('Education identities', () => {
     expect(educationChapter(0).flux).toBe(0)
     expect(educationChapter(0.5).flux).toBe(1)
     expect(educationChapter(1).flux).toBeCloseTo(0)
-    for (let p = 0; p <= 1; p += 0.01) expect(educationPose(p, 0).weight + educationPose(p, 1).weight).toBeCloseTo(1)
+    expect(educationChapter(0.5).lock).toBe(0)
+    expect(educationChapter(0.9).flux).toBeGreaterThan(0.4)
+    expect(educationChapter(1).lock).toBe(1)
+    expect(educationPose(0.38, 0, true).x).toBeLessThan(-0.1)
+    expect(educationPose(0.62, 1, true).x).toBeGreaterThan(0.1)
+    expect(educationPose(1, 1, true).x).toBe(0)
+    for (let p = 0; p <= 1; p += 0.01) expect(educationPose(p, 0, true).weight * educationPose(p, 1, true).weight).toBe(0)
     for (const [height, header, viewer] of [[844, 76, 410], [1000, 100, 450], [480, 76, 250]]) {
       expect(educationReader(height, header, viewer)).toBeGreaterThan(header + viewer)
       const top = 5000
