@@ -6,7 +6,7 @@ const mouseQuery = '(min-width: 651px) and (hover: hover) and (pointer: fine) an
 const dragControls = '.model-explorer, .company-explorer, .school-explorer'
 const modelControls = `${dragControls}, .project-part-picker`
 const actions = ':is(a[href], button, [role="button"], [role="link"]):not(:disabled):not([aria-disabled="true"])'
-const trailLength = 76
+const trailLength = 92
 const trailCurve = 'M0 18C15 20 26 7 43 12C57 17 64 20 76 13'
 
 export function SilkCursor({ disabled }: { disabled: boolean }) {
@@ -28,6 +28,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
 
     let x = 0, y = 0, targetX = 0, targetY = 0
     let tailX = 0, tailY = 0
+    let trailOpacity = 0
     let frame: number | null = null
     let lastFrame = 0
     let lastTarget: Element | null = null
@@ -67,7 +68,8 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       const ease = Math.max(1 - Math.exp(-delta / 29), 1 - 22 / Math.max(1, gap))
       x += remainingX * ease
       y += remainingY * ease
-      const tailEase = 1 - Math.exp(-delta / 56)
+      const dragging = halo.dataset.dragging === 'true'
+      const tailEase = 1 - Math.exp(-delta / (dragging ? 76 : 64))
       tailX += (x - tailX) * tailEase
       tailY += (y - tailY) * tailEase
       const dx = x - tailX, dy = y - tailY
@@ -77,18 +79,26 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
         tailY = y - dy * trailLength / distance
       }
 
-      const strength = Math.min(1, Math.max(0, (distance - 2) / 26))
+      const strength = Math.min(1, Math.max(0, (distance - 2) / (dragging ? 22 : 26)))
       if (strength > 0) {
-        const length = Math.min(14 + distance * 1.6, trailLength) / trailLength
+        const length = Math.min(16 + distance * 1.72, trailLength) / trailLength
         trail.style.transform = `rotate(${Math.atan2(dy, dx)}rad) scaleX(${length})`
-        trail.style.opacity = String(strength * (halo.dataset.dragging ? .9 : .78))
+      }
+      // Let the ribbon fade after the tail catches up to the halo.
+      const targetOpacity = strength * (dragging ? .9 : .78)
+      const opacityEase = 1 - Math.exp(-delta / (targetOpacity > trailOpacity ? 18 : 72))
+      trailOpacity += (targetOpacity - trailOpacity) * opacityEase
+      const trailVisible = strength > 0 || trailOpacity > .008
+      if (trailVisible) {
+        trail.style.opacity = String(trailOpacity)
         if (!halo.dataset.moving) halo.dataset.moving = 'true'
-      } else {
+      } else if (halo.dataset.moving) {
+        trailOpacity = 0
         trail.style.opacity = '0'
         delete halo.dataset.moving
       }
 
-      if (gap < 0.4 && distance <= 2) {
+      if (gap < 0.4 && !trailVisible) {
         x = tailX = targetX
         y = tailY = targetY
         frame = null
@@ -104,6 +114,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       delete halo.dataset.pressed
       delete halo.dataset.moving
       delete halo.dataset.dragging
+      trailOpacity = 0
       trail.style.opacity = '0'
       pulseAnimation?.cancel()
       pulseAnimation = null
@@ -177,7 +188,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
 
   return enabled ? <>
     <div ref={ref} className="silk-cursor" aria-hidden="true">
-      <svg ref={trailRef} className="silk-cursor-trail" width={trailLength} height="26" viewBox="0 0 76 26" focusable="false">
+      <svg ref={trailRef} className="silk-cursor-trail" width={trailLength} height="26" viewBox="0 0 76 26" preserveAspectRatio="none" focusable="false">
         <defs>
           <linearGradient id={trailColor} gradientUnits="userSpaceOnUse" x1="0" x2="76">
             <stop stopColor="#b877ef" stopOpacity="0" />
