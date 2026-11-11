@@ -5,7 +5,7 @@ import './silk-cursor.css'
 const mouseQuery = '(min-width: 651px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none)'
 const dragControls = '.model-explorer, .company-explorer, .school-explorer'
 const modelControls = `${dragControls}, .project-part-picker`
-const actions = 'a[href], button:not(:disabled), [role="button"]:not([aria-disabled="true"])'
+const actions = ':is(a[href], button, [role="button"], [role="link"]):not(:disabled):not([aria-disabled="true"])'
 const trailLength = 76
 
 export function SilkCursor({ disabled }: { disabled: boolean }) {
@@ -13,14 +13,16 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const trailRef = useRef<SVGSVGElement>(null)
   const pulseRef = useRef<HTMLSpanElement>(null)
+  const rippleRef = useRef<HTMLSpanElement>(null)
   const trailColor = useId()
 
   useEffect(() => {
     const halo = ref.current
     const trail = trailRef.current
     const pulse = pulseRef.current
+    const ripple = rippleRef.current
     const root = halo?.parentElement
-    if (!enabled || !halo || !trail || !pulse || !root) return
+    if (!enabled || !halo || !trail || !pulse || !ripple || !root) return
 
     let x = 0, y = 0, targetX = 0, targetY = 0
     let tailX = 0, tailY = 0
@@ -28,16 +30,32 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
     let lastFrame = 0
     let lastTarget: Element | null = null
     let pulseAnimation: Animation | null = null
+    let rippleAnimation: Animation | null = null
     let modelPress: { x: number; y: number; draggable: boolean; lastPulse: number } | null = null
 
     const paint = () => { halo.style.transform = `translate3d(${x}px, ${y}px, 0)` }
     const playPulse = () => {
       pulseAnimation?.cancel()
       pulseAnimation = pulse.animate?.([
-        { transform: 'scale(.86)', opacity: .55 },
-        { transform: 'scale(1.38)', opacity: .23, offset: .55 },
+        { transform: 'scale(.86)', opacity: .63 },
+        { transform: 'scale(1.38)', opacity: .28, offset: .55 },
         { transform: 'scale(1.63)', opacity: 0 },
       ], { duration: 540, easing: 'cubic-bezier(.2,.65,.35,1)' }) ?? null
+    }
+    const rippleOnClick = (event: MouseEvent) => {
+      if (!halo.dataset.visible || event.button !== 0 || event.detail === 0) return
+      if ('pointerType' in event && event.pointerType !== 'mouse') return
+      if (!(event.target instanceof Element) || !event.target.closest(actions)) return
+
+      // The ripple stays at the click point as the halo follows the pointer.
+      rippleAnimation?.cancel()
+      ripple.style.left = `${event.clientX}px`
+      ripple.style.top = `${event.clientY}px`
+      rippleAnimation = ripple.animate?.([
+        { transform: 'scale(.58)', opacity: .68 },
+        { transform: 'scale(1.34)', opacity: .34, offset: .46 },
+        { transform: 'scale(1.8)', opacity: 0 },
+      ], { duration: 500, easing: 'cubic-bezier(.2,.65,.35,1)' }) ?? null
     }
     const follow = (time: number) => {
       const delta = lastFrame ? Math.min(time - lastFrame, 50) : 16
@@ -87,6 +105,8 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       trail.style.opacity = '0'
       pulseAnimation?.cancel()
       pulseAnimation = null
+      rippleAnimation?.cancel()
+      rippleAnimation = null
       modelPress = null
       lastTarget = null
       if (frame !== null) cancelAnimationFrame(frame)
@@ -102,7 +122,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
       targetX = event.clientX
       targetY = event.clientY
       if (target !== lastTarget) {
-        halo.dataset.mode = target.closest(modelControls) ? 'model' : target.closest(actions) ? 'action' : 'rest'
+        halo.dataset.mode = target.closest(actions) ? 'action' : target.closest(modelControls) ? 'model' : 'rest'
         lastTarget = target
       }
       const pressed = (event.buttons & 1) !== 0
@@ -134,6 +154,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
     }
     const pointerEvents = ['pointerover', 'pointermove', 'pointerdown', 'pointerup'] as const
     pointerEvents.forEach(type => root.addEventListener(type, track, { passive: true }))
+    root.addEventListener('click', rippleOnClick, { capture: true, passive: true })
     root.addEventListener('pointerout', leave, { passive: true })
     root.addEventListener('pointercancel', hide)
     window.addEventListener('blur', hide)
@@ -142,6 +163,7 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
 
     return () => {
       pointerEvents.forEach(type => root.removeEventListener(type, track))
+      root.removeEventListener('click', rippleOnClick, true)
       root.removeEventListener('pointerout', leave)
       root.removeEventListener('pointercancel', hide)
       window.removeEventListener('blur', hide)
@@ -151,19 +173,22 @@ export function SilkCursor({ disabled }: { disabled: boolean }) {
     }
   }, [enabled])
 
-  return enabled ? <div ref={ref} className="silk-cursor" aria-hidden="true">
-    <svg ref={trailRef} className="silk-cursor-trail" width={trailLength} height="26" viewBox="0 0 76 26" focusable="false">
-      <defs>
-        <linearGradient id={trailColor} gradientUnits="userSpaceOnUse" x1="0" x2="76">
-          <stop stopColor="#b877ef" stopOpacity="0" />
-          <stop offset=".32" stopColor="#c17ff5" stopOpacity=".55" />
-          <stop offset=".74" stopColor="#e3b4ff" />
-          <stop offset="1" stopColor="#f6d8ff" stopOpacity=".18" />
-        </linearGradient>
-      </defs>
-      <path d="M0 18C15 18 26 5 43 10C57 14 64 18 76 13C64 22 56 19 42 15C26 10 15 21 0 18Z" fill={`url(#${trailColor})`} opacity=".55" />
-      <path d="M0 18C15 20 26 7 43 12C57 17 64 20 76 13" stroke={`url(#${trailColor})`} strokeWidth="1.15" fill="none" />
-    </svg>
-    <span ref={pulseRef} className="silk-cursor-pulse" />
-  </div> : null
+  return enabled ? <>
+    <div ref={ref} className="silk-cursor" aria-hidden="true">
+      <svg ref={trailRef} className="silk-cursor-trail" width={trailLength} height="26" viewBox="0 0 76 26" focusable="false">
+        <defs>
+          <linearGradient id={trailColor} gradientUnits="userSpaceOnUse" x1="0" x2="76">
+            <stop stopColor="#b877ef" stopOpacity="0" />
+            <stop offset=".32" stopColor="#c78bf7" stopOpacity=".65" />
+            <stop offset=".74" stopColor="#ebc4ff" />
+            <stop offset="1" stopColor="#f6d8ff" stopOpacity=".28" />
+          </linearGradient>
+        </defs>
+        <path d="M0 18C15 18 26 5 43 10C57 14 64 18 76 13C64 22 56 19 42 15C26 10 15 21 0 18Z" fill={`url(#${trailColor})`} opacity=".65" />
+        <path d="M0 18C15 20 26 7 43 12C57 17 64 20 76 13" stroke={`url(#${trailColor})`} strokeWidth="1.35" fill="none" />
+      </svg>
+      <span ref={pulseRef} className="silk-cursor-pulse" />
+    </div>
+    <span ref={rippleRef} className="silk-action-ripple" aria-hidden="true" />
+  </> : null
 }
