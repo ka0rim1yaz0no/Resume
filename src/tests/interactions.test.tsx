@@ -64,9 +64,14 @@ describe('Source-grounded résumé', () => {
   })
   it('shows the selected credential and its position without suggesting a document preview', () => {
     render(<Credentials />)
+    const preview = screen.getByRole('status')
     fireEvent.click(screen.getByRole('button', { name: /AI Ready ASEAN/ }))
-    expect(screen.getByRole('status')).toHaveTextContent('AI Ready ASEAN: ASEAN Foundation')
-    expect(screen.getByRole('status')).toHaveTextContent('02 / 10')
+    expect(preview).toHaveTextContent('AI Ready ASEAN: ASEAN Foundation')
+    expect(preview).toHaveTextContent('Learning & participation')
+    expect(preview).toHaveTextContent('02 / 10')
+    fireEvent.click(screen.getByRole('button', { name: /1st Runner Up in CODEFEST/ }))
+    expect(screen.getByRole('status')).toBe(preview)
+    expect(preview).toHaveTextContent('2024–2025 Locale Level')
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
   it('does not generate broken links for missing résumé documents', () => {

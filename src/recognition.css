@@ -1,0 +1,191 @@
+.credentials-section {
+  padding-block: clamp(54px, 7.2vw, 96px);
+  background: var(--studio-grain) #efe8f9;
+  border-top: 1px solid var(--line);
+}
+.credential-heading {
+  margin-bottom: clamp(26px, 3.5vw, 46px);
+}
+.credential-heading > p {
+  margin: 0 0 12px;
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 700;
+}
+.credential-heading h2 {
+  font-size: clamp(34px, 5.2vw, 66px);
+  line-height: 1.07;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+.credential-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: clamp(24px, 4.8vw, 68px);
+}
+.credential-preview {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid #c7afe3;
+  border-radius: 4px 20px 4px 4px;
+  box-shadow: 0 5px 0 #d9c8ec;
+}
+.credential-plate {
+  padding: clamp(18px, 2.8vw, 30px);
+  color: var(--stage-ink);
+  background: linear-gradient(135deg, #3e146f, #6330aa);
+  border-top: 2px solid #b89bea;
+}
+.credential-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d4b8f362;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.credential-position {
+  flex: none;
+  color: var(--stage-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.recognition-year {
+  display: flex;
+  min-height: 100px;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 18px 0 20px;
+  color: var(--stage-ink);
+  font-size: clamp(62px, 7vw, 96px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.075em;
+  line-height: 1;
+}
+.recognition-year[data-range=true] {
+  font-size: clamp(33px, 4.4vw, 56px);
+  letter-spacing: -.055em;
+}
+.recognition-year > span {
+  color: var(--stage-muted);
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+.recognition-years {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  color: var(--stage-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border-top: 1px solid #d4b8f362;
+}
+.recognition-years > span {
+  padding-top: 10px;
+  text-align: center;
+  border-top: 2px solid transparent;
+}
+.recognition-years > .is-active {
+  color: var(--accent-fill);
+  border-top-color: var(--accent-fill);
+  font-weight: 700;
+}
+.credential-selected {
+  padding: clamp(18px, 2.8vw, 30px);
+}
+.credential-selected h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(19px, 2.2vw, 29px);
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+  animation: credential-title-reveal 220ms ease both;
+}
+@keyframes credential-title-reveal {
+  from { opacity: .65; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.credential-list {
+  min-width: 0;
+  border: 1px solid #cdb8e3;
+  border-radius: 4px;
+  background: #ffffff56;
+}
+.credential-list button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(64px, 6.5rem) 24px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 14px 16px;
+  color: var(--text);
+  text-align: left;
+  scroll-margin-top: 120px;
+  transition: background-color 170ms ease, box-shadow 170ms ease;
+}
+.credential-list button + button {
+  border-top: 1px solid #d9c9eb;
+}
+.credential-list button:hover {
+  background: #faf7fe;
+}
+.credential-list button[aria-pressed=true] {
+  background: var(--panel);
+  box-shadow: inset 3px 0 var(--accent-strong);
+}
+.credential-list button:focus-visible {
+  outline-offset: -3px;
+}
+.credential-title {
+  font-size: 14px;
+  font-weight: 580;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.credential-year {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: right;
+}
+.credential-mark {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--ink);
+  border-radius: 3px;
+}
+.credential-list button[aria-pressed=true] .credential-mark {
+  background: var(--accent-fill);
+}
+.credential-mark .icon {
+  width: 14px;
+  height: 14px;
+}
+@media (min-width: 981px) and (min-height: 650px) {
+  .credential-preview { position: sticky; top: 132px; }
+}
+@media (max-width: 760px) {
+  .credential-layout { grid-template-columns: minmax(0, 1fr); }
+  .recognition-year { min-height: 72px; margin-block: 12px 16px; }
+  .credential-list button {
+    grid-template-columns: minmax(0, 1fr) 24px;
+    gap: 5px 12px;
+  }
+  .credential-year { grid-column: 1; text-align: left; }
+  .credential-mark { grid-column: 2; grid-row: 1 / span 2; }
+}

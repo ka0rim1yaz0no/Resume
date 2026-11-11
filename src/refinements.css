@@ -16,7 +16,6 @@ h1, h2, h3 { text-wrap: balance; }
 .button { min-height: 54px; }
 .button .icon { transition: transform 250ms var(--ease); }
 .button:hover .icon { transform: translate(2px, -2px); }
-.resume-hero .hero-description { color: #c4cec3; }
 .resume-download .text-link { color: var(--quiet); font-size: 12px; min-height: 44px; }
 .hero-bottom a { min-height: 44px; }
 .model-controls .icon-button { width: 44px; height: 44px; }
@@ -68,11 +67,6 @@ h1, h2, h3 { text-wrap: balance; }
 .document-row p { font-size: 13px; line-height: 1.8; }
 .document-button { font-size: 12px; }
 .document-button:hover { background: #202d24; border-color: #9bb9a2; }
-.credential-list button { border-left: 2px solid transparent; }
-.credential-list button[aria-pressed=true] { border-left-color: #a5c8b1; }
-.credential-title { font-size: 14px; line-height: 1.8; }
-.credential-year { font-size: 11px; }
-.credential-selected p { line-height: 1.75; }
 .contact-inner > div > p:not(.section-label) { font-size: 15px; line-height: 1.85; }
 .contact-email { overflow-wrap: anywhere; line-height: 1.65; }
 .personal-contact-links { font-size: 13px; }
@@ -81,7 +75,7 @@ h1, h2, h3 { text-wrap: balance; }
 .footer-personal-name > span { font-size: 10px; line-height: 1.8; }
 .back-to-top { min-height: 44px; }
 .back-to-top .icon { transform: rotate(-90deg); }
-:is(.navigation a, .experience-chapters button, .education-selector button, .credential-list button, .skill-buttons button) { scroll-margin-block: 124px 24px; }
+:is(.navigation a, .experience-chapters button, .education-selector button, .skill-buttons button) { scroll-margin-block: 124px 24px; }
 @media (min-width: 981px) {
   .section-heading { margin-bottom: 60px; }
   .resume-project { gap: clamp(40px, 5vw, 80px); }
@@ -103,7 +97,6 @@ h1, h2, h3 { text-wrap: balance; }
   .hero-actions { gap: 20px; }
   .hero-actions .button, .hero-actions .text-link { font-size: 12px; }
   .hero-bottom { font-size: 10px; gap: 16px; align-items: center; }
-  .hero-bottom > span { max-width: 150px; }
   .hero-bottom a { white-space: nowrap; }
   .journey-chapters > span { display: none; }
   .journey-chapters > div { gap: 9px; }
@@ -142,8 +135,6 @@ h1, h2, h3 { text-wrap: balance; }
   .education-heading > span { font-size: 10px; }
   .document-row > div:last-child { flex-direction: row; flex-wrap: wrap; }
   .document-button { width: auto; flex: 1 1 135px; padding-inline: 15px; }
-  .credential-preview { gap: 18px; padding: 24px 20px; }
-  .credential-title { font-size: 14px; }
   .contact-email { font-size: clamp(15px, 4.1vw, 22px); }
   .personal-contact-links { gap: 16px; font-size: 12px; }
   .site-footer { padding-block: 32px; }

@@ -1,6 +1,6 @@
 import { Icon } from './Icon'
 import { useId } from 'react'
-import { profile } from '../data/profile'
+import { credentials, profile } from '../data/profile'
 
 export function ProjectArchitecture() {
   const id = useId().replaceAll(':', '')
@@ -33,9 +33,21 @@ export function SkillMap({ category }: { category: string }) {
   return <div className="skill-map" aria-hidden="true"><div className="skill-map-line" /><div className="skill-map-layers">{[{ icon: 'platforms' as const, title: 'Interface', note: 'The experience' }, { icon: 'intelligence' as const, title: 'Logic & data', note: 'The foundation' }, { icon: 'automation' as const, title: 'Tools', note: 'The workflow' }].map((layer, index) => <div key={layer.title} className={`skill-map-layer ${active === index ? 'is-active' : ''}`}><Icon name={layer.icon} /><span>{layer.title}<small>{layer.note}</small></span><i /></div>)}</div></div>
 }
 
+const recognitionYears = [...new Set(credentials.flatMap(item => item.year.match(/\d{4}/g) ?? []))].sort()
+
 export function RecognitionTimeline({ year }: { year: string }) {
-  const selected = year.startsWith('2024') ? '2024' : year
-  return <div className="recognition-visual" aria-hidden="true"><p>A record of learning.</p><div className="recognition-year" key={year}>{year.slice(0, 4)}<span>↗</span></div><div className="recognition-years">{['2023', '2024', '2025', '2026'].map(item => <span key={item} className={selected === item ? 'is-active' : ''}><i />{item}</span>)}</div></div>
+  const period = year.match(/^\d{4}(?:–\d{4})?/)?.[0] ?? year
+  const detail = year.slice(period.length).trim()
+  return (
+    <div className="recognition-visual">
+      <p className="recognition-year" data-range={period.length > 4}>
+        {period}{detail && <span> {detail}</span>}
+      </p>
+      <div className="recognition-years" aria-hidden="true">
+        {recognitionYears.map(item => <span key={item} className={period.includes(item) ? 'is-active' : ''}>{item}</span>)}
+      </div>
+    </div>
+  )
 }
 
 export function ContactSignet() {
