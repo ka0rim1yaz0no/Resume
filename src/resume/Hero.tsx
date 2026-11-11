@@ -14,18 +14,23 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
       <h1 id="hero-title" className="hero-enter" aria-label={profile.fullName}>Vincent <br />Layzie C. <br />Del Rosario</h1>
       <p className="hero-enter specialty-line">{profile.specialty}</p>
       <div className="hero-enter hero-systems" aria-label="Interfaces, logic, and data"><span>Interfaces</span><i aria-hidden="true" /><span>Logic</span><i aria-hidden="true" /><span>Data</span></div>
-      <div className="hero-enter hero-actions"><a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a><a className="text-link" href="#contact">Get in touch <Icon name="down" /></a></div>
+      <div className="hero-enter hero-actions">
+        <a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a>
+        {systemReduced ? <a className="text-link" href="#contact">Get in touch <Icon name="down" /></a> : <a className="text-link hero-story-link" href="#journey">Explore the 3D story <Icon name="down" /></a>}
+      </div>
       <div className="hero-enter hero-utilities">
         <div className="resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
         <a className="intro-replay" href="/">Replay opening <Icon name="play" /></a>
+        {!systemReduced && <a className="text-link hero-contact-link" href="#contact">Get in touch <Icon name="down" /></a>}
       </div>
     </div>
     <div className="hero-art" data-object={model}>
       <div className="art-coordinate art-coordinate-top">
-        <span>{['Systems sculpture', 'Project laptop', 'Workflow board'][objectIndex]}</span>
+        <span className="hero-window-title"><span className="stage-window-lights" aria-hidden="true" />{['Systems sculpture', 'Project laptop', 'Workflow board'][objectIndex]}</span>
         <span>Drag to explore</span>
       </div>
       <div className="hero-model-window">
+        <div className="scene-horizon" aria-hidden="true" />
         <div className="orbit orbit-outer" aria-hidden="true" />
         <div className="orbit orbit-inner" aria-hidden="true" />
         <SceneWindow id={model} chapter="intro" className="hero-scene" />
@@ -46,6 +51,5 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
         </div>
       </div>
     </div>
-    <div className="hero-bottom"><a href="#journey">Scroll to explore <Icon name="down" /></a></div>
   </section>
 }

@@ -7,53 +7,98 @@ import { Icon } from '../components/Icon'
 import { modelIds } from '../data/assets'
 import { profile } from '../data/profile'
 import { scrollToChapter } from '../hooks/useMotion'
+import { journeyCrossfade } from '../three/choreography'
 
 gsap.registerPlugin(useGSAP, ScrollTrigger)
 
 const chapters = [
-  { title: 'Systems.', label: 'Interfaces. Logic. Data.', copy: 'Understanding how things fit together. Building the connections that make them work.', detail: profile.fullName, note: 'Information Technology' },
-  { title: 'Interfaces.', label: 'Built together. Connected throughout.', copy: 'A learning management system shaped by backend logic, structured data, and collaboration.', detail: 'Learning Management System', note: 'Capstone project · 2025' },
-  { title: 'Workflow.', label: 'Structure behind the work.', copy: 'Website administration, document review, and quality assurance across a global workflow.', detail: '486 internship hours', note: 'Knowles Training Institute · 2026' },
+  { title: 'Systems', label: 'Interfaces. Logic. Data.', copy: 'Understanding how things fit together. Building the connections that make them work.', detail: profile.fullName, note: 'Information Technology', stop: 0.1 },
+  { title: 'Interfaces', label: 'Built together. Connected throughout.', copy: 'A learning management system shaped by backend logic, structured data, and collaboration.', detail: 'Learning Management System', note: 'Capstone project · 2025', stop: 0.5 },
+  { title: 'Workflow', label: 'Structure behind the work.', copy: 'Website administration, document review, and quality assurance across a global workflow.', detail: '486 internship hours', note: 'Knowles Training Institute · 2026', stop: 0.85 },
 ]
+
+function JourneyWorlds() {
+  return <div className="journey-worlds" aria-hidden="true">
+    <div className="journey-world journey-world-systems"><div className="scene-horizon" /><div className="journey-orbit" /></div>
+    <div className="journey-world journey-world-interfaces">
+      <div className="journey-type-wall"><span>API</span><span>Data</span><span>Logic</span></div>
+      <div className="journey-browser"><span className="stage-window-lights" /></div>
+    </div>
+    <div className="journey-world journey-world-workflow"><div className="journey-boards"><i /><i /><i /></div></div>
+  </div>
+}
 
 export function ModelJourney({ paused, systemReduced, toggleMotion }: { paused: boolean; systemReduced: boolean; toggleMotion: () => void }) {
   const section = useRef<HTMLElement>(null)
+  const frame = useRef<HTMLDivElement>(null)
+  const scrollTrigger = useRef<ScrollTrigger>(null)
+  const activeChapter = useRef(0)
   const [active, setActive] = useState(0)
-  const pausedNow = useRef(paused)
-  pausedNow.current = paused
+  const update = (progress: number) => {
+    const element = frame.current
+    if (!element) return
+    const [interfaces, workflow] = journeyCrossfade(progress)
+    element.style.setProperty('--journey-progress', String(progress))
+    element.style.setProperty('--journey-interfaces', String(interfaces))
+    element.style.setProperty('--journey-workflow', String(workflow))
+    const scene = element.querySelector<HTMLElement>('[data-scene="journey"]')
+    if (scene) scene.dataset.sceneScore = String(progress)
+    const chapter = progress < 0.33 ? 0 : progress < 0.68 ? 1 : 2
+    if (chapter !== activeChapter.current) {
+      activeChapter.current = chapter
+      setActive(chapter)
+    }
+  }
   const showChapter = (index: number) => {
-    if (!section.current) return
-    const header = window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100
-    const start = section.current.getBoundingClientRect().top + window.scrollY - header
-    const distance = section.current.offsetHeight - window.innerHeight + header
-    scrollToChapter(start + distance * [0.1, 0.5, 0.9][index], paused)
+    const progress = chapters[index].stop
+    const trigger = scrollTrigger.current
+    if (paused || !trigger) {
+      update(progress)
+      window.dispatchEvent(new Event('model-explore'))
+      return
+    }
+    scrollToChapter(trigger.start + (trigger.end - trigger.start) * progress, false)
   }
   useGSAP(() => {
-    const sceneWindow = section.current?.querySelector<HTMLElement>('[data-scene="journey"]')
-    const update = (progress: number) => {
-      if (pausedNow.current) return
-      if (sceneWindow) sceneWindow.dataset.sceneScore = String(progress)
-      setActive(progress < 0.33 ? 0 : progress < 0.68 ? 1 : 2)
-    }
-    if (paused) return
-    // Lenis already smooths native scroll. A single progress source keeps the
-    // captions and camera together, including deep links and reverse scrolling.
+    if (paused || systemReduced || !section.current) return
+    // The camera, backdrop, and controls use the same scroll progress.
     const trigger = ScrollTrigger.create({
       trigger: section.current,
       start: () => `top top+=${window.innerWidth <= 650 ? 76 : window.innerWidth <= 980 ? 84 : 100}`,
-      end: 'bottom bottom', onUpdate: self => update(self.progress), onRefresh: self => update(self.progress),
+      end: 'bottom bottom',
+      onUpdate: self => update(self.progress),
+      onRefresh: self => update(self.progress),
     })
+    scrollTrigger.current = trigger
     update(trigger.progress)
-    return () => trigger.kill()
-  }, { scope: section, dependencies: [paused], revertOnUpdate: true })
-  return <section id="journey" ref={section} className={`model-journey ${systemReduced ? 'journey-reduced' : ''}`} aria-label="Systems, interfaces, and workflow in motion">
-    <div className="journey-frame" data-journey-chapter={active}>
-      <div className="journey-heading"><div className="journey-heading-links"><span>Three dimensions of my work</span><a href="/">Replay intro <Icon name="play" /></a></div><a href="#project">Skip to résumé <Icon name="down" /></a></div>
-      <div className="journey-titles" aria-hidden="true">{chapters.map((chapter, i) => <span key={chapter.title} className={active === i ? 'is-active' : ''}>{chapter.title}</span>)}</div>
-      <SceneWindow id={modelIds[active]} chapter="journey" className="journey-scene" />
-      <div className="journey-copy">{chapters.map((chapter, i) => <div className={`journey-panel ${active === i ? 'is-active' : ''}`} key={chapter.title} aria-hidden={active !== i}><h2>{chapter.label}</h2><p>{chapter.copy}</p></div>)}</div>
-      <div className="journey-detail">{chapters.map((chapter, i) => <div className={active === i ? 'is-active' : ''} key={chapter.title} aria-hidden={active !== i}><strong>{chapter.detail}</strong><span>{chapter.note}</span></div>)}</div>
-      <div className="journey-footer"><div className="journey-chapters" aria-label={`Chapter ${active + 1} of 3`}><span>0{active + 1} <i>/ 03</i></span><div>{chapters.map((chapter, i) => <button className="journey-stop" key={chapter.title} onClick={() => showChapter(i)} aria-label={`View ${chapter.title.replace('.', '')} chapter`} aria-pressed={active === i}><b className={active === i ? 'is-active' : ''} /><span>{chapter.title.replace('.', '')}</span></button>)}</div></div><span className="journey-scroll-note">{paused ? 'A still moment' : 'Scroll to move through the story'}</span><button onClick={toggleMotion} disabled={systemReduced} aria-pressed={paused}>{systemReduced ? 'Reduced motion' : paused ? 'Enable motion' : 'Pause motion'}<Icon name={paused ? 'play' : 'pause'} /></button></div>
+    return () => { scrollTrigger.current = null; trigger.kill() }
+  }, { scope: section, dependencies: [paused, systemReduced], revertOnUpdate: true })
+
+  return <section id="journey" ref={section} className={`model-journey${systemReduced ? ' journey-reduced' : ''}`} aria-labelledby="journey-title">
+    <div className="journey-frame" ref={frame} data-journey-chapter={active}>
+      <JourneyWorlds />
+      <header className="journey-heading">
+        <span id="journey-title">Three dimensions of my work</span>
+        <a href="#project">Skip to project <Icon name="down" /></a>
+      </header>
+      <div className="journey-copy">
+        {chapters.map((chapter, i) => <div className="journey-panel" data-active={active === i} key={chapter.title} aria-hidden={active !== i}>
+          <h2>{chapter.title}.</h2>
+          <p className="journey-panel-label">{chapter.label}</p>
+          <p className="journey-panel-copy">{chapter.copy}</p>
+          <p className="journey-detail"><strong>{chapter.detail}</strong><span>{chapter.note}</span></p>
+        </div>)}
+      </div>
+      <div className="journey-visual"><SceneWindow id={modelIds[active]} chapter="journey" className="journey-scene" /></div>
+      <div className="journey-footer">
+        <span className="journey-count" aria-hidden="true">0{active + 1} <span>/ 03</span></span>
+        <div className="journey-chapters" role="group" aria-label="3D story chapters">
+          {chapters.map((chapter, i) => <button type="button" className="journey-stop" key={chapter.title} onClick={() => showChapter(i)} aria-label={`View ${chapter.title} chapter`} aria-pressed={active === i}>{chapter.title}</button>)}
+        </div>
+        <button type="button" className="journey-motion" onClick={toggleMotion} disabled={systemReduced} aria-pressed={paused} aria-label={systemReduced ? 'System reduced motion' : paused ? 'Enable motion' : 'Pause motion'}>
+          <span>{paused ? 'Enable motion' : 'Pause motion'}</span><Icon name={paused ? 'play' : 'pause'} />
+        </button>
+      </div>
     </div>
   </section>
 }

@@ -363,48 +363,6 @@ h1 { font-size: clamp(72px, 7.4vw, 106px); letter-spacing: -.07em; line-height: 
 
 .poster-preview, .poster-preview.poster-systems-sculpture, .poster-preview.poster-workflow-board { background: #101412; }
 
-/* A full-viewport, three-shot scroll film. Ordinary sticky positioning keeps
-   anchors, keyboard scrolling, browser history, and touch behaviour native. */
-.model-journey { position: relative; height: 320svh; background: #111512; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.journey-frame { position: sticky; top: 100px; height: calc(100svh - 100px); overflow: clip; isolation: isolate; }
-.journey-frame::before { content: ''; position: absolute; inset: 10% 10% 0 27%; background: radial-gradient(ellipse, #4a5c3a1c, transparent 70%); pointer-events: none; }
-.journey-heading { position: absolute; inset: 32px 6vw auto; display: flex; justify-content: space-between; gap: 20px; align-items: center; color: var(--muted); font-size: 11px; }
-.journey-heading a { display: inline-flex; gap: 16px; align-items: center; min-height: 44px; }.journey-heading .icon { width: 14px; height: 14px; }
-.journey-titles { position: absolute; left: 5.5vw; right: 5.5vw; top: 10%; height: 1.1em; font-size: clamp(90px, 16vw, 245px); font-weight: 400; line-height: .98; letter-spacing: -.075em; }
-.journey-titles > span { display: block; position: absolute; inset: 0 auto auto 0; opacity: 0; transform: translateY(35px); clip-path: inset(0 0 100%); transition: opacity 650ms var(--ease), transform 900ms var(--ease), clip-path 850ms var(--ease); }
-.journey-titles > span.is-active { opacity: 1; transform: translateY(0); clip-path: inset(0); }
-.journey-titles > span { transition: opacity 160ms ease, transform 300ms var(--ease), clip-path 160ms ease; }
-.journey-titles > span.is-active { transition: opacity 450ms ease 160ms, transform 700ms var(--ease) 160ms, clip-path 600ms var(--ease) 160ms; }
-.journey-frame > .journey-scene { position: absolute; inset: 17% 9% 9% 27%; width: auto; height: auto; border-radius: 0; }
-.journey-scene > .scene-poster { mask-image: radial-gradient(ellipse, #000 20%, transparent 70%); }
-.journey-copy { position: absolute; bottom: 24%; left: 6vw; width: min(23vw, 310px); min-height: 155px; }
-.journey-panel { position: absolute; inset: 0; opacity: 0; transform: translateY(18px); transition: opacity 600ms var(--ease), transform 700ms var(--ease); pointer-events: none; }
-.journey-panel.is-active { opacity: 1; transform: translateY(0); }
-.journey-panel { transition: opacity 140ms ease, transform 250ms var(--ease); }
-.journey-panel.is-active { transition: opacity 400ms ease 150ms, transform 600ms var(--ease) 150ms; }
-.journey-panel h2 { font-size: clamp(21px, 2vw, 30px); line-height: 1.15; letter-spacing: -.045em; max-width: 270px; }
-.journey-panel p { color: var(--muted); margin-top: 22px; font-size: 12px; line-height: 1.8; max-width: 270px; }
-.journey-detail { position: absolute; left: 6vw; bottom: 10%; text-align: left; width: min(23vw, 310px); height: 60px; }
-.journey-detail > div { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px; opacity: 0; transition: opacity 600ms ease; }
-.journey-detail > div.is-active { opacity: 1; }.journey-detail strong { font-weight: 500; font-size: 13px; }.journey-detail span { font-size: 10px; color: var(--muted); }
-.journey-footer { position: absolute; left: 6vw; right: 6vw; bottom: 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 10px; }
-.journey-chapters { display: flex; align-items: center; gap: 24px; }.journey-chapters > span { color: var(--text); font-size: 13px; }.journey-chapters i { font-size: 10px; font-style: normal; color: var(--quiet); margin-left: 5px; }.journey-chapters > div { display: flex; gap: 5px; }.journey-chapters b { display: block; width: 22px; height: 2px; background: var(--line); transition: background 400ms; }.journey-chapters b.is-active { background: var(--accent); }
-.journey-footer button { display: inline-flex; gap: 12px; align-items: center; min-height: 44px; font-size: 11px; padding: 0; }.journey-footer .icon { width: 15px; height: 15px; }
-.journey-footer .journey-stop { justify-content: center; width: 44px; height: 44px; }.journey-chapters > div { gap: 0; }.journey-stop:hover b { background: var(--accent); }
-.journey-reduced { display: none; }
-@media (max-width: 980px) { .journey-frame { top: 84px; height: calc(100svh - 84px); }.journey-copy { width: 25vw; }.journey-detail { max-width: 200px; } }
-@media (max-width: 650px) {
-  .model-journey { height: 290svh; }.journey-frame { top: 76px; height: calc(100svh - 76px); min-height: 590px; }
-  .journey-heading { inset: 12px 20px auto; font-size: 9px; }.journey-heading a { gap: 8px; }
-  .journey-titles { left: 18px; right: 18px; top: 10%; font-size: clamp(61px, 17vw, 105px); }
-  .journey-frame > .journey-scene { inset: 20% 3% 27%; }
-  .journey-copy { left: 20px; right: 20px; width: auto; bottom: 11%; min-height: 110px; }
-  .journey-panel h2 { font-size: 23px; max-width: none; }.journey-panel p { font-size: 11px; margin-top: 12px; max-width: 330px; }
-  .journey-detail { display: none; }
-  .journey-footer { left: 20px; right: 20px; bottom: 12px; padding-top: 8px; gap: 14px; }.journey-scroll-note { display: none; }.journey-footer button { font-size: 10px; }.journey-chapters { gap: 18px; }.journey-chapters b { width: 18px; }
-}
-@media (prefers-reduced-motion: reduce) { .model-journey { display: none; } }
-
 /* Curated section visuals: each explains its content instead of repeating a model. */
 .personal-resume .architecture-project { background: #16221b; border-color: #4d6553; }
 .project-architecture { position: absolute; inset: 32px 0 22px; display: grid; place-items: center; transition: transform 700ms var(--ease); }

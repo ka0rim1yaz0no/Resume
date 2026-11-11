@@ -44,10 +44,6 @@
 }
 .scene-dock-lights i:nth-child(2) { --segment: 1; }
 .scene-dock-lights i:nth-child(3) { --segment: 2; }
-.model-journey {
-  background: var(--journey-gradient);
-  border-color: var(--industrial-edge);
-}
 .resume-hero {
   grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
   column-gap: clamp(28px, 4vw, 64px);
@@ -96,9 +92,6 @@
   position: relative;
   height: clamp(380px, 55svh, 520px);
   overflow: clip;
-  background-image: linear-gradient(#e0cbff12 1px, transparent 1px), linear-gradient(90deg, #e0cbff12 1px, transparent 1px);
-  background-size: 48px 48px;
-  background-position: center;
 }
 .hero-model-window > .hero-scene {
   position: absolute;

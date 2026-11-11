@@ -77,10 +77,13 @@ export function chapterPose(progress: number, intro: boolean, compact: boolean) 
   }
 }
 
+export function journeyCrossfade(progress: number) {
+  return [smooth(0.23, 0.43, progress), smooth(0.57, 0.79, progress)] as const
+}
+
 export function journeyPose(progress: number, index: number, compact: boolean) {
   const p = clamp(progress)
-  const first = smooth(0.23, 0.43, p)
-  const second = smooth(0.57, 0.79, p)
+  const [first, second] = journeyCrossfade(p)
   const travel = compact ? 0.45 : 1
   const weights = [1 - first, first * (1 - second), second]
   if (index === 0) return { weight: weights[0], x: -first * 0.45 * travel, y: first * 0.06, z: 0, rx: 0.02, ry: -0.35 + smooth(0, 0.47, p) * 0.7, rz: first * 0.015, scale: 1.08 }
