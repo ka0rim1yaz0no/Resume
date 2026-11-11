@@ -1,4 +1,5 @@
 import { SceneWindow } from '../components/SceneWindow'
+import { SceneEnvironments } from '../components/SceneEnvironments'
 import { Icon } from '../components/Icon'
 import { modelIds, type ModelId } from '../data/assets'
 import { assetUrl, documents, profile } from '../data/profile'
@@ -15,8 +16,9 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
       <p className="hero-enter specialty-line">{profile.specialty}</p>
       <div className="hero-enter hero-systems" aria-label="Interfaces, logic, and data"><span>Interfaces</span><i aria-hidden="true" /><span>Logic</span><i aria-hidden="true" /><span>Data</span></div>
       <div className="hero-enter hero-actions">
-        <a className="button button-primary" href="#project">View my project <Icon name="arrow" /></a>
-        {systemReduced ? <a className="text-link" href="#contact">Get in touch <Icon name="down" /></a> : <a className="text-link hero-story-link" href="#journey">Explore the 3D story <Icon name="down" /></a>}
+        {!systemReduced && <a className="button button-primary hero-story-link" href="#journey">Explore the 3D story <Icon name="down" /></a>}
+        <a className={systemReduced ? 'button button-primary' : 'text-link'} href="#project">View my project <Icon name="arrow" /></a>
+        {systemReduced && <a className="text-link" href="#contact">Get in touch <Icon name="down" /></a>}
       </div>
       <div className="hero-enter hero-utilities">
         <div className="resume-download">{resume.url ? <a className="text-link" href={assetUrl(resume.url)} download>Download résumé <Icon name="down" /></a> : <a className="text-link" href="#experience">Explore my experience <Icon name="down" /></a>}</div>
@@ -30,9 +32,7 @@ export function Hero({ model, selectModel, turnLeft, turnRight, resetView, pause
         <span>Drag to explore</span>
       </div>
       <div className="hero-model-window">
-        <div className="scene-horizon" aria-hidden="true" />
-        <div className="orbit orbit-outer" aria-hidden="true" />
-        <div className="orbit orbit-inner" aria-hidden="true" />
+        <SceneEnvironments />
         <SceneWindow id={model} chapter="intro" className="hero-scene" />
         <div ref={exploration.ref} className="model-explorer" role="group" tabIndex={0} aria-label="Explore 3D model" aria-describedby="model-explore-help" onPointerDown={exploration.onPointerDown} onPointerMove={exploration.onPointerMove} onPointerUp={exploration.onPointerUp} onPointerCancel={exploration.onPointerCancel} onLostPointerCapture={exploration.onLostPointerCapture} onKeyDown={exploration.onKeyDown} />
       </div>

@@ -3,6 +3,7 @@ import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import gsap from 'gsap'
 import { SceneWindow } from '../components/SceneWindow'
+import { SceneEnvironments } from '../components/SceneEnvironments'
 import { Icon } from '../components/Icon'
 import { modelIds } from '../data/assets'
 import { profile } from '../data/profile'
@@ -17,17 +18,6 @@ const chapters = [
   { title: 'Workflow', label: 'Structure behind the work.', copy: 'Website administration, document review, and quality assurance across a global workflow.', detail: '486 internship hours', note: 'Knowles Training Institute · 2026', stop: 0.85 },
 ]
 
-function JourneyWorlds() {
-  return <div className="journey-worlds" aria-hidden="true">
-    <div className="journey-world journey-world-systems"><div className="scene-horizon" /><div className="journey-orbit" /></div>
-    <div className="journey-world journey-world-interfaces">
-      <div className="journey-type-wall"><span>API</span><span>Data</span><span>Logic</span></div>
-      <div className="journey-browser"><span className="stage-window-lights" /></div>
-    </div>
-    <div className="journey-world journey-world-workflow"><div className="journey-boards"><i /><i /><i /></div></div>
-  </div>
-}
-
 export function ModelJourney({ paused, systemReduced, toggleMotion }: { paused: boolean; systemReduced: boolean; toggleMotion: () => void }) {
   const section = useRef<HTMLElement>(null)
   const frame = useRef<HTMLDivElement>(null)
@@ -38,9 +28,9 @@ export function ModelJourney({ paused, systemReduced, toggleMotion }: { paused: 
     const element = frame.current
     if (!element) return
     const [interfaces, workflow] = journeyCrossfade(progress)
-    element.style.setProperty('--journey-progress', String(progress))
-    element.style.setProperty('--journey-interfaces', String(interfaces))
-    element.style.setProperty('--journey-workflow', String(workflow))
+    element.style.setProperty('--scene-progress', String(progress))
+    element.style.setProperty('--scene-interfaces', String(interfaces))
+    element.style.setProperty('--scene-workflow', String(workflow))
     const scene = element.querySelector<HTMLElement>('[data-scene="journey"]')
     if (scene) scene.dataset.sceneScore = String(progress)
     const chapter = progress < 0.33 ? 0 : progress < 0.68 ? 1 : 2
@@ -76,7 +66,7 @@ export function ModelJourney({ paused, systemReduced, toggleMotion }: { paused: 
 
   return <section id="journey" ref={section} className={`model-journey${systemReduced ? ' journey-reduced' : ''}`} aria-labelledby="journey-title">
     <div className="journey-frame" ref={frame} data-journey-chapter={active}>
-      <JourneyWorlds />
+      <SceneEnvironments />
       <header className="journey-heading">
         <span id="journey-title">Three dimensions of my work</span>
         <a href="#project">Skip to project <Icon name="down" /></a>

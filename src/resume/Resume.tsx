@@ -38,7 +38,19 @@ export default function Resume() {
   return <div ref={root} className={`${paused || reduced ? 'motion-paused' : ''} personal-resume`}>
     <a className="skip-link" href="#main">Skip to content</a>
     <div className="reading-progress" aria-hidden="true" />
-    <header className="site-header"><div className="container nav-inner"><a href="#" className="wordmark personal-wordmark" aria-label={`${profile.fullName} home`}><span className="wordmark-full-name">Vincent Layzie C.<span>Del Rosario</span></span></a><nav id="primary-navigation" className={menu ? 'navigation is-open' : 'navigation'} aria-label="Main navigation">{[['Project', 'project'], ['Experience', 'experience'], ['Skills', 'skills'], ['About', 'about'], ['Recognition', 'credentials']].map(([label, id]) => <a href={`#${id}`} key={id} aria-current={active === id ? 'location' : undefined} onClick={() => setMenu(false)}>{label}</a>)}<a className="nav-contact" href="#contact" aria-current={active === 'contact' ? 'location' : undefined} onClick={() => setMenu(false)}>Contact <Icon name="arrow" /></a></nav><button ref={menuButton} className="icon-button menu-toggle" aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="primary-navigation" onClick={() => setMenu(value => !value)}><Icon name={menu ? 'close' : 'menu'} /></button></div></header>
+    <header className="site-header">
+      <div className="container nav-inner">
+        <a href="#" className="wordmark personal-wordmark" aria-label={`${profile.fullName} home`}><span className="wordmark-full-name">Vincent Layzie C.<span>Del Rosario</span></span></a>
+        <nav className="header-navigation" aria-label="Main navigation">
+          {!reduced && <a className="nav-story-link" href="#journey" aria-current={active === 'journey' ? 'location' : undefined} onClick={() => setMenu(false)}><Icon name="play" />3D story</a>}
+          <div id="primary-navigation" className={menu ? 'navigation is-open' : 'navigation'}>
+            {[['Project', 'project'], ['Experience', 'experience'], ['Skills', 'skills'], ['About', 'about'], ['Recognition', 'credentials']].map(([label, id]) => <a href={`#${id}`} key={id} aria-current={active === id ? 'location' : undefined} onClick={() => setMenu(false)}>{label}</a>)}
+            <a className="nav-contact" href="#contact" aria-current={active === 'contact' ? 'location' : undefined} onClick={() => setMenu(false)}>Contact <Icon name="arrow" /></a>
+          </div>
+          <button ref={menuButton} className="icon-button menu-toggle" aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="primary-navigation" onClick={() => setMenu(value => !value)}><Icon name={menu ? 'close' : 'menu'} /></button>
+        </nav>
+      </div>
+    </header>
     <main id="main">
       <Hero model={model} turnLeft={() => setTurn(value => value - 0.35)} turnRight={() => setTurn(value => value + 0.35)} resetView={() => { setTurn(0); setReset(value => value + 1) }} selectModel={id => { setModel(id); setTurn(0) }} paused={paused || reduced} systemReduced={reduced} toggleMotion={() => setPaused(value => !value)} />
       <div className="capability-strip"><div className="container"><p>Interfaces. Logic. Data.</p><div><span>Web development</span><span className="strip-join" aria-hidden="true">+</span><span>Systems thinking</span><span className="strip-join" aria-hidden="true">+</span><span>Project coordination</span></div></div></div>
